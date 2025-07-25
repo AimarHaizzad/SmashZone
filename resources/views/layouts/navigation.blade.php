@@ -13,19 +13,14 @@
                 @if($user->isOwner())
                     <a href="{{ route('courts.index') }}" class="text-base font-semibold {{ request()->routeIs('courts.*') ? 'text-blue-700 border-b-2 border-blue-700' : 'text-gray-700 hover:text-blue-700' }} transition pb-1">Courts</a>
                     <a href="{{ route('owner.bookings') }}" class="text-base font-semibold {{ request()->routeIs('owner.bookings') ? 'text-blue-700 border-b-2 border-blue-700' : 'text-gray-700 hover:text-blue-700' }} transition pb-1">Bookings</a>
-                    <a href="{{ route('products.index') }}" class="text-base font-semibold {{ request()->routeIs('products.*') ? 'text-blue-700 border-b-2 border-blue-700' : 'text-gray-700 hover:text-blue-700' }} transition pb-1">Products</a>
-                    <a href="{{ route('payments.index') }}" class="text-base font-semibold {{ request()->routeIs('payments.*') ? 'text-blue-700 border-b-2 border-blue-700' : 'text-gray-700 hover:text-blue-700' }} transition pb-1">Payments</a>
                 @elseif($user->isStaff())
-                    <a href="{{ route('bookings.index') }}" class="text-base font-semibold {{ request()->routeIs('bookings.*') ? 'text-blue-700 border-b-2 border-blue-700' : 'text-gray-700 hover:text-blue-700' }} transition pb-1">Bookings</a>
                     <a href="{{ route('courts.index') }}" class="text-base font-semibold {{ request()->routeIs('courts.*') ? 'text-blue-700 border-b-2 border-blue-700' : 'text-gray-700 hover:text-blue-700' }} transition pb-1">Courts</a>
-                    <a href="{{ route('products.index') }}" class="text-base font-semibold {{ request()->routeIs('products.*') ? 'text-blue-700 border-b-2 border-blue-700' : 'text-gray-700 hover:text-blue-700' }} transition pb-1">Products</a>
-                    <a href="{{ route('payments.index') }}" class="text-base font-semibold {{ request()->routeIs('payments.*') ? 'text-blue-700 border-b-2 border-blue-700' : 'text-gray-700 hover:text-blue-700' }} transition pb-1">Payments</a>
+                    <a href="{{ route('bookings.index') }}" class="text-base font-semibold {{ request()->routeIs('bookings.index') ? 'text-blue-700 border-b-2 border-blue-700' : 'text-gray-700 hover:text-blue-700' }} transition pb-1">Bookings</a>
                 @else
-                    <a href="{{ route('bookings.index') }}" class="text-base font-semibold {{ request()->routeIs('bookings.*') ? 'text-blue-700 border-b-2 border-blue-700' : 'text-gray-700 hover:text-blue-700' }} transition pb-1">My Bookings</a>
-                    <a href="{{ route('courts.index') }}" class="text-base font-semibold {{ request()->routeIs('courts.*') ? 'text-blue-700 border-b-2 border-blue-700' : 'text-gray-700 hover:text-blue-700' }} transition pb-1">Courts</a>
-                    <a href="{{ route('products.index') }}" class="text-base font-semibold {{ request()->routeIs('products.*') ? 'text-blue-700 border-b-2 border-blue-700' : 'text-gray-700 hover:text-blue-700' }} transition pb-1">Shop</a>
-                    <a href="{{ route('payments.index') }}" class="text-base font-semibold {{ request()->routeIs('payments.*') ? 'text-blue-700 border-b-2 border-blue-700' : 'text-gray-700 hover:text-blue-700' }} transition pb-1">Payments</a>
+                    <a href="{{ route('bookings.index') }}" class="text-base font-semibold {{ request()->routeIs('bookings.index') ? 'text-blue-700 border-b-2 border-blue-700' : 'text-gray-700 hover:text-blue-700' }} transition pb-1">My Bookings</a>
                 @endif
+                <a href="{{ route('products.index') }}" class="text-base font-semibold {{ request()->routeIs('products.*') ? 'text-blue-700 border-b-2 border-blue-700' : 'text-gray-700 hover:text-blue-700' }} transition pb-1">Shop</a>
+                <a href="{{ route('payments.index') }}" class="text-base font-semibold {{ request()->routeIs('payments.*') ? 'text-blue-700 border-b-2 border-blue-700' : 'text-gray-700 hover:text-blue-700' }} transition pb-1">Payments</a>
             @endif
         </div>
     </div>

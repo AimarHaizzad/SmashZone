@@ -188,4 +188,37 @@ class BookingController extends Controller
         $booking->delete();
         return redirect()->route('bookings.index')->with('success', 'Booking deleted successfully.');
     }
+
+    public function availability(Request $request)
+    {
+        $courtId = $request->input('court_id');
+        $date = $request->input('date');
+        $bookings = \App\Models\Booking::where('court_id', $courtId)
+            ->where('date', $date)
+            ->get(['start_time', 'end_time']);
+        return response()->json($bookings);
+    }
+
+    public function gridAvailability(Request $request)
+    {
+        $date = $request->input('date', now()->toDateString());
+        $bookings = \App\Models\Booking::where('date', $date)->get(['court_id', 'start_time', 'end_time', 'user_id']);
+        return response()->json($bookings);
+    }
+
+    public function showDetails(Request $request, $id)
+    {
+        $booking = \App\Models\Booking::with(['court', 'payment'])->where('id', $id)->where('user_id', auth()->id())->firstOrFail();
+        return response()->json($booking);
+    }
+
+    public function userBookings(Request $request)
+    {
+        $bookings = \App\Models\Booking::with(['court', 'payment'])
+            ->where('user_id', auth()->id())
+            ->orderByDesc('date')
+            ->orderBy('start_time')
+            ->get();
+        return response()->json($bookings);
+    }
 }
