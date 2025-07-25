@@ -16,6 +16,6 @@ class EnsureUserIsOwner
         if (auth()->check() && auth()->user()->role === 'owner') {
             return $next($request);
         }
-        abort(403);
+        abort(403, 'Unauthorized');
     }
 }

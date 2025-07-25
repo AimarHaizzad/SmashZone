@@ -14,14 +14,22 @@ class BookingController extends Controller
      */
     public function index(Request $request)
     {
+        $user = Auth::user();
         $selectedDate = $request->query('date', now()->toDateString());
-        $courts = Court::all();
-        // Generate time slots (8:00 to 22:00, hourly)
+        if ($user->isOwner()) {
+            $courts = $user->courts;
+            $bookings = Booking::whereIn('court_id', $courts->pluck('id'))->where('date', $selectedDate)->get();
+        } elseif ($user->isStaff()) {
+            $courts = Court::all(); // Optionally restrict to courts assigned to staff
+            $bookings = Booking::where('date', $selectedDate)->get();
+        } else {
+            $courts = Court::all();
+            $bookings = Booking::where('user_id', $user->id)->where('date', $selectedDate)->get();
+        }
         $timeSlots = [];
         for ($h = 8; $h <= 22; $h++) {
             $timeSlots[] = sprintf('%02d:00', $h);
         }
-        $bookings = Booking::where('date', $selectedDate)->get();
         return view('bookings.index', compact('courts', 'timeSlots', 'bookings', 'selectedDate'));
     }
 
@@ -30,6 +38,9 @@ class BookingController extends Controller
      */
     public function create()
     {
+        if (!Auth::user()->isCustomer()) {
+            abort(403);
+        }
         $courts = Court::all();
         $selectedCourtId = request('court_id');
         return view('bookings.create', compact('courts', 'selectedCourtId'));
@@ -40,6 +51,9 @@ class BookingController extends Controller
      */
     public function store(Request $request)
     {
+        if (!Auth::user()->isCustomer()) {
+            abort(403);
+        }
         $validated = $request->validate([
             'court_id' => 'required|exists:courts,id',
             'date' => 'required|date|after_or_equal:today',
@@ -98,6 +112,13 @@ class BookingController extends Controller
      */
     public function edit(Booking $booking)
     {
+        $user = Auth::user();
+        if ($user->isCustomer() && $booking->user_id !== $user->id) {
+            abort(403);
+        }
+        if ($user->isOwner() && $booking->court->owner_id !== $user->id) {
+            abort(403);
+        }
         $courts = Court::all();
         return view('bookings.edit', compact('booking', 'courts'));
     }
@@ -107,6 +128,13 @@ class BookingController extends Controller
      */
     public function update(Request $request, Booking $booking)
     {
+        $user = Auth::user();
+        if ($user->isCustomer() && $booking->user_id !== $user->id) {
+            abort(403);
+        }
+        if ($user->isOwner() && $booking->court->owner_id !== $user->id) {
+            abort(403);
+        }
         $validated = $request->validate([
             'court_id' => 'required|exists:courts,id',
             'date' => 'required|date|after_or_equal:today',
@@ -150,6 +178,13 @@ class BookingController extends Controller
      */
     public function destroy(Booking $booking)
     {
+        $user = Auth::user();
+        if ($user->isCustomer() && $booking->user_id !== $user->id) {
+            abort(403);
+        }
+        if ($user->isOwner() && $booking->court->owner_id !== $user->id) {
+            abort(403);
+        }
         $booking->delete();
         return redirect()->route('bookings.index')->with('success', 'Booking deleted successfully.');
     }

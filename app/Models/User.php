@@ -56,10 +56,42 @@ class User extends Authenticatable
     }
 
     /**
-     * Get the staff members for the owner.
+     * Get the bookings for the user.
      */
-    public function staff()
+    public function bookings()
     {
-        return $this->hasMany(User::class, 'owner_id');
+        return $this->hasMany(Booking::class);
+    }
+
+    /**
+     * Get the courts owned by the user (if owner).
+     */
+    public function courts()
+    {
+        return $this->hasMany(Court::class, 'owner_id');
+    }
+
+    /**
+     * Check if user is owner.
+     */
+    public function isOwner()
+    {
+        return $this->role === 'owner';
+    }
+
+    /**
+     * Check if user is staff.
+     */
+    public function isStaff()
+    {
+        return $this->role === 'staff';
+    }
+
+    /**
+     * Check if user is customer.
+     */
+    public function isCustomer()
+    {
+        return $this->role === 'customer';
     }
 }

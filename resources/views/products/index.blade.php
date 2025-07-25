@@ -10,7 +10,7 @@
             <a href="?" class="px-5 py-2 border-2 rounded-lg font-semibold text-base {{ !request('category') ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-800 border-gray-300 hover:bg-blue-50' }} transition">All</a>
         </div>
         @if(auth()->user() && auth()->user()->role === 'owner')
-            <a href="{{ route('products.add') }}" class="bg-blue-600 text-white px-4 py-2 rounded shadow hover:bg-blue-700">Add Product</a>
+            <a href="{{ route('products.create') }}" class="bg-blue-600 text-white px-4 py-2 rounded shadow hover:bg-blue-700">Add Product</a>
         @endif
     </div>
     <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
@@ -50,4 +50,7 @@
         @endforelse
     </div>
 </div>
+@if(auth()->user() && auth()->user()->role === 'owner')
+<!-- Remove the Add Product Modal and its script -->
+@endif
 @endsection 

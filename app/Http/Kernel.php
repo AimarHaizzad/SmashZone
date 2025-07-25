@@ -65,4 +65,6 @@ class Kernel extends HttpKernel
         'verified' => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
         'owner' => \App\Http\Middleware\EnsureUserIsOwner::class,
     ];
-} 
+}
+
+file_put_contents(storage_path('logs/kernel-debug.log'), 'Kernel loaded at '.date('Y-m-d H:i:s').PHP_EOL, FILE_APPEND);

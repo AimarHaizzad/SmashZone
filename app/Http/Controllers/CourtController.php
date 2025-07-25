@@ -22,6 +22,9 @@ class CourtController extends Controller
      */
     public function create()
     {
+        if (!auth()->user() || !auth()->user()->isOwner()) {
+            abort(403);
+        }
         return view('courts.create');
     }
 
@@ -30,6 +33,9 @@ class CourtController extends Controller
      */
     public function store(Request $request)
     {
+        if (!auth()->user() || !auth()->user()->isOwner()) {
+            abort(403);
+        }
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
@@ -59,6 +65,9 @@ class CourtController extends Controller
      */
     public function edit(Court $court)
     {
+        if (!auth()->user() || !auth()->user()->isOwner() || $court->owner_id !== auth()->id()) {
+            abort(403);
+        }
         return view('courts.edit', compact('court'));
     }
 
@@ -67,6 +76,9 @@ class CourtController extends Controller
      */
     public function update(Request $request, Court $court)
     {
+        if (!auth()->user() || !auth()->user()->isOwner() || $court->owner_id !== auth()->id()) {
+            abort(403);
+        }
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
@@ -89,10 +101,31 @@ class CourtController extends Controller
      */
     public function destroy(Court $court)
     {
+        if (!auth()->user() || !auth()->user()->isOwner() || $court->owner_id !== auth()->id()) {
+            abort(403);
+        }
         if ($court->image) {
             Storage::disk('public')->delete($court->image);
         }
         $court->delete();
         return redirect()->route('courts.index')->with('success', 'Court deleted successfully.');
+    }
+
+    public function availability(Request $request)
+    {
+        $date = $request->input('date', now()->toDateString());
+        $courts = \App\Models\Court::with(['bookings' => function($q) use ($date) {
+            $q->whereDate('date', $date);
+        }])->get();
+
+        $data = $courts->map(function($court) {
+            return [
+                'id' => $court->id,
+                'name' => $court->name,
+                'is_booked' => $court->bookings->count() > 0,
+            ];
+        });
+
+        return response()->json($data);
     }
 }

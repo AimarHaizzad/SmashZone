@@ -16,13 +16,13 @@
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V7a2 2 0 00-2-2H6a2 2 0 00-2 2v6m16 0v6a2 2 0 01-2 2H6a2 2 0 01-2-2v-6m16 0H4" /></svg>
             Courts
         </a>
-        <a href="#" class="block px-4 py-2 rounded hover:bg-green-50 flex items-center gap-2 opacity-50 cursor-not-allowed">
+        <a href="{{ route('products.index') }}" class="block px-4 py-2 rounded hover:bg-green-50 flex items-center gap-2 {{ request()->routeIs('products.*') ? 'bg-green-100 text-green-700 font-bold' : '' }}">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h1l2 9h12l2-9h1" /></svg>
-            Product
+            Products
         </a>
-        <a href="#" class="block px-4 py-2 rounded hover:bg-green-50 flex items-center gap-2 opacity-50 cursor-not-allowed">
+        <a href="{{ route('payments.index') }}" class="block px-4 py-2 rounded hover:bg-green-50 flex items-center gap-2 {{ request()->routeIs('payments.*') ? 'bg-green-100 text-green-700 font-bold' : '' }}">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a5 5 0 00-10 0v2a2 2 0 00-2 2v7a2 2 0 002 2h10a2 2 0 002-2v-7a2 2 0 00-2-2z" /></svg>
-            Payment
+            Payments
         </a>
         <a href="#" class="block px-4 py-2 rounded hover:bg-green-50 flex items-center gap-2 opacity-50 cursor-not-allowed">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2a4 4 0 014-4h2a4 4 0 014 4v2M9 17H7a4 4 0 01-4-4V7a4 4 0 014-4h10a4 4 0 014 4v6a4 4 0 01-4 4h-2M9 17v2a4 4 0 004 4h2a4 4 0 004-4v-2" /></svg>
