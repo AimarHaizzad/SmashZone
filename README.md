@@ -7,6 +7,39 @@
 <a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
 </p>
 
+# Badminton Booking System
+
+This project is a badminton court booking system built with Laravel. It allows users to book courts for specific time slots, and owners to manage courts, bookings, and payments.
+
+## Features
+- User registration and login with roles: Owner, Staff, Customer
+- Court management (add, edit, delete courts)
+- Booking system with time slot selection and overlap prevention
+- Automatic price calculation (RM20 per hour)
+- Payment tracking for each booking
+- Owner dashboard to manage all courts, bookings, and payments
+- User dashboard to view and manage own bookings
+
+## Usage
+### For Users
+- Register and log in as a customer
+- View available courts and book a time slot
+- See your bookings and payment status
+- Cancel bookings if needed
+
+### For Owners
+- Register and log in as an owner
+- Access the owner dashboard to manage courts, bookings, and payments
+- View all bookings and payment statuses
+- Add or remove courts as needed
+
+### Booking Rules
+- You cannot book a court for a time slot that overlaps with an existing booking
+- Price is calculated automatically based on the duration (RM20 per hour)
+- Payment status is tracked for each booking
+
+---
+
 ## About Laravel
 
 Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:

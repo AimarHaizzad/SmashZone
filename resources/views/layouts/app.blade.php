@@ -15,36 +15,18 @@
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
     <body class="font-sans antialiased">
-        <div class="min-h-screen bg-gray-100 flex">
-            @if(Auth::check() && Auth::user()->role === 'owner')
-                @include('layouts.owner-sidebar')
-                <div class="flex-1">
-                    @isset($header)
-                        <header class="bg-white shadow">
-                            <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-                                {{ $header }}
-                            </div>
-                        </header>
-                    @endisset
-                    <main>
-                        {{ $slot }}
-                    </main>
-                </div>
-            @else
-                <div class="w-full">
-                    @include('layouts.navigation')
-                    @isset($header)
-                        <header class="bg-white shadow">
-                            <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-                                {{ $header }}
-                            </div>
-                        </header>
-                    @endisset
-                    <main>
-                        {{ $slot }}
-                    </main>
-                </div>
-            @endif
+        <div class="min-h-screen bg-gray-100 flex flex-col">
+            @include('layouts.navigation')
+            @isset($header)
+                <header class="bg-white shadow">
+                    <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+                        {{ $header }}
+                    </div>
+                </header>
+            @endisset
+            <main class="flex-1">
+                @yield('content')
+            </main>
         </div>
     </body>
 </html>
