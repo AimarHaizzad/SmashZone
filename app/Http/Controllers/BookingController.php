@@ -91,6 +91,7 @@ class BookingController extends Controller
         // Create payment record
         $booking->payment()->create([
             'user_id' => Auth::id(),
+            'booking_id' => $booking->id,
             'amount' => $total_price,
             'status' => 'pending',
             'payment_date' => null,

@@ -1,56 +1,235 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="max-w-7xl mx-auto py-8">
-    <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-6 gap-4">
-        <div class="flex flex-wrap gap-3 mb-4">
-            @foreach(['Shoes','Clothing','Shuttlecocks','Rackets','Bags','Accessories'] as $cat)
-                <a href="?category={{ strtolower($cat) }}" class="px-5 py-2 border-2 rounded-lg font-semibold text-base {{ request('category') === strtolower($cat) ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-800 border-gray-300 hover:bg-blue-50' }} transition">Badminton {{ $cat }}</a>
-            @endforeach
-            <a href="?" class="px-5 py-2 border-2 rounded-lg font-semibold text-base {{ !request('category') ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-800 border-gray-300 hover:bg-blue-50' }} transition">All</a>
+<!-- Enhanced Hero Section -->
+<div class="relative mb-12">
+    <div class="absolute inset-0 bg-gradient-to-r from-green-900/90 to-blue-900/90 rounded-3xl"></div>
+    <img src="/images/badminton-hero.jpg" alt="Badminton Products" class="w-full h-64 object-cover rounded-3xl shadow-2xl">
+    <div class="absolute inset-0 flex flex-col justify-center items-center text-center px-4">
+        <div class="bg-white/10 backdrop-blur-sm rounded-2xl p-8 border border-white/20">
+            <h1 class="text-5xl font-extrabold text-white drop-shadow-lg mb-4">Badminton Gear</h1>
+            <p class="text-xl text-green-100 font-medium drop-shadow mb-6">Premium equipment • Professional quality • Best prices</p>
+            <div class="flex items-center justify-center gap-6 text-white/90">
+                <div class="flex items-center gap-2">
+                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                    </svg>
+                    <span class="text-sm font-medium">Premium Brands</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 1.343-3 3s1.343 3 3 3 3-1.343 3-3-1.343-3-3-3zm0 0V4m0 7v7" />
+                    </svg>
+                    <span class="text-sm font-medium">Fast Delivery</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span class="text-sm font-medium">Quality Guaranteed</span>
+                </div>
+            </div>
         </div>
-        @if(auth()->user() && auth()->user()->role === 'owner')
-            <a href="{{ route('products.create') }}" class="bg-blue-600 text-white px-4 py-2 rounded shadow hover:bg-blue-700">Add Product</a>
-        @endif
     </div>
+</div>
+
+<div class="max-w-7xl mx-auto py-8 px-4">
+    <!-- Enhanced Category Filters -->
+    <div class="bg-white rounded-2xl shadow-lg p-6 mb-8 border border-gray-100">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div class="flex flex-wrap gap-3">
+            @foreach(['Shoes','Clothing','Shuttlecocks','Rackets','Bags','Accessories'] as $cat)
+                    <a href="?category={{ strtolower($cat) }}" 
+                       class="px-6 py-3 border-2 rounded-xl font-semibold text-base transition-all transform hover:scale-105 {{ request('category') === strtolower($cat) ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white border-blue-600 shadow-lg' : 'bg-white text-gray-700 border-gray-200 hover:bg-blue-50 hover:border-blue-300' }}">
+                        <div class="flex items-center gap-2">
+                            @if(strtolower($cat) === 'shoes')
+                                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                                </svg>
+                            @elseif(strtolower($cat) === 'clothing')
+                                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                                </svg>
+                            @elseif(strtolower($cat) === 'shuttlecocks')
+                                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                                </svg>
+                            @elseif(strtolower($cat) === 'rackets')
+                                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                            @elseif(strtolower($cat) === 'bags')
+                                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                                </svg>
+                            @else
+                                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                                </svg>
+                            @endif
+                            {{ $cat }}
+                        </div>
+                    </a>
+            @endforeach
+                <a href="?" 
+                   class="px-6 py-3 border-2 rounded-xl font-semibold text-base transition-all transform hover:scale-105 {{ !request('category') ? 'bg-gradient-to-r from-green-600 to-green-700 text-white border-green-600 shadow-lg' : 'bg-white text-gray-700 border-gray-200 hover:bg-green-50 hover:border-green-300' }}">
+                    <div class="flex items-center gap-2">
+                        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+                        </svg>
+                        All Products
+                    </div>
+                </a>
+            </div>
+            @if(auth()->user() && auth()->user()->role === 'owner')
+                <a href="{{ route('products.create') }}" 
+                   class="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl shadow-lg hover:from-blue-700 hover:to-blue-800 font-semibold transition-all transform hover:scale-105">
+                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                    </svg>
+                    Add Product
+                </a>
+            @endif
+        </div>
+    </div>
+
+    <!-- Enhanced Product Grid -->
     <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
         @forelse($products as $product)
-            <div class="bg-white rounded-2xl shadow-lg p-4 flex flex-col relative group border border-gray-100">
+            <div class="bg-white rounded-3xl shadow-lg border border-gray-100 overflow-hidden group hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2">
+                <!-- Product Image -->
+                <div class="relative overflow-hidden">
                 @if($product->image)
-                    <img src="{{ asset('storage/' . $product->image) }}" alt="{{ $product->name }}" class="h-48 w-full object-contain rounded-xl mb-4 bg-gray-50">
+                        <img src="{{ asset('storage/' . $product->image) }}" 
+                             alt="{{ $product->name }}" 
+                             class="h-64 w-full object-cover group-hover:scale-110 transition-transform duration-300">
                 @else
-                    <div class="h-48 w-full flex items-center justify-center bg-gray-100 rounded-xl mb-4 text-gray-400">No Image</div>
-                @endif
-                <div class="absolute top-4 right-4 flex flex-col gap-2 z-10">
-                    <button class="bg-white rounded-full p-2 shadow hover:bg-blue-50"><svg xmlns='http://www.w3.org/2000/svg' class='h-5 w-5 text-gray-400' fill='none' viewBox='0 0 24 24' stroke='currentColor'><path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M5 15l7-7 7 7' /></svg></button>
-                    <button class="bg-white rounded-full p-2 shadow hover:bg-blue-50"><svg xmlns='http://www.w3.org/2000/svg' class='h-5 w-5 text-gray-400' fill='none' viewBox='0 0 24 24' stroke='currentColor'><path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M17 16l4-4m0 0l-4-4m4 4H7' /></svg></button>
+                        <div class="h-64 w-full flex items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200">
+                            <div class="text-center">
+                                <svg class="w-16 h-16 text-gray-400 mx-auto mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                </svg>
+                                <p class="text-gray-500 font-medium">No Image</p>
+                            </div>
                 </div>
-                <div class="text-sm text-gray-500 mb-1">{{ $product->brand ?? 'Brand' }}</div>
-                <div class="text-lg font-bold text-gray-900 mb-1">{{ $product->name }}</div>
-                <div class="flex items-center gap-2 mb-2">
-                    <span class="text-red-600 font-bold text-lg">RM {{ number_format($product->price, 2) }}</span>
-                    @if($product->old_price)
-                        <span class="text-gray-400 line-through text-base">RM {{ number_format($product->old_price, 2) }}</span>
                     @endif
+                    
+                    <!-- Quick Action Buttons -->
+                    <div class="absolute top-4 right-4 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                        <button class="bg-white/90 backdrop-blur-sm rounded-full p-2 shadow-lg hover:bg-white transition-colors">
+                            <svg class="h-5 w-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                            </svg>
+                        </button>
+                        <button class="bg-white/90 backdrop-blur-sm rounded-full p-2 shadow-lg hover:bg-white transition-colors">
+                            <svg class="h-5 w-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.207A1 1 0 013 6.5V4z" />
+                            </svg>
+                        </button>
+                    </div>
+                    
+                    <!-- Category Badge -->
+                    <div class="absolute top-4 left-4">
+                        <span class="inline-flex px-3 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
+                            {{ ucfirst($product->category ?? 'General') }}
+                        </span>
+                    </div>
                 </div>
-                <div class="flex-1"></div>
-                @if(auth()->user() && auth()->user()->role === 'owner')
-                    <div class="flex gap-2 mt-4">
-                        <a href="{{ route('products.edit', $product) }}" class="bg-yellow-400 text-white px-3 py-1 rounded shadow hover:bg-yellow-500">Edit</a>
-                        <form action="{{ route('products.destroy', $product) }}" method="POST" onsubmit="return confirm('Are you sure?');">
+
+                <!-- Product Info -->
+                <div class="p-6">
+                    <div class="text-sm text-gray-500 mb-2 flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                        </svg>
+                        {{ $product->brand ?? 'Brand' }}
+                    </div>
+                    
+                    <h3 class="text-lg font-bold text-gray-900 mb-3 line-clamp-2">{{ $product->name }}</h3>
+                    
+                    <!-- Price Section -->
+                    <div class="flex items-center gap-3 mb-4">
+                        <span class="text-2xl font-bold text-red-600">RM {{ number_format($product->price, 2) }}</span>
+                        @if($product->old_price)
+                            <span class="text-lg text-gray-400 line-through">RM {{ number_format($product->old_price, 2) }}</span>
+                            <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">
+                                {{ round((($product->old_price - $product->price) / $product->old_price) * 100) }}% OFF
+                            </span>
+                        @endif
+                    </div>
+
+                    <!-- Action Buttons -->
+                    @if(!auth()->user() || (auth()->user() && auth()->user()->role !== 'owner'))
+                        <form action="{{ route('cart.add') }}" method="POST" class="space-y-3">
                             @csrf
-                            @method('DELETE')
-                            <button type="submit" class="bg-red-600 text-white px-3 py-1 rounded shadow hover:bg-red-700">Delete</button>
+                            <input type="hidden" name="product_id" value="{{ $product->id }}">
+                            <div class="flex items-center gap-2">
+                                <label for="qty-{{ $product->id }}" class="text-sm font-medium text-gray-700">Quantity:</label>
+                                <input id="qty-{{ $product->id }}" name="quantity" type="number" min="1" value="1" 
+                                       class="w-20 border-2 border-gray-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-300 focus:border-blue-500 transition-colors">
+                            </div>
+                            <button type="submit" 
+                                    class="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-3 rounded-xl font-semibold hover:from-blue-700 hover:to-blue-800 transition-all transform hover:scale-105 shadow-lg">
+                                <div class="flex items-center justify-center gap-2">
+                                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13l-1.35 2.7A2 2 0 007.52 19h8.96a2 2 0 001.87-2.3L17 13M7 13V6a1 1 0 011-1h5a1 1 0 011 1v7" />
+                                    </svg>
+                                    Add to Cart
+                                </div>
+                            </button>
+                        </form>
+                    @endif
+                    
+                    @if(auth()->user() && auth()->user()->role === 'owner')
+                        <div class="flex gap-2 mt-4">
+                            <a href="{{ route('products.edit', $product) }}" 
+                               class="flex-1 bg-gradient-to-r from-yellow-500 to-yellow-600 text-white px-4 py-3 rounded-xl font-semibold hover:from-yellow-600 hover:to-yellow-700 transition-all transform hover:scale-105 shadow-lg text-center">
+                                <div class="flex items-center justify-center gap-2">
+                                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                    </svg>
+                                    Edit
+                                </div>
+                            </a>
+                            <form action="{{ route('products.destroy', $product) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this product?');" class="flex-1">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" 
+                                        class="w-full bg-gradient-to-r from-red-500 to-red-600 text-white px-4 py-3 rounded-xl font-semibold hover:from-red-600 hover:to-red-700 transition-all transform hover:scale-105 shadow-lg">
+                                    <div class="flex items-center justify-center gap-2">
+                                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                        </svg>
+                                        Delete
+                                    </div>
+                                </button>
                         </form>
                     </div>
                 @endif
+                </div>
             </div>
         @empty
-            <div class="text-center text-gray-500 py-8 col-span-full">No products found.</div>
+            <div class="col-span-full">
+                <div class="text-center py-16">
+                    <div class="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <svg class="w-12 h-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-semibold text-gray-600 mb-2">No Products Found</h3>
+                    <p class="text-gray-500 mb-6">We couldn't find any products matching your criteria.</p>
+                    @if(auth()->user() && auth()->user()->role === 'owner')
+                        <a href="{{ route('products.create') }}" 
+                           class="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl shadow-lg hover:from-blue-700 hover:to-blue-800 font-semibold transition-all transform hover:scale-105">
+                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                            </svg>
+                            Add Your First Product
+                        </a>
+                    @endif
+                </div>
+            </div>
         @endforelse
     </div>
 </div>
-@if(auth()->user() && auth()->user()->role === 'owner')
-<!-- Remove the Add Product Modal and its script -->
-@endif
 @endsection 
