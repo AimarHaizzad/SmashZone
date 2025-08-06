@@ -147,10 +147,13 @@ Route::middleware(['auth'])->group(function () {
     // Owner Resources
   //  Route::resource('products', ProductController::class)->except(['index', 'show']);
     Route::resource('courts', CourtController::class)->except(['index', 'show']);
-    Route::resource('staff', StaffController::class);
 
     // Payments
     Route::get('payments', [PaymentController::class, 'index'])->name('payments.index');
+    Route::get('payments/{payment}/pay', [PaymentController::class, 'showPaymentForm'])->name('payments.pay');
+    Route::post('payments/{payment}/process', [PaymentController::class, 'processPayment'])->name('payments.process');
+    Route::get('payments/{payment}/success', [PaymentController::class, 'paymentSuccess'])->name('payments.success');
+    Route::get('payments/{payment}/cancel', [PaymentController::class, 'paymentCancel'])->name('payments.cancel');
 
     // TODO: Add booking and report routes here
 });
@@ -177,3 +180,122 @@ Route::post('cart/remove', [App\Http\Controllers\CartController::class, 'remove'
 Route::post('cart/checkout', [App\Http\Controllers\StripeController::class, 'checkout'])->name('cart.checkout');
 Route::get('cart/success', [App\Http\Controllers\StripeController::class, 'success'])->name('stripe.success');
 Route::get('cart/cancel', [App\Http\Controllers\StripeController::class, 'cancel'])->name('stripe.cancel');
+
+// Test route for Stripe configuration
+Route::get('test-stripe-config', function() {
+    $stripeKey = config('services.stripe.key');
+    $stripeSecret = config('services.stripe.secret');
+    
+    return response()->json([
+        'stripe_key_exists' => !empty($stripeKey),
+        'stripe_secret_exists' => !empty($stripeSecret),
+        'stripe_key_preview' => $stripeKey ? substr($stripeKey, 0, 10) . '...' : 'Not set',
+        'stripe_secret_preview' => $stripeSecret ? substr($stripeSecret, 0, 10) . '...' : 'Not set',
+    ]);
+});
+
+// Test route for payment data
+Route::get('test-payment/{id}', function($id) {
+    $payment = \App\Models\Payment::with(['user', 'booking.court'])->find($id);
+    
+    if (!$payment) {
+        return response()->json(['error' => 'Payment not found'], 404);
+    }
+    
+    return response()->json([
+        'payment_id' => $payment->id,
+        'user_id' => $payment->user_id,
+        'booking_id' => $payment->booking_id,
+        'amount' => $payment->amount,
+        'status' => $payment->status,
+        'court_name' => $payment->booking->court->name ?? 'Unknown',
+        'booking_date' => $payment->booking->date ?? 'Unknown',
+        'booking_time' => $payment->booking->start_time . ' - ' . $payment->booking->end_time ?? 'Unknown',
+    ]);
+});
+
+// Test route to show all payments for current user
+Route::get('my-payments', function() {
+    $payments = \App\Models\Payment::with(['booking.court'])
+        ->where('user_id', auth()->id())
+        ->orderBy('created_at', 'desc')
+        ->get();
+    
+    return response()->json([
+        'user_id' => auth()->id(),
+        'total_payments' => $payments->count(),
+        'payments' => $payments->map(function($payment) {
+            return [
+                'id' => $payment->id,
+                'amount' => $payment->amount,
+                'status' => $payment->status,
+                'court_name' => $payment->booking->court->name ?? 'Unknown',
+                'booking_date' => $payment->booking->date ?? 'Unknown',
+                'created_at' => $payment->created_at->format('Y-m-d H:i:s'),
+                'payment_url' => route('payments.pay', $payment->id)
+            ];
+        })
+    ]);
+});
+
+// Test route to create a sample payment
+Route::get('create-test-payment', function() {
+    // Find or create a court
+    $court = \App\Models\Court::first();
+    if (!$court) {
+        return response()->json(['error' => 'No courts found. Please create a court first.'], 404);
+    }
+    
+    // Create a test booking
+    $booking = \App\Models\Booking::create([
+        'user_id' => auth()->id(),
+        'court_id' => $court->id,
+        'date' => now()->addDays(1)->format('Y-m-d'),
+        'start_time' => '10:00:00',
+        'end_time' => '11:00:00',
+        'total_price' => 25.00,
+        'status' => 'pending'
+    ]);
+    
+    // Create a test payment
+    $payment = \App\Models\Payment::create([
+        'user_id' => auth()->id(),
+        'booking_id' => $booking->id,
+        'amount' => 25.00,
+        'payment_method' => 'stripe',
+        'status' => 'pending',
+        'payment_date' => now()
+    ]);
+    
+    return response()->json([
+        'message' => 'Test payment created successfully',
+        'payment_id' => $payment->id,
+        'payment_url' => route('payments.pay', $payment->id),
+        'booking' => [
+            'id' => $booking->id,
+            'court_name' => $court->name,
+            'date' => $booking->date,
+            'time' => $booking->start_time . ' - ' . $booking->end_time,
+            'amount' => $payment->amount
+        ]
+    ]);
+});
+
+// Test route for owner middleware
+Route::get('/test-owner', function () {
+    return response()->json([
+        'user_id' => auth()->id(),
+        'user_role' => auth()->user()->role,
+        'is_owner' => auth()->user()->role === 'owner'
+    ]);
+})->middleware(['auth', 'owner']);
+
+// Staff Management Routes (Owner only)
+Route::middleware(['auth'])->group(function () {
+    Route::get('/staff', [App\Http\Controllers\StaffController::class, 'index'])->name('staff.index');
+    Route::get('/staff/create', [App\Http\Controllers\StaffController::class, 'create'])->name('staff.create');
+    Route::post('/staff', [App\Http\Controllers\StaffController::class, 'store'])->name('staff.store');
+    Route::get('/staff/{staff}/edit', [App\Http\Controllers\StaffController::class, 'edit'])->name('staff.edit');
+    Route::put('/staff/{staff}', [App\Http\Controllers\StaffController::class, 'update'])->name('staff.update');
+    Route::delete('/staff/{staff}', [App\Http\Controllers\StaffController::class, 'destroy'])->name('staff.destroy');
+});

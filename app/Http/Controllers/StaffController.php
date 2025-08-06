@@ -5,86 +5,156 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rules\Password;
 
 class StaffController extends Controller
 {
-    // Show staff creation form
+    /**
+     * Display a listing of staff members.
+     */
+    public function index()
+    {
+        // Check if user is owner
+        if (auth()->user()->role !== 'owner') {
+            abort(403, 'Unauthorized. Only owners can access staff management.');
+        }
+
+        $staff = User::where('role', 'staff')->orderBy('created_at', 'desc')->get();
+        
+        return view('staff.index', compact('staff'));
+    }
+
+    /**
+     * Show the form for creating a new staff member.
+     */
     public function create()
     {
-        // Only owner can access
-        if (Auth::user()->role !== 'owner') {
-            abort(403);
+        // Check if user is owner
+        if (auth()->user()->role !== 'owner') {
+            abort(403, 'Unauthorized. Only owners can access staff management.');
         }
+
         return view('staff.create');
     }
 
-    // Handle staff creation
+    /**
+     * Store a newly created staff member.
+     */
     public function store(Request $request)
     {
-        if (Auth::user()->role !== 'owner') {
-            abort(403);
+        // Check if user is owner
+        if (auth()->user()->role !== 'owner') {
+            abort(403, 'Unauthorized. Only owners can access staff management.');
         }
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users',
-            'password' => 'required|string|confirmed|min:8',
+
+        $validator = Validator::make($request->all(), [
+            'name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
+            'password' => ['required', 'confirmed', Password::defaults()],
+            'phone' => ['nullable', 'string', 'max:20'],
+            'position' => ['nullable', 'string', 'max:100'],
         ]);
-        User::create([
+
+        if ($validator->fails()) {
+            return redirect()->back()
+                ->withErrors($validator)
+                ->withInput();
+        }
+
+        $staff = User::create([
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
             'role' => 'staff',
+            'phone' => $request->phone,
+            'position' => $request->position,
+            'email_verified_at' => now(), // Auto-verify staff accounts
         ]);
-        return redirect()->route('dashboard')->with('status', 'Staff created successfully!');
+
+        return redirect()->route('staff.index')
+            ->with('success', 'Staff member created successfully!');
     }
 
-    // List all staff
-    public function index()
+    /**
+     * Show the form for editing the specified staff member.
+     */
+    public function edit(User $staff)
     {
-        if (Auth::user()->role !== 'owner') {
-            abort(403);
+        // Check if user is owner
+        if (auth()->user()->role !== 'owner') {
+            abort(403, 'Unauthorized. Only owners can access staff management.');
         }
-        $staff = User::where('role', 'staff')->get();
-        return view('staff.index', compact('staff'));
-    }
 
-    // Show edit form for staff
-    public function edit($id)
-    {
-        if (Auth::user()->role !== 'owner') {
-            abort(403);
+        if ($staff->role !== 'staff') {
+            abort(404);
         }
-        $staff = User::where('role', 'staff')->findOrFail($id);
+        
         return view('staff.edit', compact('staff'));
     }
 
-    // Update staff info
-    public function update(Request $request, $id)
+    /**
+     * Update the specified staff member.
+     */
+    public function update(Request $request, User $staff)
     {
-        if (Auth::user()->role !== 'owner') {
-            abort(403);
+        // Check if user is owner
+        if (auth()->user()->role !== 'owner') {
+            abort(403, 'Unauthorized. Only owners can access staff management.');
         }
-        $staff = User::where('role', 'staff')->findOrFail($id);
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users,email,' . $staff->id,
+
+        if ($staff->role !== 'staff') {
+            abort(404);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email,' . $staff->id],
+            'phone' => ['nullable', 'string', 'max:20'],
+            'position' => ['nullable', 'string', 'max:100'],
+            'password' => ['nullable', 'confirmed', Password::defaults()],
         ]);
+
+        if ($validator->fails()) {
+            return redirect()->back()
+                ->withErrors($validator)
+                ->withInput();
+        }
+
         $staff->update([
             'name' => $request->name,
             'email' => $request->email,
+            'phone' => $request->phone,
+            'position' => $request->position,
         ]);
-        return redirect()->route('staff.index')->with('status', 'Staff updated successfully!');
+
+        if ($request->filled('password')) {
+            $staff->update([
+                'password' => Hash::make($request->password)
+            ]);
+        }
+
+        return redirect()->route('staff.index')
+            ->with('success', 'Staff member updated successfully!');
     }
 
-    // Delete staff
-    public function destroy($id)
+    /**
+     * Remove the specified staff member.
+     */
+    public function destroy(User $staff)
     {
-        if (Auth::user()->role !== 'owner') {
-            abort(403);
+        // Check if user is owner
+        if (auth()->user()->role !== 'owner') {
+            abort(403, 'Unauthorized. Only owners can access staff management.');
         }
-        $staff = User::where('role', 'staff')->findOrFail($id);
+
+        if ($staff->role !== 'staff') {
+            abort(404);
+        }
+
         $staff->delete();
-        return redirect()->route('staff.index')->with('status', 'Staff deleted successfully!');
+
+        return redirect()->route('staff.index')
+            ->with('success', 'Staff member deleted successfully!');
     }
 } 

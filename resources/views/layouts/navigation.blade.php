@@ -13,6 +13,7 @@
                 @if($user->isOwner())
                     <a href="{{ route('courts.index') }}" class="text-base font-semibold {{ request()->routeIs('courts.*') ? 'text-blue-700 border-b-2 border-blue-700' : 'text-gray-700 hover:text-blue-700' }} transition pb-1">Courts</a>
                     <a href="{{ route('owner.bookings') }}" class="text-base font-semibold {{ request()->routeIs('owner.bookings') ? 'text-blue-700 border-b-2 border-blue-700' : 'text-gray-700 hover:text-blue-700' }} transition pb-1">Bookings</a>
+                    <a href="{{ route('staff.index') }}" class="text-base font-semibold {{ request()->routeIs('staff.*') ? 'text-blue-700 border-b-2 border-blue-700' : 'text-gray-700 hover:text-blue-700' }} transition pb-1">Staff Management</a>
                 @elseif($user->isStaff())
                     <a href="{{ route('courts.index') }}" class="text-base font-semibold {{ request()->routeIs('courts.*') ? 'text-blue-700 border-b-2 border-blue-700' : 'text-gray-700 hover:text-blue-700' }} transition pb-1">Courts</a>
                     <a href="{{ route('bookings.index') }}" class="text-base font-semibold {{ request()->routeIs('bookings.index') ? 'text-blue-700 border-b-2 border-blue-700' : 'text-gray-700 hover:text-blue-700' }} transition pb-1">Bookings</a>
