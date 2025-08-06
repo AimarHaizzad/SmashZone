@@ -81,7 +81,7 @@
                     </div>
                 </a>
             </div>
-            @if(auth()->user() && auth()->user()->role === 'owner')
+            @if(auth()->user() && (auth()->user()->role === 'owner' || auth()->user()->role === 'staff'))
                 <a href="{{ route('products.create') }}" 
                    class="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl shadow-lg hover:from-blue-700 hover:to-blue-800 font-semibold transition-all transform hover:scale-105">
                     <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -99,19 +99,19 @@
             <div class="bg-white rounded-3xl shadow-lg border border-gray-100 overflow-hidden group hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2">
                 <!-- Product Image -->
                 <div class="relative overflow-hidden">
-                @if($product->image)
+                    @if($product->image)
                         <img src="{{ asset('storage/' . $product->image) }}" 
                              alt="{{ $product->name }}" 
                              class="h-64 w-full object-cover group-hover:scale-110 transition-transform duration-300">
-                @else
+                    @else
                         <div class="h-64 w-full flex items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200">
                             <div class="text-center">
                                 <svg class="w-16 h-16 text-gray-400 mx-auto mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 002 2z" />
                                 </svg>
                                 <p class="text-gray-500 font-medium">No Image</p>
                             </div>
-                </div>
+                        </div>
                     @endif
                     
                     <!-- Quick Action Buttons -->
@@ -180,7 +180,7 @@
                         </form>
                     @endif
                     
-                    @if(auth()->user() && auth()->user()->role === 'owner')
+                    @if(auth()->user() && (auth()->user()->role === 'owner' || auth()->user()->role === 'staff'))
                         <div class="flex gap-2 mt-4">
                             <a href="{{ route('products.edit', $product) }}" 
                                class="flex-1 bg-gradient-to-r from-yellow-500 to-yellow-600 text-white px-4 py-3 rounded-xl font-semibold hover:from-yellow-600 hover:to-yellow-700 transition-all transform hover:scale-105 shadow-lg text-center">
@@ -218,7 +218,7 @@
                     </div>
                     <h3 class="text-xl font-semibold text-gray-600 mb-2">No Products Found</h3>
                     <p class="text-gray-500 mb-6">We couldn't find any products matching your criteria.</p>
-                    @if(auth()->user() && auth()->user()->role === 'owner')
+                    @if(auth()->user() && (auth()->user()->role === 'owner' || auth()->user()->role === 'staff'))
                         <a href="{{ route('products.create') }}" 
                            class="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl shadow-lg hover:from-blue-700 hover:to-blue-800 font-semibold transition-all transform hover:scale-105">
                             <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">

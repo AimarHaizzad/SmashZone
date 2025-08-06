@@ -119,6 +119,9 @@ Route::middleware('auth')->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
+    // Staff Management Routes
+    Route::get('staff/bookings', [StaffController::class, 'bookings'])->name('staff.bookings');
+
     // Bookings (for customers)
     Route::resource('bookings', BookingController::class);
 
@@ -154,9 +157,16 @@ Route::middleware(['auth'])->group(function () {
     Route::post('payments/{payment}/process', [PaymentController::class, 'processPayment'])->name('payments.process');
     Route::get('payments/{payment}/success', [PaymentController::class, 'paymentSuccess'])->name('payments.success');
     Route::get('payments/{payment}/cancel', [PaymentController::class, 'paymentCancel'])->name('payments.cancel');
+    Route::patch('payments/{payment}/mark-paid', [PaymentController::class, 'markAsPaid'])->name('payments.mark-paid');
 
-    // TODO: Add booking and report routes here
+    // Analytics & Reports
+    Route::get('analytics', [App\Http\Controllers\AnalyticsController::class, 'index'])->name('analytics.index');
+    Route::get('analytics/export-pdf', [App\Http\Controllers\AnalyticsController::class, 'exportPDF'])->name('analytics.export-pdf');
+    Route::get('analytics/export-excel', [App\Http\Controllers\AnalyticsController::class, 'exportExcel'])->name('analytics.export-excel');
 });
+
+// Stripe webhook (outside auth middleware)
+Route::post('stripe/webhook', [PaymentController::class, 'webhook'])->name('stripe.webhook');
 
 /*
 |--------------------------------------------------------------------------
@@ -202,17 +212,10 @@ Route::get('test-payment/{id}', function($id) {
         return response()->json(['error' => 'Payment not found'], 404);
     }
     
-    return response()->json([
-        'payment_id' => $payment->id,
-        'user_id' => $payment->user_id,
-        'booking_id' => $payment->booking_id,
-        'amount' => $payment->amount,
-        'status' => $payment->status,
-        'court_name' => $payment->booking->court->name ?? 'Unknown',
-        'booking_date' => $payment->booking->date ?? 'Unknown',
-        'booking_time' => $payment->booking->start_time . ' - ' . $payment->booking->end_time ?? 'Unknown',
-    ]);
+    return response()->json($payment);
 });
+
+
 
 // Test route to show all payments for current user
 Route::get('my-payments', function() {

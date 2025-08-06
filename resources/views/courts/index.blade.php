@@ -49,8 +49,8 @@
                            class="border-2 border-blue-200 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-300 focus:border-blue-500 transition-colors">
                 </div>
                 
-                <!-- Add Court Button (Owner Only) -->
-                @if(auth()->user() && auth()->user()->role === 'owner')
+                <!-- Add Court Button (Owner and Staff) -->
+                @if(auth()->user() && (auth()->user()->role === 'owner' || auth()->user()->role === 'staff'))
                     <a href="{{ route('courts.create') }}" 
                        class="bg-gradient-to-r from-green-600 to-blue-600 text-white px-6 py-3 rounded-xl font-semibold hover:from-green-700 hover:to-blue-700 transition-all transform hover:scale-105 shadow-lg flex items-center gap-2">
                         <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -134,8 +134,8 @@
                         </a>
                     </div>
                     
-                    <!-- Owner Actions -->
-                    @if(auth()->user() && auth()->user()->role === 'owner' && auth()->user()->id === $court->owner_id)
+                    <!-- Owner/Staff Actions -->
+                    @if(auth()->user() && (auth()->user()->role === 'owner' || auth()->user()->role === 'staff') && auth()->user()->id === $court->owner_id)
                         <div class="flex gap-2 mt-3 pt-3 border-t border-gray-100">
                             <a href="{{ route('courts.edit', $court) }}" 
                                class="flex-1 px-3 py-2 bg-blue-100 text-blue-700 rounded-lg font-medium hover:bg-blue-200 transition-colors text-center text-xs">
@@ -164,7 +164,7 @@
                     </div>
                     <h3 class="text-2xl font-bold text-gray-800 mb-2">No Courts Available</h3>
                     <p class="text-gray-600 mb-6">There are currently no badminton courts registered in the system.</p>
-                    @if(auth()->user() && auth()->user()->role === 'owner')
+                    @if(auth()->user() && (auth()->user()->role === 'owner' || auth()->user()->role === 'staff'))
                         <a href="{{ route('courts.create') }}" 
                            class="inline-flex items-center gap-2 bg-gradient-to-r from-green-600 to-blue-600 text-white px-6 py-3 rounded-xl font-semibold hover:from-green-700 hover:to-blue-700 transition-all transform hover:scale-105 shadow-lg">
                             <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">

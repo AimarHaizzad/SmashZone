@@ -22,7 +22,7 @@ class CourtController extends Controller
      */
     public function create()
     {
-        if (!auth()->user() || !auth()->user()->isOwner()) {
+        if (!auth()->user() || (!auth()->user()->isOwner() && !auth()->user()->isStaff())) {
             abort(403);
         }
         return view('courts.create');
@@ -33,7 +33,7 @@ class CourtController extends Controller
      */
     public function store(Request $request)
     {
-        if (!auth()->user() || !auth()->user()->isOwner()) {
+        if (!auth()->user() || (!auth()->user()->isOwner() && !auth()->user()->isStaff())) {
             abort(403);
         }
         $validated = $request->validate([
@@ -65,7 +65,7 @@ class CourtController extends Controller
      */
     public function edit(Court $court)
     {
-        if (!auth()->user() || !auth()->user()->isOwner() || $court->owner_id !== auth()->id()) {
+        if (!auth()->user() || (!auth()->user()->isOwner() && !auth()->user()->isStaff()) || $court->owner_id !== auth()->id()) {
             abort(403);
         }
         return view('courts.edit', compact('court'));
@@ -76,7 +76,7 @@ class CourtController extends Controller
      */
     public function update(Request $request, Court $court)
     {
-        if (!auth()->user() || !auth()->user()->isOwner() || $court->owner_id !== auth()->id()) {
+        if (!auth()->user() || (!auth()->user()->isOwner() && !auth()->user()->isStaff()) || $court->owner_id !== auth()->id()) {
             abort(403);
         }
         $validated = $request->validate([
@@ -101,7 +101,7 @@ class CourtController extends Controller
      */
     public function destroy(Court $court)
     {
-        if (!auth()->user() || !auth()->user()->isOwner() || $court->owner_id !== auth()->id()) {
+        if (!auth()->user() || (!auth()->user()->isOwner() && !auth()->user()->isStaff()) || $court->owner_id !== auth()->id()) {
             abort(403);
         }
         if ($court->image) {

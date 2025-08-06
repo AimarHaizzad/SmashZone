@@ -19,6 +19,7 @@ class PaymentController extends Controller
                 $q->whereIn('id', $courtIds);
             })->with(['user', 'booking.court'])->orderBy('payment_date', 'desc')->get();
         } elseif ($user->isStaff()) {
+            // Staff can view all payments
             $payments = \App\Models\Payment::with(['user', 'booking.court'])->orderBy('payment_date', 'desc')->get();
         } else {
             $payments = \App\Models\Payment::where('user_id', $user->id)->with(['user', 'booking.court'])->orderBy('payment_date', 'desc')->get();
@@ -186,5 +187,54 @@ class PaymentController extends Controller
         ]);
 
         return redirect()->back()->with('success', 'Payment marked as paid successfully.');
+    }
+
+    /**
+     * Handle Stripe webhook events
+     */
+    public function webhook(Request $request)
+    {
+        $payload = $request->getContent();
+        $sig_header = $request->header('Stripe-Signature');
+        $endpoint_secret = config('services.stripe.webhook_secret');
+
+        if (!$endpoint_secret) {
+            \Log::error('Stripe webhook secret not configured');
+            return response('Webhook secret not configured', 400);
+        }
+
+        try {
+            $event = \Stripe\Webhook::constructEvent(
+                $payload, $sig_header, $endpoint_secret
+            );
+        } catch(\UnexpectedValueException $e) {
+            // Invalid payload
+            \Log::error('Stripe webhook invalid payload: ' . $e->getMessage());
+            return response('Invalid payload', 400);
+        } catch(\Stripe\Exception\SignatureVerificationException $e) {
+            // Invalid signature
+            \Log::error('Stripe webhook invalid signature: ' . $e->getMessage());
+            return response('Invalid signature', 400);
+        }
+
+        // Handle the event
+        if ($event['type'] === 'checkout.session.completed') {
+            $session = $event['data']['object'];
+            
+            // Find the payment by Stripe session ID
+            $payment = Payment::where('stripe_session_id', $session['id'])->first();
+            
+            if ($payment && $payment->status === 'pending') {
+                $payment->update([
+                    'status' => 'paid',
+                    'payment_date' => now(),
+                    'stripe_payment_intent_id' => $session['payment_intent'],
+                ]);
+                
+                \Log::info('Payment updated via webhook', ['payment_id' => $payment->id]);
+            }
+        }
+
+        return response('Webhook handled', 200);
     }
 }

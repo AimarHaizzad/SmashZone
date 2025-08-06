@@ -11,8 +11,8 @@
                 </svg>
             </div>
             <div>
-                <h1 class="text-3xl font-bold text-gray-800">Court Bookings</h1>
-                <p class="text-gray-600">Manage all bookings for your courts</p>
+                <h1 class="text-3xl font-bold text-gray-800">Staff Bookings</h1>
+                <p class="text-gray-600">Manage all bookings for all courts</p>
             </div>
         </div>
         
@@ -114,7 +114,7 @@
                     </svg>
                 </div>
                 <h3 class="text-xl font-semibold text-gray-600 mb-2">No Bookings Found</h3>
-                <p class="text-gray-500">There are no bookings for your courts yet.</p>
+                <p class="text-gray-500">There are no bookings to display.</p>
             </div>
         @else
             <div class="overflow-x-auto">

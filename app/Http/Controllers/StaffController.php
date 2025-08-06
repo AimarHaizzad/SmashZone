@@ -3,6 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Models\Court;
+use App\Models\Booking;
+use App\Models\Payment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
@@ -10,6 +13,26 @@ use Illuminate\Validation\Rules\Password;
 
 class StaffController extends Controller
 {
+    /**
+     * Staff Bookings Management (similar to owner.bookings)
+     */
+    public function bookings()
+    {
+        // Only staff can access this
+        if (!auth()->user()->isStaff()) {
+            abort(403, 'Unauthorized. Only staff can access this feature.');
+        }
+
+        // Staff can see all bookings (not just owner-specific ones)
+        $bookings = Booking::with(['court', 'user', 'payment'])
+            ->orderBy('date', 'desc')
+            ->get();
+            
+        return view('staff.bookings', compact('bookings'));
+    }
+
+    // === TEAM MANAGEMENT (OWNER ONLY) ===
+
     /**
      * Display a listing of staff members.
      */

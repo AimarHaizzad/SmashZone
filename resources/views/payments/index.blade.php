@@ -78,12 +78,30 @@
     <!-- Enhanced Payments Table -->
     <div class="bg-white rounded-3xl shadow-xl border border-gray-100 overflow-hidden">
         <div class="bg-gradient-to-r from-purple-50 to-blue-50 px-6 py-4 border-b border-gray-200">
-            <h2 class="text-xl font-semibold text-gray-800 flex items-center gap-2">
-                <svg class="w-6 h-6 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                </svg>
-                Payment Transactions
-            </h2>
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-xl font-semibold text-gray-800 flex items-center gap-2">
+                    <svg class="w-6 h-6 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                    </svg>
+                    Payment Transactions
+                </h2>
+                
+                <!-- Filter Buttons -->
+                <div class="flex items-center gap-2">
+                    <button onclick="filterPayments('all')" id="filter-all" class="filter-btn active px-4 py-2 rounded-lg text-sm font-medium bg-purple-600 text-white">
+                        All
+                    </button>
+                    <button onclick="filterPayments('paid')" id="filter-paid" class="filter-btn px-4 py-2 rounded-lg text-sm font-medium bg-gray-200 text-gray-700 hover:bg-green-200 hover:text-green-800">
+                        Paid
+                    </button>
+                    <button onclick="filterPayments('pending')" id="filter-pending" class="filter-btn px-4 py-2 rounded-lg text-sm font-medium bg-gray-200 text-gray-700 hover:bg-yellow-200 hover:text-yellow-800">
+                        Pending
+                    </button>
+                    <button onclick="filterPayments('failed')" id="filter-failed" class="filter-btn px-4 py-2 rounded-lg text-sm font-medium bg-gray-200 text-gray-700 hover:bg-red-200 hover:text-red-800">
+                        Failed
+                    </button>
+                </div>
+            </div>
         </div>
         
         @if($payments->isEmpty())
@@ -123,7 +141,7 @@
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-200">
                         @foreach($payments as $payment)
-                            <tr class="hover:bg-gray-50 transition-colors">
+                            <tr class="payment-row hover:bg-gray-50 transition-colors" data-status="{{ $payment->status }}">
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <div class="flex items-center">
                                         <div class="w-10 h-10 bg-gradient-to-br from-purple-500 to-blue-500 rounded-full flex items-center justify-center mr-3">
@@ -185,10 +203,15 @@
                                         <button class="text-blue-600 hover:text-blue-900 font-medium">
                                             View Details
                                         </button>
-                                        @if($payment->status === 'pending')
-                                            <button class="text-green-600 hover:text-green-900 font-medium">
-                                                Mark Paid
-                                            </button>
+                                        @if($payment->status === 'pending' && (auth()->user()->isOwner() || auth()->user()->isStaff()))
+                                            <form action="{{ route('payments.mark-paid', $payment) }}" method="POST" class="inline">
+                                                @csrf
+                                                @method('PATCH')
+                                                <button type="submit" class="text-green-600 hover:text-green-900 font-medium" 
+                                                        onclick="return confirm('Are you sure you want to mark this payment as paid?')">
+                                                    Mark Paid
+                                                </button>
+                                            </form>
                                         @endif
                                     </div>
                                 </td>
@@ -283,4 +306,40 @@
         </div>
     </div>
 </div>
+
+<script>
+function filterPayments(status) {
+    const rows = document.querySelectorAll('.payment-row');
+    const buttons = document.querySelectorAll('.filter-btn');
+    
+    // Update button styles
+    buttons.forEach(btn => {
+        btn.classList.remove('active', 'bg-purple-600', 'text-white', 'bg-green-600', 'bg-yellow-600', 'bg-red-600');
+        btn.classList.add('bg-gray-200', 'text-gray-700');
+    });
+    
+    const activeBtn = document.getElementById(`filter-${status}`);
+    activeBtn.classList.remove('bg-gray-200', 'text-gray-700');
+    activeBtn.classList.add('active');
+    
+    if (status === 'all') {
+        activeBtn.classList.add('bg-purple-600', 'text-white');
+    } else if (status === 'paid') {
+        activeBtn.classList.add('bg-green-600', 'text-white');
+    } else if (status === 'pending') {
+        activeBtn.classList.add('bg-yellow-600', 'text-white');
+    } else if (status === 'failed') {
+        activeBtn.classList.add('bg-red-600', 'text-white');
+    }
+    
+    // Filter rows
+    rows.forEach(row => {
+        if (status === 'all' || row.getAttribute('data-status') === status) {
+            row.style.display = '';
+        } else {
+            row.style.display = 'none';
+        }
+    });
+}
+</script>
 @endsection 

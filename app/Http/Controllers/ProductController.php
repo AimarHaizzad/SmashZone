@@ -22,6 +22,9 @@ class ProductController extends Controller
      */
     public function create()
     {
+        if (!auth()->user() || (!auth()->user()->isOwner() && !auth()->user()->isStaff())) {
+            abort(403);
+        }
         return view('products.create');
     }
 
