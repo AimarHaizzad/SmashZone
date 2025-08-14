@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules;
 use Illuminate\View\View;
+use App\Notifications\WelcomeEmail;
 
 class RegisteredUserController extends Controller
 {
@@ -44,6 +45,14 @@ class RegisteredUserController extends Controller
         ]);
 
         event(new Registered($user));
+
+        // Send welcome email
+        try {
+            $user->notify(new WelcomeEmail($user));
+        } catch (\Exception $e) {
+            // Log the error but don't fail the registration
+            \Log::error('Failed to send welcome email: ' . $e->getMessage());
+        }
 
         Auth::login($user);
 

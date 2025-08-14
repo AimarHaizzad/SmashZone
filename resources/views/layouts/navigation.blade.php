@@ -23,8 +23,9 @@
                     <a href="{{ route('products.index') }}" class="text-base font-semibold {{ request()->routeIs('products.*') ? 'text-blue-700 border-b-2 border-blue-700' : 'text-gray-700 hover:text-blue-700' }} transition pb-1">Shop</a>
                     <a href="{{ route('payments.index') }}" class="text-base font-semibold {{ request()->routeIs('payments.*') ? 'text-blue-700 border-b-2 border-blue-700' : 'text-gray-700 hover:text-blue-700' }} transition pb-1">Payments</a>
                 @else
-                    <a href="{{ route('bookings.index') }}" class="text-base font-semibold {{ request()->routeIs('bookings.index') ? 'text-blue-700 border-b-2 border-blue-700' : 'text-gray-700 hover:text-blue-700' }} transition pb-1">My Bookings</a>
-                    <a href="{{ route('products.index') }}" class="text-base font-semibold {{ request()->routeIs('products.*') ? 'text-blue-700 border-b-2 border-blue-700' : 'text-gray-700 hover:text-blue-700' }} transition pb-1">Shop</a>
+                    <a href="{{ route('bookings.index') }}" class="text-base font-semibold {{ request()->routeIs('bookings.index') ? 'text-blue-700 border-b-2 border-blue-700' : 'text-gray-700 hover:text-blue-700' }} transition pb-1">Courts</a>
+                    <a href="{{ route('bookings.my') }}" class="text-base font-semibold {{ request()->routeIs('bookings.my') ? 'text-blue-700 border-b-2 border-blue-700' : 'text-gray-700 hover:text-blue-700' }} transition pb-1">Bookings</a>
+                    <a href="{{ route('payments.index') }}" class="text-base font-semibold {{ request()->routeIs('payments.*') ? 'text-blue-700 border-b-2 border-blue-700' : 'text-gray-700 hover:text-blue-700' }} transition pb-1">Payments</a>
                 @endif
             @endif
         </div>

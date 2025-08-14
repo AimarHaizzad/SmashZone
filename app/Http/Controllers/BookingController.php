@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\Booking;
 use App\Models\Court;
 use Illuminate\Support\Facades\Auth;
+use App\Notifications\BookingConfirmation;
 
 class BookingController extends Controller
 {
@@ -96,6 +97,14 @@ class BookingController extends Controller
             'status' => 'pending',
             'payment_date' => null,
         ]);
+
+        // Send booking confirmation email
+        try {
+            $booking->user->notify(new BookingConfirmation($booking));
+        } catch (\Exception $e) {
+            // Log the error but don't fail the booking creation
+            \Log::error('Failed to send booking confirmation email: ' . $e->getMessage());
+        }
 
         return redirect()->route('bookings.index')->with('success', 'Booking created successfully.');
     }
@@ -221,5 +230,24 @@ class BookingController extends Controller
             ->orderBy('start_time')
             ->get();
         return response()->json($bookings);
+    }
+
+    /**
+     * Customer bookings list page.
+     */
+    public function my(Request $request)
+    {
+        $user = Auth::user();
+        if (!$user || !$user->isCustomer()) {
+            abort(403);
+        }
+
+        $bookings = Booking::with(['court', 'payment'])
+            ->where('user_id', $user->id)
+            ->orderByDesc('date')
+            ->orderBy('start_time')
+            ->get();
+
+        return view('bookings.my', compact('bookings'));
     }
 }

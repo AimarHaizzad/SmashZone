@@ -7,6 +7,7 @@ use App\Models\Payment;
 use App\Models\Booking;
 use Stripe\Stripe;
 use Stripe\Checkout\Session;
+use App\Notifications\PaymentConfirmation;
 
 class PaymentController extends Controller
 {
@@ -152,6 +153,13 @@ class PaymentController extends Controller
                         'stripe_payment_intent_id' => $session->payment_intent,
                     ]);
 
+                    // Send payment confirmation email
+                    try {
+                        $payment->user->notify(new PaymentConfirmation($payment));
+                    } catch (\Exception $e) {
+                        \Log::error('Failed to send payment confirmation email: ' . $e->getMessage());
+                    }
+
                     return view('payments.success', compact('payment', 'session'));
                 }
             } catch (\Exception $e) {
@@ -185,6 +193,13 @@ class PaymentController extends Controller
             'status' => 'paid',
             'payment_date' => now(),
         ]);
+
+        // Send payment confirmation email
+        try {
+            $payment->user->notify(new PaymentConfirmation($payment));
+        } catch (\Exception $e) {
+            \Log::error('Failed to send payment confirmation email: ' . $e->getMessage());
+        }
 
         return redirect()->back()->with('success', 'Payment marked as paid successfully.');
     }

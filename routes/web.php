@@ -124,6 +124,8 @@ Route::middleware('auth')->group(function () {
 
     // Bookings (for customers)
     Route::resource('bookings', BookingController::class);
+    // Customer bookings list page
+    Route::get('my/bookings', [BookingController::class, 'my'])->name('bookings.my');
 
     // Courts (view and show only for customers)
     //Route::get('courts', [CourtController::class, 'index'])->name('courts.index');
@@ -292,6 +294,134 @@ Route::get('/test-owner', function () {
         'is_owner' => auth()->user()->role === 'owner'
     ]);
 })->middleware(['auth', 'owner']);
+
+// Test email notifications
+Route::get('/test-email-notifications', function() {
+    if (!auth()->check()) {
+        return response()->json(['error' => 'Please login first'], 401);
+    }
+
+    $user = auth()->user();
+    $testBooking = null;
+    $testPayment = null;
+
+    try {
+        // Create a test booking if none exists
+        $testBooking = \App\Models\Booking::first();
+        if (!$testBooking) {
+            $court = \App\Models\Court::first();
+            if (!$court) {
+                return response()->json(['error' => 'No courts found. Please create a court first.'], 404);
+            }
+            
+            $testBooking = \App\Models\Booking::create([
+                'user_id' => $user->id,
+                'court_id' => $court->id,
+                'date' => now()->addDays(1)->format('Y-m-d'),
+                'start_time' => '10:00:00',
+                'end_time' => '11:00:00',
+                'total_price' => 25.00,
+                'status' => 'confirmed'
+            ]);
+        }
+
+        // Create a test payment if none exists
+        $testPayment = \App\Models\Payment::first();
+        if (!$testPayment) {
+            $testPayment = \App\Models\Payment::create([
+                'user_id' => $user->id,
+                'booking_id' => $testBooking->id,
+                'amount' => 25.00,
+                'status' => 'paid',
+                'payment_date' => now()
+            ]);
+        }
+
+        return response()->json([
+            'message' => 'Test data ready for email notifications',
+            'user' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email
+            ],
+            'test_booking' => [
+                'id' => $testBooking->id,
+                'court_name' => $testBooking->court->name,
+                'date' => $testBooking->date,
+                'time' => $testBooking->start_time . ' - ' . $testBooking->end_time
+            ],
+            'test_payment' => [
+                'id' => $testPayment->id,
+                'amount' => $testPayment->amount,
+                'status' => $testPayment->status
+            ],
+            'available_tests' => [
+                'welcome_email' => 'Send welcome email to current user',
+                'booking_confirmation' => 'Send booking confirmation for test booking',
+                'payment_confirmation' => 'Send payment confirmation for test payment',
+                'booking_reminder' => 'Send booking reminder for test booking',
+                'booking_cancellation' => 'Send booking cancellation for test booking'
+            ]
+        ]);
+
+    } catch (\Exception $e) {
+        return response()->json(['error' => 'Failed to setup test data: ' . $e->getMessage()], 500);
+    }
+})->middleware('auth');
+
+// Test individual email notifications
+Route::get('/test-email/{type}', function($type) {
+    if (!auth()->check()) {
+        return response()->json(['error' => 'Please login first'], 401);
+    }
+
+    $user = auth()->user();
+
+    try {
+        switch ($type) {
+            case 'welcome':
+                $user->notify(new \App\Notifications\WelcomeEmail($user));
+                return response()->json(['message' => 'Welcome email sent successfully']);
+                
+            case 'booking-confirmation':
+                $booking = \App\Models\Booking::first();
+                if (!$booking) {
+                    return response()->json(['error' => 'No bookings found'], 404);
+                }
+                $user->notify(new \App\Notifications\BookingConfirmation($booking));
+                return response()->json(['message' => 'Booking confirmation email sent successfully']);
+                
+            case 'payment-confirmation':
+                $payment = \App\Models\Payment::first();
+                if (!$payment) {
+                    return response()->json(['error' => 'No payments found'], 404);
+                }
+                $user->notify(new \App\Notifications\PaymentConfirmation($payment));
+                return response()->json(['message' => 'Payment confirmation email sent successfully']);
+                
+            case 'booking-reminder':
+                $booking = \App\Models\Booking::first();
+                if (!$booking) {
+                    return response()->json(['error' => 'No bookings found'], 404);
+                }
+                $user->notify(new \App\Notifications\BookingReminder($booking));
+                return response()->json(['message' => 'Booking reminder email sent successfully']);
+                
+            case 'booking-cancellation':
+                $booking = \App\Models\Booking::first();
+                if (!$booking) {
+                    return response()->json(['error' => 'No bookings found'], 404);
+                }
+                $user->notify(new \App\Notifications\BookingCancellation($booking, 'Test cancellation'));
+                return response()->json(['message' => 'Booking cancellation email sent successfully']);
+                
+            default:
+                return response()->json(['error' => 'Invalid email type'], 400);
+        }
+    } catch (\Exception $e) {
+        return response()->json(['error' => 'Failed to send email: ' . $e->getMessage()], 500);
+    }
+})->middleware('auth');
 
 // Staff Management Routes (Owner only)
 Route::middleware(['auth'])->group(function () {
