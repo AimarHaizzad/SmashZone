@@ -11,9 +11,16 @@ class ProductController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $products = Product::all();
+        $query = Product::query();
+        
+        // Filter by category if provided
+        if ($request->has('category') && $request->category !== '') {
+            $query->where('category', $request->category);
+        }
+        
+        $products = $query->get();
         return view('products.index', compact('products'));
     }
 
@@ -42,6 +49,8 @@ class ProductController extends Controller
             'price' => 'required|numeric|min:0',
             'quantity' => 'required|integer|min:0',
             'image' => 'nullable|image|max:2048',
+            'category' => 'required|string|max:255',
+            'brand' => 'required|string|max:255',
         ]);
 
         if ($request->hasFile('image')) {
@@ -85,6 +94,8 @@ class ProductController extends Controller
             'price' => 'required|numeric|min:0',
             'quantity' => 'required|integer|min:0',
             'image' => 'nullable|image|max:2048',
+            'category' => 'required|string|max:255',
+            'brand' => 'required|string|max:255',
         ]);
 
         if ($request->hasFile('image')) {

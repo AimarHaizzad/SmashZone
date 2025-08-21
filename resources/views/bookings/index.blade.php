@@ -60,15 +60,11 @@
                     </svg>
                 </button>
             </div>
-            <button id="open-my-bookings" 
-                    class="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl shadow-lg hover:from-blue-700 hover:to-blue-800 font-semibold transition-all transform hover:scale-105">
-                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-6a2 2 0 012-2h2a2 2 0 012 2v6" />
-                </svg>
-                My Bookings
-            </button>
+
         </div>
     </div>
+
+
 
     <!-- Enhanced Booking Grid -->
     <div class="bg-white rounded-3xl shadow-xl border border-gray-100 overflow-hidden">
@@ -89,8 +85,22 @@
                 </thead>
                 <tbody>
                     @foreach($timeSlots as $slotIdx => $slot)
-                    <tr class="hover:bg-gray-50 transition-colors">
-                        <td class="px-4 py-4 border-b border-gray-100 text-right font-bold text-blue-700 bg-blue-50 sticky left-0 z-10 text-lg">
+                        @php
+                            // Check if any court in this time slot is booked by current user
+                            $hasMyBooking = false;
+                            foreach($courts as $court) {
+                                $booking = $bookings->first(function($b) use ($court, $slot, $timeSlots, $slotIdx) {
+                                    return $b->court_id == $court->id && $b->start_time <= $slot && $b->end_time >= $slot;
+                                });
+                                if ($booking && $booking->user_id == auth()->id()) {
+                                    $hasMyBooking = true;
+                                    break;
+                                }
+                            }
+                            $rowClass = $hasMyBooking ? 'bg-blue-50 hover:bg-blue-100' : 'hover:bg-gray-50';
+                        @endphp
+                    <tr class="{{ $rowClass }} transition-colors">
+                        <td class="px-4 py-4 border-b border-gray-100 text-right font-bold text-blue-700 {{ $hasMyBooking ? 'bg-blue-100' : 'bg-blue-50' }} sticky left-0 z-10 text-lg">
                             {{ \Carbon\Carbon::createFromFormat('H:i', $slot)->format('g:i A') }}
                         </td>
                         @foreach($courts as $court)
@@ -102,6 +112,53 @@
                                 $isBooked = $booking && !$isMine;
                                 $isStart = $booking && $booking->start_time == $slot;
                                 $isEnd = $booking && $booking->end_time == $slot;
+                                
+                                // Check if user has any booking in this court during this time period
+                                $hasMyBookingInCourt = $bookings->contains(function($b) use ($court, $slot) {
+                                    return $b->court_id == $court->id && 
+                                           $b->user_id == auth()->id() && 
+                                           $b->start_time <= $slot && 
+                                           $b->end_time > $slot;
+                                });
+                                
+                                // Alternative check - maybe the time format is different
+                                if (!$hasMyBookingInCourt) {
+                                    $hasMyBookingInCourt = $bookings->contains(function($b) use ($court, $slot) {
+                                        $slotTime = \Carbon\Carbon::createFromFormat('H:i', $slot);
+                                        $startTime = \Carbon\Carbon::createFromFormat('H:i:s', $b->start_time);
+                                        $endTime = \Carbon\Carbon::createFromFormat('H:i:s', $b->end_time);
+                                        
+                                        return $b->court_id == $court->id && 
+                                               $b->user_id == auth()->id() && 
+                                               $slotTime->between($startTime, $endTime);
+                                    });
+                                }
+                                
+
+                                
+                                // If we found a booking, use it
+                                if ($hasMyBookingInCourt) {
+                                    $booking = $bookings->first(function($b) use ($court, $slot) {
+                                        return $b->court_id == $court->id && 
+                                               $b->user_id == auth()->id() && 
+                                               $b->start_time <= $slot && 
+                                               $b->end_time > $slot;
+                                    });
+                                    
+                                    // If the first check didn't find it, try the Carbon time check
+                                    if (!$booking) {
+                                        $booking = $bookings->first(function($b) use ($court, $slot) {
+                                            $slotTime = \Carbon\Carbon::createFromFormat('H:i', $slot);
+                                            $startTime = \Carbon\Carbon::createFromFormat('H:i:s', $b->start_time);
+                                            $endTime = \Carbon\Carbon::createFromFormat('H:i:s', $b->end_time);
+                                            
+                                            return $b->court_id == $court->id && 
+                                                   $b->user_id == auth()->id() && 
+                                                   $slotTime->between($startTime, $endTime);
+                                        });
+                                    }
+                                }
+                                
                                 $borderClass = '';
                                 if ($isStart) {
                                     $borderClass .= $isMine ? ' border-l-4 border-blue-500' : ' border-l-4 border-red-500';
@@ -111,29 +168,27 @@
                                 }
                                 $bgClass = '';
                                 if ($booking) {
-                                    $bgClass = $isMine ? ' bg-blue-100 text-blue-700 border-blue-300' : ' bg-red-100 text-red-600 border-red-200';
+                                    $bgClass = $isMine ? ' bg-blue-100 text-blue-700 border-blue-300' : ' bg-blue-100 text-blue-600 border-blue-200';
                                 }
                             @endphp
                             <td class="px-3 py-4 border-b border-gray-100 text-center{{ $borderClass }}{{ $bgClass }}" data-court="{{ $court->id }}" data-time="{{ $slot }}">
-                                @if($booking)
-                                    @if($isMine)
-                                        <button class="my-booking-btn w-full py-3 px-4 font-semibold rounded-xl border-2 border-blue-300 bg-blue-100 text-blue-700 hover:bg-blue-200 transition-all transform hover:scale-105 shadow-sm"
-                                                data-booking-id="{{ $booking->id }}">
-                                            <div class="flex items-center justify-center gap-2">
-                                                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                                                </svg>
-                                                My Booking
-                                            </div>
-                                        </button>
-                                    @else
-                                        <div class="flex items-center justify-center gap-2 rounded-xl py-3 px-4 w-full font-semibold text-base shadow-sm bg-red-100 text-red-600 border-2 border-red-200 cursor-not-allowed">
+                                @if($hasMyBookingInCourt && $booking)
+                                    <button class="my-booking-btn w-full py-3 px-4 font-semibold rounded-xl border-2 border-blue-300 bg-blue-100 text-blue-700 hover:bg-blue-200 transition-all transform hover:scale-105 shadow-sm"
+                                            data-booking-id="{{ $booking->id }}">
+                                        <div class="flex items-center justify-center gap-2">
                                             <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                                             </svg>
-                                            Booked
+                                            My Booking
                                         </div>
-                                    @endif
+                                    </button>
+                                @elseif($booking)
+                                    <div class="flex items-center justify-center gap-2 rounded-xl py-3 px-4 w-full font-semibold text-base shadow-sm bg-blue-100 text-blue-600 border-2 border-blue-200 cursor-not-allowed">
+                                        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                        </svg>
+                                        Booked
+                                    </div>
                                 @else
                                     <button class="select-slot-btn w-full py-3 px-4 font-semibold rounded-xl border-2 border-green-200 bg-green-50 text-green-800 hover:bg-green-100 hover:border-green-300 transition-all transform hover:scale-105 shadow-sm" 
                                             data-court="{{ $court->id }}" data-time="{{ $slot }}">
@@ -206,70 +261,15 @@
         input.form.submit();
     }
 
-    // Enhanced Live Grid Coloring
-    const userId = {{ auth()->id() }};
-    const courts = @json($courts->pluck('id'));
-    const slots = @json($timeSlots);
+    // DISABLED: Enhanced Live Grid Coloring (was causing incorrect display)
+    // const userId = {{ auth()->id() }};
+    // const courts = @json($courts->pluck('id'));
+    // const slots = @json($timeSlots);
     
-    function updateGrid() {
-        const date = document.getElementById('date-input').value;
-        fetch(`/booking-grid-availability?date=${date}`)
-            .then(r => r.json())
-            .then(bookings => {
-                courts.forEach((courtId, cIdx) => {
-                    slots.forEach((slot, sIdx) => {
-                        const cell = document.querySelector(`[data-court='${courtId}'][data-time='${slot}']`);
-                        if (!cell) return;
-                        
-                        const booking = bookings.find(b => b.court_id == courtId && b.start_time <= slot && b.end_time > slot);
-                        
-                        // Remove all classes
-                        cell.className = 'px-3 py-4 border-b border-gray-100 text-center';
-                        
-                        if (booking) {
-                            if (booking.user_id == userId) {
-                                cell.classList.add('bg-blue-100', 'text-blue-700', 'border-blue-300');
-                                cell.innerHTML = `
-                                    <button class="my-booking-btn w-full py-3 px-4 font-semibold rounded-xl border-2 border-blue-300 bg-blue-100 text-blue-700 hover:bg-blue-200 transition-all transform hover:scale-105 shadow-sm" data-booking-id="${booking.id}">
-                                        <div class="flex items-center justify-center gap-2">
-                                            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                                            </svg>
-                                            My Booking
-                                        </div>
-                                    </button>
-                                `;
-                            } else {
-                                cell.classList.add('bg-red-100', 'text-red-600', 'border-red-200', 'cursor-not-allowed');
-                                cell.innerHTML = `
-                                    <div class="flex items-center justify-center gap-2 rounded-xl py-3 px-4 w-full font-semibold text-base shadow-sm bg-red-100 text-red-600 border-2 border-red-200 cursor-not-allowed">
-                                        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                                        </svg>
-                                        Booked
-                                    </div>
-                                `;
-                            }
-                        } else {
-                            cell.classList.add('bg-green-50', 'hover:bg-green-100', 'text-green-800', 'border-green-200');
-                            cell.innerHTML = `
-                                <button class="select-slot-btn w-full py-3 px-4 font-semibold rounded-xl border-2 border-green-200 bg-green-50 text-green-800 hover:bg-green-100 hover:border-green-300 transition-all transform hover:scale-105 shadow-sm" data-court="${courtId}" data-time="${slot}">
-                                    <div class="flex items-center justify-center gap-2">
-                                        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                                        </svg>
-                                        Book Now
-                                    </div>
-                                </button>
-                            `;
-                        }
-                    });
-                });
-                // Re-attach event listeners after grid update
-                addMyBookingBtnListeners();
-                addSlotSelectionListeners();
-            });
-    }
+    // function updateGrid() {
+    //     // This function was overriding the correct server-side rendering
+    //     // and causing "My Booking" slots to show as "Book Now"
+    // }
 
     function showBookingModal(courtId, slot) {
         const courtName = document.querySelector(`th[data-court-id='${courtId}']`)?.innerText || '';
@@ -333,8 +333,9 @@
     }
 
     // Event Listeners
-    document.getElementById('date-input').addEventListener('change', updateGrid);
-    window.addEventListener('DOMContentLoaded', updateGrid);
+    // DISABLED: These were causing the grid to override correct display
+    // document.getElementById('date-input').addEventListener('change', updateGrid);
+    // window.addEventListener('DOMContentLoaded', updateGrid);
     
     document.getElementById('close-modal').onclick = function() {
         document.getElementById('booking-modal').classList.add('hidden');

@@ -177,6 +177,7 @@
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <span class="inline-flex px-3 py-1 text-xs font-semibold rounded-full
                                     @if($booking->status === 'confirmed') bg-green-100 text-green-800
+                                    @elseif($booking->status === 'completed') bg-gray-100 text-gray-800
                                     @elseif($booking->status === 'pending') bg-yellow-100 text-yellow-800
                                     @else bg-red-100 text-red-800 @endif">
                                     {{ ucfirst($booking->status) }}

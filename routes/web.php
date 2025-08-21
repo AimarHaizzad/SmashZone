@@ -67,6 +67,62 @@ Route::get('/test-booking-create', function() {
     }
 });
 
+Route::get('/test-complete-bookings', function() {
+    try {
+        // Run the command manually for testing
+        \Artisan::call('bookings:complete-past');
+        $output = \Artisan::output();
+        
+        return response()->json([
+            'success' => true,
+            'message' => 'Booking completion command executed',
+            'output' => $output
+        ]);
+    } catch (Exception $e) {
+        return response()->json([
+            'success' => false,
+            'error' => $e->getMessage()
+        ]);
+    }
+});
+
+Route::get('/test-bookings-status', function() {
+    try {
+        $bookings = App\Models\Booking::with(['user', 'court'])->get();
+        $now = now();
+        
+        $bookingData = $bookings->map(function($booking) use ($now) {
+            $bookingDateTime = \Carbon\Carbon::parse($booking->date . ' ' . $booking->end_time);
+            $isPast = $bookingDateTime->isPast();
+            
+            return [
+                'id' => $booking->id,
+                'court' => $booking->court->name ?? 'N/A',
+                'date' => $booking->date,
+                'start_time' => $booking->start_time,
+                'end_time' => $booking->end_time,
+                'status' => $booking->status,
+                'is_past' => $isPast,
+                'should_be_completed' => $isPast && $booking->status === 'confirmed'
+            ];
+        });
+        
+        return response()->json([
+            'success' => true,
+            'current_time' => $now->format('Y-m-d H:i:s'),
+            'total_bookings' => $bookings->count(),
+            'bookings' => $bookingData,
+            'past_bookings' => $bookingData->where('is_past', true)->count(),
+            'confirmed_past_bookings' => $bookingData->where('should_be_completed', true)->count()
+        ]);
+    } catch (Exception $e) {
+        return response()->json([
+            'success' => false,
+            'error' => $e->getMessage()
+        ]);
+    }
+});
+
 Route::get('/create-test-data', function() {
     try {
         // Create test owner
@@ -160,6 +216,12 @@ Route::middleware(['auth'])->group(function () {
     Route::get('payments/{payment}/success', [PaymentController::class, 'paymentSuccess'])->name('payments.success');
     Route::get('payments/{payment}/cancel', [PaymentController::class, 'paymentCancel'])->name('payments.cancel');
     Route::patch('payments/{payment}/mark-paid', [PaymentController::class, 'markAsPaid'])->name('payments.mark-paid');
+
+    // Refunds
+    Route::get('refunds', [App\Http\Controllers\RefundController::class, 'index'])->name('refunds.index');
+    Route::get('refunds/{refund}', [App\Http\Controllers\RefundController::class, 'show'])->name('refunds.show');
+    Route::post('refunds/{refund}/retry', [App\Http\Controllers\RefundController::class, 'retry'])->name('refunds.retry');
+    Route::post('refunds/{refund}/manual', [App\Http\Controllers\RefundController::class, 'manualRefund'])->name('refunds.manual');
 
     // Analytics & Reports
     Route::get('analytics', [App\Http\Controllers\AnalyticsController::class, 'index'])->name('analytics.index');

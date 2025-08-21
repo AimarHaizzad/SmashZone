@@ -78,12 +78,7 @@
                          alt="{{ $court->name }}" 
                          class="h-48 w-full object-cover">
                     
-                    <!-- Status Badge -->
-                    <div class="absolute top-4 right-4">
-                        <span class="px-3 py-1 rounded-full text-sm font-semibold {{ $isBooked ? 'bg-red-500 text-white' : 'bg-green-500 text-white' }}">
-                            {{ $isBooked ? 'Booked' : 'Available' }}
-                        </span>
-                    </div>
+                    
                     
                     <!-- Court Type Badge (if available) -->
                     @if($court->type)
@@ -122,17 +117,7 @@
                         </div>
                     </div>
                     
-                    <!-- Action Buttons -->
-                    <div class="flex gap-3 pt-4 border-t border-gray-100">
-                        <a href="{{ route('courts.show', $court) }}" 
-                           class="flex-1 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg font-semibold hover:bg-gray-200 transition-colors text-center text-sm">
-                            Details
-                        </a>
-                        <a href="{{ route('bookings.create', ['court_id' => $court->id]) }}" 
-                           class="flex-1 px-4 py-2 bg-gradient-to-r from-green-600 to-blue-600 text-white rounded-lg font-semibold hover:from-green-700 hover:to-blue-700 transition-all transform hover:scale-105 text-center text-sm">
-                            Book Now
-                        </a>
-                    </div>
+
                     
                     <!-- Owner/Staff Actions -->
                     @if(auth()->user() && (auth()->user()->role === 'owner' || auth()->user()->role === 'staff') && auth()->user()->id === $court->owner_id)

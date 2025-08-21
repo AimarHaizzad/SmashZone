@@ -122,17 +122,13 @@
                                     
                                     <!-- Remove Button -->
                                     <div class="flex-shrink-0">
-                                        <form action="{{ route('cart.remove') }}" method="POST" class="inline">
-                                            @csrf
-                                            <input type="hidden" name="product_id" value="{{ $product->id }}">
-                                            <button type="submit" 
-                                                    class="p-2 text-red-500 hover:bg-red-50 rounded-full transition-colors"
-                                                    onclick="return confirm('Are you sure you want to remove this item?')">
-                                                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                                </svg>
-                                            </button>
-                                        </form>
+                                        <button type="button" 
+                                                onclick="removeItem({{ $product->id }})"
+                                                class="p-2 text-red-500 hover:bg-red-50 rounded-full transition-colors">
+                                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                            </svg>
+                                        </button>
                                     </div>
                                 </div>
                             @endforeach
@@ -227,5 +223,41 @@ function updateQuantity(productId, change) {
     const newValue = Math.max(1, parseInt(input.value) + change);
     input.value = newValue;
 }
+
+function removeItem(productId) {
+    if (confirm('Are you sure you want to remove this item?')) {
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '{{ route("cart.remove") }}';
+        
+        const csrfToken = document.createElement('input');
+        csrfToken.type = 'hidden';
+        csrfToken.name = '_token';
+        csrfToken.value = '{{ csrf_token() }}';
+        
+        const productIdInput = document.createElement('input');
+        productIdInput.type = 'hidden';
+        productIdInput.name = 'product_id';
+        productIdInput.value = productId;
+        
+        form.appendChild(csrfToken);
+        form.appendChild(productIdInput);
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+
+// Auto-submit form when quantity changes
+document.addEventListener('DOMContentLoaded', function() {
+    const quantityInputs = document.querySelectorAll('input[name^="quantities"]');
+    quantityInputs.forEach(input => {
+        input.addEventListener('change', function() {
+            // Add a small delay to allow the user to finish typing
+            setTimeout(() => {
+                this.closest('form').submit();
+            }, 500);
+        });
+    });
+});
 </script>
 @endsection 

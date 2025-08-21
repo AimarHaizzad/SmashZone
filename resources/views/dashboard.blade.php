@@ -66,19 +66,21 @@
                     </thead>
                 <tbody>
                 @foreach($user->courts->flatMap->bookings->sortByDesc('date')->take(5) as $booking)
-                        <tr class="bg-blue-50 hover:bg-blue-100 transition rounded-xl">
+                                                <tr class="bg-blue-50 hover:bg-blue-100 transition rounded-xl">
                             <td class="py-2 font-semibold">{{ $booking->court->name }}</td>
                         <td>{{ $booking->date }}</td>
                         <td>{{ $booking->start_time }} - {{ $booking->end_time }}</td>
                             <td>
                                 <span class="inline-block px-3 py-1 rounded-full text-xs font-bold
                                     @if($booking->status === 'paid') bg-green-200 text-green-800
+                                    @elseif($booking->status === 'confirmed') bg-blue-200 text-blue-800
+                                    @elseif($booking->status === 'completed') bg-gray-200 text-gray-800
                                     @elseif($booking->status === 'pending') bg-yellow-200 text-yellow-800
                                     @else bg-red-200 text-red-800 @endif">
                                     {{ ucfirst($booking->status) }}
                                 </span>
                             </td>
-                    </tr>
+                        </tr>
                 @endforeach
                 </tbody>
             </table>
@@ -98,7 +100,7 @@
                     <thead><tr class="text-gray-600 text-sm"><th class="py-2">Court</th><th>Date</th><th>Time</th><th>User</th><th>Status</th></tr></thead>
                 <tbody>
                 @foreach(\App\Models\Booking::orderBy('date', 'desc')->take(10)->get() as $booking)
-                        <tr class="bg-green-50 hover:bg-green-100 transition rounded-xl">
+                                                <tr class="bg-green-50 hover:bg-green-100 transition rounded-xl">
                             <td class="py-2 font-semibold">{{ $booking->court->name }}</td>
                         <td>{{ $booking->date }}</td>
                         <td>{{ $booking->start_time }} - {{ $booking->end_time }}</td>
@@ -106,12 +108,14 @@
                             <td>
                                 <span class="inline-block px-3 py-1 rounded-full text-xs font-bold
                                     @if($booking->status === 'paid') bg-green-200 text-green-800
+                                    @elseif($booking->status === 'confirmed') bg-blue-200 text-blue-800
+                                    @elseif($booking->status === 'completed') bg-gray-200 text-gray-800
                                     @elseif($booking->status === 'pending') bg-yellow-200 text-yellow-800
                                     @else bg-red-200 text-red-800 @endif">
                                     {{ ucfirst($booking->status) }}
                                 </span>
                             </td>
-                    </tr>
+                        </tr>
                 @endforeach
                 </tbody>
             </table>
@@ -164,6 +168,8 @@
                             <td>
                                 <span class="inline-block px-3 py-1 rounded-full text-xs font-bold
                                     @if($booking->status === 'paid') bg-green-200 text-green-800
+                                    @elseif($booking->status === 'confirmed') bg-blue-200 text-blue-800
+                                    @elseif($booking->status === 'completed') bg-gray-200 text-gray-800
                                     @elseif($booking->status === 'pending') bg-yellow-200 text-yellow-800
                                     @else bg-red-200 text-red-800 @endif">
                                     {{ ucfirst($booking->status) }}

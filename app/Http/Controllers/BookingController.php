@@ -7,6 +7,8 @@ use App\Models\Booking;
 use App\Models\Court;
 use Illuminate\Support\Facades\Auth;
 use App\Notifications\BookingConfirmation;
+use App\Notifications\BookingCancellation;
+use App\Services\RefundService;
 
 class BookingController extends Controller
 {
@@ -25,7 +27,7 @@ class BookingController extends Controller
             $bookings = Booking::where('date', $selectedDate)->get();
         } else {
             $courts = Court::all();
-            $bookings = Booking::where('user_id', $user->id)->where('date', $selectedDate)->get();
+            $bookings = Booking::where('date', $selectedDate)->get();
         }
         $timeSlots = [];
         for ($h = 8; $h <= 22; $h++) {
@@ -195,8 +197,51 @@ class BookingController extends Controller
         if ($user->isOwner() && $booking->court->owner_id !== $user->id) {
             abort(403);
         }
+
+        // Store booking info before deletion for notifications
+        $bookingInfo = [
+            'court_name' => $booking->court->name,
+            'date' => $booking->date,
+            'start_time' => $booking->start_time,
+            'end_time' => $booking->end_time,
+            'user' => $booking->user,
+        ];
+
+        // Process refund if payment was made
+        $refundService = new RefundService();
+        $refund = null;
+        
+        try {
+            if ($refundService->isEligibleForRefund($booking)) {
+                $refund = $refundService->processRefund($booking, 'Booking cancelled by ' . ($user->isCustomer() ? 'customer' : 'staff/owner'));
+            }
+        } catch (\Exception $e) {
+            \Log::error('Failed to process refund during booking cancellation', [
+                'booking_id' => $booking->id,
+                'error' => $e->getMessage()
+            ]);
+            // Continue with cancellation even if refund fails
+        }
+
+        // Send cancellation notification
+        try {
+            $booking->user->notify(new BookingCancellation($booking, 'Booking cancelled by ' . ($user->isCustomer() ? 'customer' : 'staff/owner')));
+        } catch (\Exception $e) {
+            \Log::error('Failed to send booking cancellation email', [
+                'booking_id' => $booking->id,
+                'error' => $e->getMessage()
+            ]);
+        }
+
+        // Delete the booking
         $booking->delete();
-        return redirect()->route('bookings.index')->with('success', 'Booking deleted successfully.');
+
+        $message = 'Booking cancelled successfully.';
+        if ($refund) {
+            $message .= ' A refund of ' . $refund->formatted_amount . ' has been processed.';
+        }
+
+        return redirect()->route('bookings.index')->with('success', $message);
     }
 
     public function availability(Request $request)

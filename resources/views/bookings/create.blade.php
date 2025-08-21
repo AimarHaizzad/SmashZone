@@ -63,26 +63,53 @@
                 @enderror
             </div>
 
-            <!-- Time Slot Selection -->
-            <div class="space-y-2">
+            <!-- Enhanced Time Selection -->
+            <div class="space-y-4">
                 <label class="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
                     <svg class="w-5 h-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
-                    Select Time Slot
+                    Select Your Booking Time
                 </label>
-                <div id="time-slots" class="grid grid-cols-2 md:grid-cols-3 gap-3">
-                    <div class="col-span-full text-center text-gray-500 py-8">
-                        Please select a court and date to view available time slots.
+                
+                <!-- Start Time Selection -->
+                <div class="space-y-2">
+                    <label class="block text-sm font-medium text-gray-600">Start Time</label>
+                    <select name="start_time" id="start_time" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-300 focus:border-blue-500 transition-colors text-lg" required>
+                        <option value="">Choose start time...</option>
+                    </select>
+                </div>
+                
+                <!-- Duration Selection -->
+                <div class="space-y-2">
+                    <label class="block text-sm font-medium text-gray-600">Duration</label>
+                    <div class="grid grid-cols-3 gap-3">
+                        <button type="button" class="duration-btn px-4 py-3 border-2 border-gray-200 rounded-xl font-semibold hover:border-blue-300 transition-colors" data-duration="1">
+                            1 Hour
+                        </button>
+                        <button type="button" class="duration-btn px-4 py-3 border-2 border-gray-200 rounded-xl font-semibold hover:border-blue-300 transition-colors" data-duration="2">
+                            2 Hours
+                        </button>
+                        <button type="button" class="duration-btn px-4 py-3 border-2 border-gray-200 rounded-xl font-semibold hover:border-blue-300 transition-colors" data-duration="3">
+                            3 Hours
+                        </button>
                     </div>
                 </div>
-                <input type="hidden" name="start_time" id="start_time">
+                
+                <!-- End Time Display -->
+                <div class="space-y-2">
+                    <label class="block text-sm font-medium text-gray-600">End Time</label>
+                    <div id="end-time-display" class="px-4 py-3 bg-gray-50 border-2 border-gray-200 rounded-xl text-lg font-semibold text-gray-500">
+                        Select start time and duration
+                    </div>
+                </div>
+                
                 <input type="hidden" name="end_time" id="end_time">
                 <div id="slot-error" class="text-red-500 text-sm mt-2 flex items-center gap-1 hidden">
                     <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
-                    <span>Please select a time slot.</span>
+                    <span>Please select a start time and duration.</span>
                 </div>
             </div>
 
@@ -128,74 +155,63 @@
         </div>
 
         <script>
-    const timeSlots = [];
-    for (let h = 8; h < 22; h++) {
-        timeSlots.push({
-            start: (h < 10 ? '0' : '') + h + ':00',
-            end: (h+1 < 10 ? '0' : '') + (h+1) + ':00'
-        });
-    }
+    let selectedDuration = 1;
+    let availableTimes = [];
 
-    function renderSlots(booked) {
-        const container = document.getElementById('time-slots');
-        container.innerHTML = '';
+    function populateStartTimes(booked) {
+        const startTimeSelect = document.getElementById('start_time');
+        startTimeSelect.innerHTML = '<option value="">Choose start time...</option>';
         
-        if (!booked || booked.length === 0) {
-            // Show all slots as available
-            timeSlots.forEach(slot => {
-                const btn = document.createElement('button');
-                btn.type = 'button';
-                btn.textContent = slot.start + ' - ' + slot.end;
-                btn.className = 'px-4 py-3 rounded-xl font-semibold bg-gray-100 text-gray-700 border-2 border-gray-200 hover:bg-green-100 hover:text-green-700 hover:border-green-300 transition-all transform hover:scale-105';
-                btn.onclick = function() {
-                    selectSlot(btn, slot);
-                };
-                container.appendChild(btn);
-            });
-        } else {
-            timeSlots.forEach(slot => {
-                const isBooked = booked.some(b => (
-                    (slot.start >= b.start_time && slot.start < b.end_time) ||
-                    (slot.end > b.start_time && slot.end <= b.end_time)
-                ));
-                
-                const btn = document.createElement('button');
-                btn.type = 'button';
-                btn.textContent = slot.start + ' - ' + slot.end;
-                
-                if (isBooked) {
-                    btn.className = 'px-4 py-3 rounded-xl font-semibold bg-red-100 text-red-700 border-2 border-red-200 cursor-not-allowed opacity-60';
-                    btn.disabled = true;
-                } else {
-                    btn.className = 'px-4 py-3 rounded-xl font-semibold bg-gray-100 text-gray-700 border-2 border-gray-200 hover:bg-green-100 hover:text-green-700 hover:border-green-300 transition-all transform hover:scale-105';
-                    btn.onclick = function() {
-                        selectSlot(btn, slot);
-                    };
+        // Generate available start times (8 AM to 9 PM)
+        for (let h = 8; h < 21; h++) {
+            const time = (h < 10 ? '0' : '') + h + ':00';
+            const endTime = ((h + selectedDuration) < 10 ? '0' : '') + (h + selectedDuration) + ':00';
+            
+            // Check if this time slot is available for the selected duration
+            let isAvailable = true;
+            if (booked && booked.length > 0) {
+                for (let i = 0; i < selectedDuration; i++) {
+                    const checkTime = ((h + i) < 10 ? '0' : '') + (h + i) + ':00';
+                    const isBooked = booked.some(b => (
+                        (checkTime >= b.start_time && checkTime < b.end_time) ||
+                        (endTime > b.start_time && endTime <= b.end_time)
+                    ));
+                    if (isBooked) {
+                        isAvailable = false;
+                        break;
+                    }
                 }
-                
-                container.appendChild(btn);
-            });
+            }
+            
+            if (isAvailable) {
+                const option = document.createElement('option');
+                option.value = time;
+                option.textContent = time + ' - ' + endTime + ' (' + selectedDuration + ' hour' + (selectedDuration > 1 ? 's' : '') + ')';
+                startTimeSelect.appendChild(option);
+            }
         }
     }
 
-    function selectSlot(btn, slot) {
-        // Remove selection from all buttons
-        document.querySelectorAll('#time-slots button').forEach(b => {
-            if (!b.disabled) {
-                b.classList.remove('bg-green-600', 'text-white', 'border-green-500');
-                b.classList.add('bg-gray-100', 'text-gray-700', 'border-gray-200');
-            }
-        });
+    function updateEndTime() {
+        const startTime = document.getElementById('start_time').value;
+        const endTimeDisplay = document.getElementById('end-time-display');
         
-        // Select this button
-        btn.classList.remove('bg-gray-100', 'text-gray-700', 'border-gray-200');
-        btn.classList.add('bg-green-600', 'text-white', 'border-green-500');
-        
-        document.getElementById('start_time').value = slot.start;
-        document.getElementById('end_time').value = slot.end;
-        document.getElementById('slot-error').classList.add('hidden');
-        
-        calculatePrice();
+        if (startTime && selectedDuration) {
+            const [hours, minutes] = startTime.split(':').map(Number);
+            const endHours = hours + selectedDuration;
+            const endTime = (endHours < 10 ? '0' : '') + endHours + ':00';
+            
+            endTimeDisplay.textContent = endTime;
+            endTimeDisplay.className = 'px-4 py-3 bg-green-50 border-2 border-green-200 rounded-xl text-lg font-semibold text-green-700';
+            
+            document.getElementById('end_time').value = endTime;
+            document.getElementById('slot-error').classList.add('hidden');
+            calculatePrice();
+        } else {
+            endTimeDisplay.textContent = 'Select start time and duration';
+            endTimeDisplay.className = 'px-4 py-3 bg-gray-50 border-2 border-gray-200 rounded-xl text-lg font-semibold text-gray-500';
+            document.getElementById('end_time').value = '';
+        }
     }
 
     function fetchAvailability() {
@@ -203,13 +219,13 @@
         const date = document.querySelector('input[name=date]').value;
         
         if (!courtId || !date) {
-            renderSlots([]);
+            populateStartTimes([]);
             return;
         }
         
         // Show loading state
-        const container = document.getElementById('time-slots');
-        container.innerHTML = '<div class="col-span-full text-center py-8"><div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div><div class="mt-2 text-gray-500">Loading available slots...</div></div>';
+        const startTimeSelect = document.getElementById('start_time');
+        startTimeSelect.innerHTML = '<option value="">Loading available times...</option>';
         
         fetch(`/booking-availability?court_id=${courtId}&date=${date}`)
             .then(response => {
@@ -219,12 +235,12 @@
                 return response.json();
             })
             .then(booked => {
-                renderSlots(booked);
+                populateStartTimes(booked);
             })
             .catch(error => {
                 console.error('Error fetching availability:', error);
                 // Show error state but still render slots as available
-                renderSlots([]);
+                populateStartTimes([]);
             });
     }
 
@@ -248,6 +264,30 @@
     // Event Listeners
     document.querySelector('select[name=court_id]').addEventListener('change', fetchAvailability);
     document.querySelector('input[name=date]').addEventListener('change', fetchAvailability);
+    document.getElementById('start_time').addEventListener('change', updateEndTime);
+    
+    // Duration button listeners
+    document.querySelectorAll('.duration-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            // Remove active state from all buttons
+            document.querySelectorAll('.duration-btn').forEach(b => {
+                b.classList.remove('bg-blue-600', 'text-white', 'border-blue-500');
+                b.classList.add('border-gray-200', 'hover:border-blue-300');
+            });
+            
+            // Add active state to clicked button
+            this.classList.remove('border-gray-200', 'hover:border-blue-300');
+            this.classList.add('bg-blue-600', 'text-white', 'border-blue-500');
+            
+            selectedDuration = parseInt(this.dataset.duration);
+            
+            // Refresh available times with new duration
+            fetchAvailability();
+            
+            // Update end time if start time is already selected
+            updateEndTime();
+        });
+    });
     
     // Form validation
     document.querySelector('form').addEventListener('submit', function(e) {

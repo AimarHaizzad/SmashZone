@@ -58,6 +58,7 @@
             <select name="status" class="w-full border rounded px-3 py-2" required>
                 <option value="pending" {{ old('status', $booking->status) == 'pending' ? 'selected' : '' }}>Pending</option>
                 <option value="confirmed" {{ old('status', $booking->status) == 'confirmed' ? 'selected' : '' }}>Confirmed</option>
+                <option value="completed" {{ old('status', $booking->status) == 'completed' ? 'selected' : '' }}>Completed</option>
                 <option value="cancelled" {{ old('status', $booking->status) == 'cancelled' ? 'selected' : '' }}>Cancelled</option>
             </select>
             @error('status')<div class="text-red-500 text-sm">{{ $message }}</div>@enderror
