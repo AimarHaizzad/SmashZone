@@ -32,32 +32,42 @@
     <div class="bg-white rounded-2xl shadow-lg p-6 mb-8 border border-gray-100">
         <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div class="flex items-center gap-3">
-                <button onclick="changeDate(-1)" class="p-3 rounded-xl hover:bg-blue-50 transition-colors border border-gray-200">
-                    <svg class="h-5 w-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <button onclick="changeDate(-1)" class="p-3 rounded-xl hover:bg-blue-50 transition-colors border border-gray-200"
+                        title="Previous day"
+                        aria-label="Go to previous day">
+                    <svg class="h-5 w-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
                     </svg>
+                    <span class="sr-only">Previous day</span>
                 </button>
                 <form method="GET" action="" class="flex items-center gap-3">
                     <div class="relative">
                         <input id="date-input" type="date" name="date" value="{{ $selectedDate }}" 
                                class="border-2 border-blue-200 rounded-xl px-4 py-3 shadow-sm focus:ring-2 focus:ring-blue-300 text-lg font-semibold bg-white" 
-                               onchange="this.form.submit()">
+                               onchange="this.form.submit()"
+                               title="Select booking date"
+                               aria-label="Select booking date">
                         <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                            <svg class="h-5 w-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <svg class="h-5 w-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                             </svg>
                         </div>
                     </div>
                     <span class="text-blue-700 font-bold text-xl">{{ \Carbon\Carbon::parse($selectedDate)->format('j F Y') }}</span>
                     <button type="button" onclick="setToday()" 
-                            class="px-4 py-2 bg-blue-50 text-blue-700 rounded-xl border border-blue-200 hover:bg-blue-100 transition font-medium">
+                            class="px-4 py-2 bg-blue-50 text-blue-700 rounded-xl border border-blue-200 hover:bg-blue-100 transition font-medium"
+                            title="Go to today"
+                            aria-label="Go to today's date">
                         Today
                     </button>
                 </form>
-                <button onclick="changeDate(1)" class="p-3 rounded-xl hover:bg-blue-50 transition-colors border border-gray-200">
-                    <svg class="h-5 w-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <button onclick="changeDate(1)" class="p-3 rounded-xl hover:bg-blue-50 transition-colors border border-gray-200"
+                        title="Next day"
+                        aria-label="Go to next day">
+                    <svg class="h-5 w-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
                     </svg>
+                    <span class="sr-only">Next day</span>
                 </button>
             </div>
 
@@ -191,9 +201,11 @@
                                     </div>
                                 @else
                                     <button class="select-slot-btn w-full py-3 px-4 font-semibold rounded-xl border-2 border-green-200 bg-green-50 text-green-800 hover:bg-green-100 hover:border-green-300 transition-all transform hover:scale-105 shadow-sm" 
-                                            data-court="{{ $court->id }}" data-time="{{ $slot }}">
+                                            data-court="{{ $court->id }}" data-time="{{ $slot }}"
+                                            title="Book {{ $court->name }} at {{ \Carbon\Carbon::createFromFormat('H:i', $slot)->format('g:i A') }}"
+                                            aria-label="Book {{ $court->name }} at {{ \Carbon\Carbon::createFromFormat('H:i', $slot)->format('g:i A') }}">
                                         <div class="flex items-center justify-center gap-2">
-                                            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                                             </svg>
                                             Book Now
@@ -212,7 +224,7 @@
     <!-- Enhanced Booking Modal -->
     <div id="booking-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 hidden transition-all duration-300">
         <div class="bg-white rounded-3xl shadow-2xl p-8 max-w-md w-full mx-4 relative border border-gray-100 animate-fade-in">
-            <button id="close-modal" class="absolute top-4 right-4 text-gray-400 hover:text-gray-700 text-2xl font-bold">&times;</button>
+            <button id="close-modal" class="absolute top-4 right-4 text-gray-400 hover:text-gray-700 text-2xl font-bold" title="Close modal" aria-label="Close booking modal">&times;</button>
             <div id="modal-content">
                 <!-- Filled by JS -->
             </div>
@@ -222,7 +234,7 @@
     <!-- Enhanced Booking Details Modal -->
     <div id="booking-details-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 hidden">
         <div class="bg-white rounded-3xl shadow-2xl p-8 max-w-md w-full mx-4 relative border border-gray-100">
-            <button id="close-details-modal" class="absolute top-4 right-4 text-gray-400 hover:text-gray-700 text-2xl font-bold">&times;</button>
+            <button id="close-details-modal" class="absolute top-4 right-4 text-gray-400 hover:text-gray-700 text-2xl font-bold" title="Close modal" aria-label="Close details modal">&times;</button>
             <div id="details-modal-content">
                 <!-- Filled by JS -->
             </div>
@@ -232,9 +244,9 @@
     <!-- Enhanced My Bookings Modal -->
     <div id="my-bookings-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 hidden transition-all duration-300">
         <div class="bg-white rounded-3xl shadow-2xl p-8 max-w-4xl w-full mx-4 relative border border-gray-100 animate-fade-in">
-            <button id="close-my-bookings-modal" class="absolute top-4 right-4 text-gray-400 hover:text-gray-700 text-2xl font-bold">&times;</button>
+            <button id="close-my-bookings-modal" class="absolute top-4 right-4 text-gray-400 hover:text-gray-700 text-2xl font-bold" title="Close modal" aria-label="Close my bookings modal">&times;</button>
             <h2 class="text-3xl font-bold mb-6 text-blue-700 flex items-center gap-3">
-                <svg class="w-8 h-8 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg class="w-8 h-8 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-6a2 2 0 012-2h2a2 2 0 012 2v6" />
                 </svg>
                 My Bookings
@@ -272,11 +284,14 @@
     // }
 
     function showBookingModal(courtId, slot) {
+        console.log('showBookingModal called with:', { courtId, slot });
         const courtName = document.querySelector(`th[data-court-id='${courtId}']`)?.innerText || '';
         const date = document.getElementById('date-input').value;
         const startTime = slot;
         const endTime = (parseInt(startTime.split(':')[0]) + 1).toString().padStart(2, '0') + ':00';
         const price = 20;
+        
+        console.log('Modal data:', { courtName, date, startTime, endTime, price });
         
         const modal = document.getElementById('booking-modal');
         const modalContent = document.getElementById('modal-content');
@@ -337,17 +352,26 @@
     // document.getElementById('date-input').addEventListener('change', updateGrid);
     // window.addEventListener('DOMContentLoaded', updateGrid);
     
-    document.getElementById('close-modal').onclick = function() {
-        document.getElementById('booking-modal').classList.add('hidden');
-    };
+    const closeModalBtn = document.getElementById('close-modal');
+    if (closeModalBtn) {
+        closeModalBtn.onclick = function() {
+            document.getElementById('booking-modal').classList.add('hidden');
+        };
+    }
     
-    document.getElementById('close-details-modal').onclick = function() {
-        document.getElementById('booking-details-modal').classList.add('hidden');
-    };
+    const closeDetailsModalBtn = document.getElementById('close-details-modal');
+    if (closeDetailsModalBtn) {
+        closeDetailsModalBtn.onclick = function() {
+            document.getElementById('booking-details-modal').classList.add('hidden');
+        };
+    }
     
-    document.getElementById('close-my-bookings-modal').onclick = function() {
-        document.getElementById('my-bookings-modal').classList.add('hidden');
-    };
+    const closeMyBookingsModalBtn = document.getElementById('close-my-bookings-modal');
+    if (closeMyBookingsModalBtn) {
+        closeMyBookingsModalBtn.onclick = function() {
+            document.getElementById('my-bookings-modal').classList.add('hidden');
+        };
+    }
 
     // Enhanced My Booking Button Listeners
     function addMyBookingBtnListeners() {
@@ -415,18 +439,31 @@
 
     // Enhanced Slot Selection Listeners
     function addSlotSelectionListeners() {
-        document.querySelectorAll('.select-slot-btn').forEach(btn => {
+        console.log('Setting up slot selection listeners...');
+        const buttons = document.querySelectorAll('.select-slot-btn');
+        console.log('Found', buttons.length, 'Book Now buttons');
+        
+        buttons.forEach((btn, index) => {
+            console.log('Setting up listener for button', index + 1, 'with data:', {
+                court: btn.getAttribute('data-court'),
+                time: btn.getAttribute('data-time')
+            });
+            
             btn.onclick = function(e) {
                 e.preventDefault();
+                console.log('Book Now button clicked!');
                 const courtId = this.getAttribute('data-court');
                 const slot = this.getAttribute('data-time');
+                console.log('Court ID:', courtId, 'Slot:', slot);
                 showBookingModal(courtId, slot);
             };
         });
     }
 
     // Enhanced My Bookings Modal
-    document.getElementById('open-my-bookings').onclick = function(e) {
+    const openMyBookingsBtn = document.getElementById('open-my-bookings');
+    if (openMyBookingsBtn) {
+        openMyBookingsBtn.onclick = function(e) {
         e.preventDefault();
         fetch('/user-bookings')
             .then(r => r.json())
@@ -555,10 +592,13 @@
                     };
                 });
             });
-    };
+        };
+    }
 
     // Initial event listeners setup
+    console.log('Initializing booking page...');
     addSlotSelectionListeners();
+    console.log('Booking page initialization complete.');
 </script>
 
 <style>

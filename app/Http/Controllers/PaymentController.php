@@ -30,15 +30,15 @@ class PaymentController extends Controller
         
         // Get refunds based on user role
         if ($user->isOwner()) {
-            $courtIds = $user->courts->pluck('id');
-            $refunds = \App\Models\Refund::whereHas('booking.court', function($q) use ($courtIds) {
-                $q->whereIn('id', $courtIds);
-            })->with(['user', 'booking.court', 'payment'])->orderBy('refunded_at', 'desc')->get();
+            // For owners, show all refunds - they should see everything related to their business
+            $refunds = \App\Models\Refund::with(['user', 'booking.court', 'payment.booking.court'])
+                ->orderBy('created_at', 'desc')
+                ->get();
         } elseif ($user->isStaff()) {
             // Staff can view all refunds
-            $refunds = \App\Models\Refund::with(['user', 'booking.court', 'payment'])->orderBy('refunded_at', 'desc')->get();
+            $refunds = \App\Models\Refund::with(['user', 'booking.court', 'payment'])->orderBy('created_at', 'desc')->get();
         } else {
-            $refunds = \App\Models\Refund::where('user_id', $user->id)->with(['user', 'booking.court', 'payment'])->orderBy('refunded_at', 'desc')->get();
+            $refunds = \App\Models\Refund::where('user_id', $user->id)->with(['user', 'booking.court', 'payment'])->orderBy('created_at', 'desc')->get();
         }
         
         return view('payments.index', compact('payments', 'refunds'));

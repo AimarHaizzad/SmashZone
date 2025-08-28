@@ -15,10 +15,10 @@ class RefundController extends Controller
         $user = auth()->user();
         
         if ($user->isOwner()) {
-            $courtIds = $user->courts->pluck('id');
-            $refunds = Refund::whereHas('booking.court', function($q) use ($courtIds) {
-                $q->whereIn('id', $courtIds);
-            })->with(['user', 'booking.court', 'payment'])->orderBy('created_at', 'desc')->paginate(15);
+            // For owners, show all refunds - they should see everything related to their business
+            $refunds = Refund::with(['user', 'booking.court', 'payment.booking.court'])
+                ->orderBy('created_at', 'desc')
+                ->paginate(15);
         } elseif ($user->isStaff()) {
             // Staff can view all refunds
             $refunds = Refund::with(['user', 'booking.court', 'payment'])->orderBy('created_at', 'desc')->paginate(15);
