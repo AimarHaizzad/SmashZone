@@ -1,6 +1,8 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Http\Request;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\BookingController;
 use App\Http\Controllers\OwnerDashboardController;
@@ -17,9 +19,93 @@ use App\Http\Controllers\StaffController;
 
 Route::get('/', fn () => view('welcome'))->name('welcome');
 
+// Mobile app authentication check route
+Route::get('/mobile-auth-check', function() {
+    $user = null;
+    $token = request()->header('Authorization');
+    
+    if ($token) {
+        $token = str_replace('Bearer ', '', $token);
+        $user = \App\Models\User::whereHas('tokens', function($query) use ($token) {
+            $query->where('token', hash('sha256', $token));
+        })->first();
+    }
+    
+    return response()->json([
+        'authenticated' => $user !== null,
+        'user' => $user ? [
+            'id' => $user->id,
+            'name' => $user->name,
+            'email' => $user->email,
+            'role' => $user->role
+        ] : null
+    ]);
+});
+
 Route::get('/dashboard', fn () => view('dashboard'))
-    ->middleware(['auth', 'verified'])
+    ->middleware(['mobile.auth', 'auth', 'verified'])
     ->name('dashboard');
+
+// Mobile app integration test page
+Route::get('/mobile-test', fn () => view('mobile-test'))
+    ->name('mobile-test');
+
+// Mobile app authentication handler
+Route::get('/mobile-auth', function(Request $request) {
+    $isAuthenticated = $request->get('authenticated') === 'true';
+    $userId = $request->get('user_id');
+    $authToken = $request->get('auth_token');
+    $targetPage = $request->get('target', 'dashboard');
+    
+    \Log::info('Mobile auth attempt', [
+        'authenticated' => $isAuthenticated,
+        'user_id' => $userId,
+        'has_token' => !empty($authToken),
+        'target_page' => $targetPage
+    ]);
+    
+    if ($isAuthenticated && $userId && $authToken) {
+        // Find user by ID
+        $user = \App\Models\User::find($userId);
+        
+        if ($user) {
+            \Log::info('User found, attempting login', ['user_id' => $user->id, 'user_name' => $user->name]);
+            
+            // Log the user in
+            Auth::login($user, true); // Remember the user
+            
+            // Store mobile app authentication in session
+            session(['mobile_app_auth' => true]);
+            session(['mobile_app_token' => $authToken]);
+            
+            \Log::info('User logged in successfully', ['user_id' => $user->id, 'session_id' => session()->getId()]);
+            
+            // Redirect to target page based on the target parameter
+            $redirectUrl = match($targetPage) {
+                'profile' => '/profile',
+                'dashboard' => '/dashboard',
+                'bookings' => '/bookings',
+                'courts' => '/courts',
+                'payments' => '/payments',
+                default => '/dashboard'
+            };
+            
+            \Log::info('Redirecting to target page', ['target' => $targetPage, 'redirect_url' => $redirectUrl]);
+            return redirect($redirectUrl);
+        } else {
+            \Log::error('User not found', ['user_id' => $userId]);
+        }
+    } else {
+        \Log::error('Invalid authentication parameters', [
+            'authenticated' => $isAuthenticated,
+            'user_id' => $userId,
+            'has_token' => !empty($authToken)
+        ]);
+    }
+    
+    // If authentication fails, redirect to login
+    return redirect('/login');
+})->name('mobile-auth');
 
 Route::get('/test-owner', function() {
     return 'Owner middleware works!';
@@ -169,7 +255,7 @@ Route::get('/create-test-data', function() {
 |--------------------------------------------------------------------------
 */
 
-Route::middleware('auth')->group(function () {
+Route::middleware(['auth', 'mobile.auth'])->group(function () {
     // Profile
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
