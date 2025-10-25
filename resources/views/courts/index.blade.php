@@ -28,27 +28,13 @@
                         </svg>
                         <span class="text-2xl font-bold">{{ $courts->count() }}</span>
                     </div>
-                    <span class="text-gray-600 font-medium">Courts Available</span>
+                    <span class="text-gray-600 font-medium">Total Courts</span>
                 </div>
-                <p class="text-gray-600">Select a date to check court availability and book your preferred time slot.</p>
+                <p class="text-gray-600">Manage your badminton courts and view their details.</p>
             </div>
             
-            <!-- Date Picker and Actions -->
+            <!-- Actions -->
             <div class="flex flex-col sm:flex-row gap-4 items-center">
-                <!-- Enhanced Date Picker -->
-                <div class="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-4 border border-blue-100">
-                    <label for="availability-date" class="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
-                        <svg class="w-4 h-4 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                        </svg>
-                        Check Availability
-                    </label>
-                    <input type="date" 
-                           id="availability-date" 
-                           value="{{ date('Y-m-d') }}"
-                           class="border-2 border-blue-200 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-300 focus:border-blue-500 transition-colors">
-                </div>
-                
                 <!-- Add Court Button (Owner and Staff) -->
                 @if(auth()->user() && (auth()->user()->role === 'owner' || auth()->user()->role === 'staff'))
                     <a href="{{ route('courts.create') }}" 
@@ -66,11 +52,8 @@
     <!-- Enhanced Courts Grid -->
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         @forelse($courts as $court)
-            @php
-                $isBooked = $court->bookings->count() > 0;
-            @endphp
             <div id="court-card-{{ $court->id }}" 
-                 class="bg-white rounded-2xl shadow-lg border-2 border-gray-100 overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 {{ $isBooked ? 'border-red-300' : 'border-green-200' }}">
+                 class="bg-white rounded-2xl shadow-lg border-2 border-gray-100 overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
                 
                 <!-- Court Image with Status Badge -->
                 <div class="relative">
@@ -99,7 +82,6 @@
                         {{ $court->name }}
                     </h2>
                     
-                    <p class="text-gray-600 flex-1 mb-4 line-clamp-3">{{ $court->description ?: 'Professional badminton court with excellent facilities and lighting.' }}</p>
                     
                     <!-- Court Details -->
                     <div class="space-y-2 mb-4">
@@ -109,6 +91,23 @@
                             </svg>
                             <span>Owner: {{ $court->owner->name ?? 'Unknown' }}</span>
                         </div>
+                        <div class="flex items-center gap-2 text-sm">
+                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            <span class="font-medium {{ $court->status === 'active' ? 'text-green-600' : ($court->status === 'maintenance' ? 'text-yellow-600' : 'text-red-600') }}">
+                                Status: {{ ucfirst($court->status) }}
+                            </span>
+                        </div>
+                        @if($court->location)
+                        <div class="flex items-center gap-2 text-sm text-gray-500">
+                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                            </svg>
+                            <span>Location: {{ ucfirst($court->location) }}</span>
+                        </div>
+                        @endif
                         <div class="flex items-center gap-2 text-sm text-gray-500">
                             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -165,56 +164,6 @@
 </div>
 
 <script>
-// Enhanced Date Picker with Loading State
-document.getElementById('availability-date').addEventListener('change', function() {
-    const date = this.value;
-    const cards = document.querySelectorAll('[id^="court-card-"]');
-    
-    // Show loading state
-    cards.forEach(card => {
-        const statusBadge = card.querySelector('.absolute.top-4.right-4 span');
-        if (statusBadge) {
-            statusBadge.textContent = 'Loading...';
-            statusBadge.className = 'px-3 py-1 rounded-full text-sm font-semibold bg-gray-500 text-white';
-        }
-    });
-    
-    fetch(`/courts-availability?date=${date}`)
-        .then(response => response.json())
-        .then(data => {
-            data.forEach(court => {
-                const card = document.getElementById('court-card-' + court.id);
-                if (card) {
-                    const statusBadge = card.querySelector('.absolute.top-4.right-4 span');
-                    if (statusBadge) {
-                        if (court.is_booked) {
-                            card.classList.remove('border-green-200');
-                            card.classList.add('border-red-300');
-                            statusBadge.textContent = 'Booked';
-                            statusBadge.className = 'px-3 py-1 rounded-full text-sm font-semibold bg-red-500 text-white';
-                        } else {
-                            card.classList.remove('border-red-300');
-                            card.classList.add('border-green-200');
-                            statusBadge.textContent = 'Available';
-                            statusBadge.className = 'px-3 py-1 rounded-full text-sm font-semibold bg-green-500 text-white';
-                        }
-                    }
-                }
-            });
-        })
-        .catch(error => {
-            console.error('Error fetching availability:', error);
-            // Reset to default state on error
-            cards.forEach(card => {
-                const statusBadge = card.querySelector('.absolute.top-4.right-4 span');
-                if (statusBadge) {
-                    statusBadge.textContent = 'Available';
-                    statusBadge.className = 'px-3 py-1 rounded-full text-sm font-semibold bg-green-500 text-white';
-                }
-            });
-        });
-});
-
 // Add smooth animations for card interactions
 document.addEventListener('DOMContentLoaded', function() {
     const cards = document.querySelectorAll('[id^="court-card-"]');

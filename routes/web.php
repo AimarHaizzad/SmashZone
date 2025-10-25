@@ -268,6 +268,10 @@ Route::middleware(['auth', 'mobile.auth'])->group(function () {
     Route::resource('bookings', BookingController::class);
     // Customer bookings list page
     Route::get('my/bookings', [BookingController::class, 'my'])->name('bookings.my');
+    // Mark booking as completed
+    Route::patch('bookings/{booking}/mark-completed', [BookingController::class, 'markCompleted'])->name('bookings.mark-completed');
+    // Cancel booking (for late customers)
+    Route::patch('bookings/{booking}/cancel', [BookingController::class, 'cancel'])->name('bookings.cancel');
 
     // Courts (view and show only for customers)
     //Route::get('courts', [CourtController::class, 'index'])->name('courts.index');

@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Models\Court;
 use App\Models\Booking;
 use App\Models\Payment;
+use App\Notifications\StaffAccountCreated;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
@@ -95,8 +96,11 @@ class StaffController extends Controller
             'email_verified_at' => now(), // Auto-verify staff accounts
         ]);
 
+        // Send email notification to the new staff member
+        $staff->notify(new StaffAccountCreated($staff, $request->password));
+
         return redirect()->route('staff.index')
-            ->with('success', 'Staff member created successfully!');
+            ->with('success', 'Staff member created successfully! An email with account details has been sent to ' . $staff->email);
     }
 
     /**

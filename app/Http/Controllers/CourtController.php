@@ -38,7 +38,8 @@ class CourtController extends Controller
         }
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'description' => 'nullable|string',
+            'status' => 'required|in:active,maintenance,closed',
+            'location' => 'nullable|in:middle,edge,corner,center,side,front,back',
             'image' => 'nullable|image|max:2048',
         ]);
 
@@ -81,7 +82,8 @@ class CourtController extends Controller
         }
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'description' => 'nullable|string',
+            'status' => 'required|in:active,maintenance,closed',
+            'location' => 'nullable|in:middle,edge,corner,center,side,front,back',
             'image' => 'nullable|image|max:2048',
         ]);
 

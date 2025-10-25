@@ -13,6 +13,8 @@ class Court extends Model
         'description',
         'image',
         'owner_id',
+        'status',
+        'location',
     ];
 
     public function owner()

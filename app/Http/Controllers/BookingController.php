@@ -295,4 +295,84 @@ class BookingController extends Controller
 
         return view('bookings.my', compact('bookings'));
     }
+
+    /**
+     * Mark a booking as completed (customer has played)
+     */
+    public function markCompleted(Booking $booking)
+    {
+        // Check if user is owner or staff
+        if (!Auth::user() || (!Auth::user()->isOwner() && !Auth::user()->isStaff())) {
+            abort(403, 'Unauthorized to mark bookings as completed');
+        }
+
+        // Check if booking belongs to owner's courts (for owners)
+        if (Auth::user()->isOwner()) {
+            $userCourts = Auth::user()->courts->pluck('id');
+            if (!$userCourts->contains($booking->court_id)) {
+                abort(403, 'Unauthorized to mark this booking as completed');
+            }
+        }
+
+        // Update booking status to completed
+        $booking->update(['status' => 'completed']);
+
+        return redirect()->back()->with('success', 'Booking marked as completed successfully!');
+    }
+
+    /**
+     * Cancel a booking (for late customers)
+     */
+    public function cancel(Booking $booking)
+    {
+        // Check if user is owner or staff
+        if (!Auth::user() || (!Auth::user()->isOwner() && !Auth::user()->isStaff())) {
+            abort(403, 'Unauthorized to cancel bookings');
+        }
+
+        // Check if booking belongs to owner's courts (for owners)
+        if (Auth::user()->isOwner()) {
+            $userCourts = Auth::user()->courts->pluck('id');
+            if (!$userCourts->contains($booking->court_id)) {
+                abort(403, 'Unauthorized to cancel this booking');
+            }
+        }
+
+        // Check if booking can be cancelled (not already completed or cancelled)
+        if ($booking->status === 'completed' || $booking->status === 'cancelled') {
+            return redirect()->back()->with('error', 'Cannot cancel this booking - already completed or cancelled');
+        }
+
+        // Check if customer is late (more than 30 minutes)
+        $bookingDateTime = \Carbon\Carbon::parse($booking->date . ' ' . $booking->start_time);
+        $now = \Carbon\Carbon::now();
+        $isLate = $now->diffInMinutes($bookingDateTime, false) > 30;
+
+        if (!$isLate) {
+            return redirect()->back()->with('error', 'Cannot cancel booking - customer is not late enough (must be 30+ minutes late)');
+        }
+
+        // Update booking status to cancelled
+        $booking->update(['status' => 'cancelled']);
+
+        // Handle different cancellation rules based on payment method
+        if ($booking->payment) {
+            $paymentMethod = $booking->payment->payment_method ?? 'online';
+            
+            if ($paymentMethod === 'pay_at_counter') {
+                // For pay at counter: court becomes available immediately
+                // No refund needed since payment wasn't processed
+                $message = 'Booking cancelled successfully. Court is now available for new bookings.';
+            } else {
+                // For online payments: court remains unavailable until booking time ends
+                // This prevents double booking and maintains payment integrity
+                $message = 'Booking cancelled successfully. Court will remain unavailable until the original booking time ends to maintain payment integrity.';
+            }
+        } else {
+            // No payment record - court becomes available immediately
+            $message = 'Booking cancelled successfully. Court is now available for new bookings.';
+        }
+
+        return redirect()->back()->with('success', $message);
+    }
 }

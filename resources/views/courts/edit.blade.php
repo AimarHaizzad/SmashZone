@@ -42,18 +42,18 @@
                 </h3>
                 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <!-- Court Name -->
+                    <!-- Court Number -->
                     <div class="space-y-2">
                         <label class="block text-sm font-semibold text-gray-700 flex items-center gap-2">
                             <svg class="w-4 h-4 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
                             </svg>
-                            Court Name *
+                            Court Number *
                         </label>
                         <input type="text" name="name" 
                                class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-300 focus:border-blue-500 transition-colors text-lg" 
                                value="{{ old('name', $court->name) }}" 
-                               placeholder="e.g., Court A, Premium Court, etc."
+                               placeholder="e.g., Court 1, Court 2, Court A, etc."
                                required>
                         @error('name')
                             <div class="text-red-500 text-sm flex items-center gap-1">
@@ -65,46 +65,54 @@
                         @enderror
                     </div>
                     
-                    <!-- Court Type (Optional) -->
+                    <!-- Court Location -->
                     <div class="space-y-2">
                         <label class="block text-sm font-semibold text-gray-700 flex items-center gap-2">
                             <svg class="w-4 h-4 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                             </svg>
-                            Court Type
+                            Court Location
                         </label>
-                        <select name="type" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-300 focus:border-blue-500 transition-colors text-lg">
-                            <option value="">Select Court Type</option>
-                            <option value="standard" {{ old('type', $court->type ?? '') == 'standard' ? 'selected' : '' }}>Standard Court</option>
-                            <option value="premium" {{ old('type', $court->type ?? '') == 'premium' ? 'selected' : '' }}>Premium Court</option>
-                            <option value="professional" {{ old('type', $court->type ?? '') == 'professional' ? 'selected' : '' }}>Professional Court</option>
-                            <option value="training" {{ old('type', $court->type ?? '') == 'training' ? 'selected' : '' }}>Training Court</option>
+                        <select name="location" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-300 focus:border-blue-500 transition-colors text-lg">
+                            <option value="">Select Court Location</option>
+                            <option value="middle" {{ old('location', $court->location ?? '') == 'middle' ? 'selected' : '' }}>Middle - Center of facility</option>
+                            <option value="edge" {{ old('location', $court->location ?? '') == 'edge' ? 'selected' : '' }}>Edge - Side of facility</option>
+                            <option value="corner" {{ old('location', $court->location ?? '') == 'corner' ? 'selected' : '' }}>Corner - Corner position</option>
+                            <option value="center" {{ old('location', $court->location ?? '') == 'center' ? 'selected' : '' }}>Center - Central area</option>
+                            <option value="side" {{ old('location', $court->location ?? '') == 'side' ? 'selected' : '' }}>Side - Side area</option>
+                            <option value="front" {{ old('location', $court->location ?? '') == 'front' ? 'selected' : '' }}>Front - Near entrance</option>
+                            <option value="back" {{ old('location', $court->location ?? '') == 'back' ? 'selected' : '' }}>Back - Rear area</option>
                         </select>
                     </div>
                 </div>
             </div>
             
-            <!-- Description Section -->
+            <!-- Court Status Section -->
             <div class="bg-gradient-to-r from-green-50 to-emerald-50 rounded-2xl p-6 border border-green-100">
                 <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
                     <svg class="w-5 h-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
-                    Court Description
+                    Court Status
                 </h3>
                 
                 <div class="space-y-2">
                     <label class="block text-sm font-semibold text-gray-700 flex items-center gap-2">
                         <svg class="w-4 h-4 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
-                        Description
+                        Status *
                     </label>
-                    <textarea name="description" 
-                              rows="4"
-                              class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-green-300 focus:border-green-500 transition-colors text-lg resize-none" 
-                              placeholder="Describe the court features, facilities, or any special characteristics...">{{ old('description', $court->description) }}</textarea>
-                    @error('description')
+                    <select name="status" 
+                            class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-green-300 focus:border-green-500 transition-colors text-lg" 
+                            required>
+                        <option value="">Select Court Status</option>
+                        <option value="active" {{ old('status', $court->status ?? '') == 'active' ? 'selected' : '' }}>Active - Available for booking</option>
+                        <option value="maintenance" {{ old('status', $court->status ?? '') == 'maintenance' ? 'selected' : '' }}>Under Maintenance</option>
+                        <option value="closed" {{ old('status', $court->status ?? '') == 'closed' ? 'selected' : '' }}>Closed - Not available</option>
+                    </select>
+                    @error('status')
                         <div class="text-red-500 text-sm flex items-center gap-1">
                             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
