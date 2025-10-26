@@ -21,13 +21,20 @@ class BookingController extends Controller
         $selectedDate = $request->query('date', now()->toDateString());
         if ($user->isOwner()) {
             $courts = $user->courts;
-            $bookings = Booking::whereIn('court_id', $courts->pluck('id'))->where('date', $selectedDate)->get();
+            $bookings = Booking::whereIn('court_id', $courts->pluck('id'))
+                ->where('date', $selectedDate)
+                ->where('status', '!=', 'cancelled')
+                ->get();
         } elseif ($user->isStaff()) {
             $courts = Court::all(); // Optionally restrict to courts assigned to staff
-            $bookings = Booking::where('date', $selectedDate)->get();
+            $bookings = Booking::where('date', $selectedDate)
+                ->where('status', '!=', 'cancelled')
+                ->get();
         } else {
             $courts = Court::all();
-            $bookings = Booking::where('date', $selectedDate)->get();
+            $bookings = Booking::where('date', $selectedDate)
+                ->where('status', '!=', 'cancelled')
+                ->get();
         }
         $timeSlots = [];
         for ($h = 8; $h <= 22; $h++) {
@@ -64,14 +71,26 @@ class BookingController extends Controller
             'end_time' => 'required|date_format:H:i|after:start_time',
         ]);
 
-        // Check for overlapping bookings
+        // Check for overlapping bookings (excluding cancelled bookings)
         $overlap = Booking::where('court_id', $validated['court_id'])
             ->where('date', $validated['date'])
+            ->where('status', '!=', 'cancelled')
             ->where(function($query) use ($validated) {
-                $query->whereBetween('start_time', [$validated['start_time'], $validated['end_time']])
-                      ->orWhereBetween('end_time', [$validated['start_time'], $validated['end_time']]);
+                // Check if new booking overlaps with existing booking
+                $query->where(function($q) use ($validated) {
+                    // New booking starts before existing ends AND new booking ends after existing starts
+                    $q->where('start_time', '<', $validated['end_time'])
+                      ->where('end_time', '>', $validated['start_time']);
+                });
             })->exists();
         if ($overlap) {
+            // Check if this is an AJAX request
+            if ($validated['date'] && request()->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'This court is already booked for the selected time.'
+                ], 422);
+            }
             return back()->withErrors(['overlap' => 'This court is already booked for the selected time.'])->withInput();
         }
 
@@ -106,6 +125,15 @@ class BookingController extends Controller
         } catch (\Exception $e) {
             // Log the error but don't fail the booking creation
             \Log::error('Failed to send booking confirmation email: ' . $e->getMessage());
+        }
+
+        // Check if this is an AJAX request
+        if (request()->wantsJson() || request()->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Booking created successfully!',
+                'booking_id' => $booking->id
+            ]);
         }
 
         return redirect()->route('bookings.index')->with('success', 'Booking created successfully.');
@@ -250,6 +278,7 @@ class BookingController extends Controller
         $date = $request->input('date');
         $bookings = \App\Models\Booking::where('court_id', $courtId)
             ->where('date', $date)
+            ->where('status', '!=', 'cancelled')
             ->get(['start_time', 'end_time']);
         return response()->json($bookings);
     }
@@ -257,7 +286,9 @@ class BookingController extends Controller
     public function gridAvailability(Request $request)
     {
         $date = $request->input('date', now()->toDateString());
-        $bookings = \App\Models\Booking::where('date', $date)->get(['court_id', 'start_time', 'end_time', 'user_id']);
+        $bookings = \App\Models\Booking::where('date', $date)
+            ->where('status', '!=', 'cancelled')
+            ->get(['court_id', 'start_time', 'end_time', 'user_id']);
         return response()->json($bookings);
     }
 

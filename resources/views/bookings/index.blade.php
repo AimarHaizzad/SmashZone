@@ -99,8 +99,10 @@
                             // Check if any court in this time slot is booked by current user
                             $hasMyBooking = false;
                             foreach($courts as $court) {
-                                $booking = $bookings->first(function($b) use ($court, $slot, $timeSlots, $slotIdx) {
-                                    return $b->court_id == $court->id && $b->start_time <= $slot && $b->end_time > $slot;
+                                $booking = $bookings->first(function($b) use ($court, $slot) {
+                                    // Convert slot to H:i:s format for comparison
+                                    $slotTime = $slot . ':00';
+                                    return $b->court_id == $court->id && $b->start_time == $slotTime;
                                 });
                                 if ($booking && $booking->user_id == auth()->id()) {
                                     $hasMyBooking = true;
@@ -115,20 +117,23 @@
                         </td>
                         @foreach($courts as $court)
                             @php
-                                $booking = $bookings->first(function($b) use ($court, $slot, $timeSlots, $slotIdx) {
-                                    return $b->court_id == $court->id && $b->start_time <= $slot && $b->end_time > $slot;
+                                $booking = $bookings->first(function($b) use ($court, $slot) {
+                                    // Convert slot to H:i:s format for comparison
+                                    $slotTime = $slot . ':00';
+                                    return $b->court_id == $court->id && $b->start_time == $slotTime;
                                 });
                                 $isMine = $booking && $booking->user_id == auth()->id();
                                 $isBooked = $booking && !$isMine;
-                                $isStart = $booking && $booking->start_time == $slot;
-                                $isEnd = $booking && $booking->end_time == $slot;
+                                $isStart = $booking && $booking->start_time == $slot . ':00';
+                                $isEnd = $booking && $booking->end_time == $slot . ':00';
                                 
-                                // Check if user has a booking that covers this time slot
+                                // Check if user has a booking that starts at this exact time slot
                                 $hasMyBookingInCourt = $bookings->contains(function($b) use ($court, $slot) {
+                                    // Convert slot to H:i:s format for comparison
+                                    $slotTime = $slot . ':00';
                                     return $b->court_id == $court->id && 
                                            $b->user_id == auth()->id() && 
-                                           $b->start_time <= $slot && 
-                                           $b->end_time > $slot;
+                                           $b->start_time == $slotTime;
                                 });
                                 
                                 // Alternative check - maybe the time format is different
@@ -136,11 +141,10 @@
                                     $hasMyBookingInCourt = $bookings->contains(function($b) use ($court, $slot) {
                                         $slotTime = \Carbon\Carbon::createFromFormat('H:i', $slot);
                                         $startTime = \Carbon\Carbon::createFromFormat('H:i:s', $b->start_time);
-                                        $endTime = \Carbon\Carbon::createFromFormat('H:i:s', $b->end_time);
                                         
                                         return $b->court_id == $court->id && 
                                                $b->user_id == auth()->id() && 
-                                               $slotTime->between($startTime, $endTime, false);
+                                               $slotTime->format('H:i:s') == $startTime->format('H:i:s');
                                     });
                                 }
                                 
@@ -149,10 +153,10 @@
                                 // If we found a booking, use it
                                 if ($hasMyBookingInCourt) {
                                     $booking = $bookings->first(function($b) use ($court, $slot) {
+                                        $slotTime = $slot . ':00';
                                         return $b->court_id == $court->id && 
                                                $b->user_id == auth()->id() && 
-                                               $b->start_time <= $slot && 
-                                               $b->end_time > $slot;
+                                               $b->start_time == $slotTime;
                                     });
                                     
                                     // If the first check didn't find it, try the Carbon time check
@@ -160,11 +164,10 @@
                                         $booking = $bookings->first(function($b) use ($court, $slot) {
                                             $slotTime = \Carbon\Carbon::createFromFormat('H:i', $slot);
                                             $startTime = \Carbon\Carbon::createFromFormat('H:i:s', $b->start_time);
-                                            $endTime = \Carbon\Carbon::createFromFormat('H:i:s', $b->end_time);
                                             
                                             return $b->court_id == $court->id && 
                                                    $b->user_id == auth()->id() && 
-                                                   $slotTime->between($startTime, $endTime, false);
+                                                   $slotTime->format('H:i:s') == $startTime->format('H:i:s');
                                         });
                                     }
                                 }
@@ -187,8 +190,8 @@
                                         $startTime = \Carbon\Carbon::createFromFormat('H:i:s', $booking->start_time);
                                         $endTime = \Carbon\Carbon::createFromFormat('H:i:s', $booking->end_time);
                                         $duration = $startTime->diffInHours($endTime);
-                                        $isStart = $booking->start_time == $slot;
-                                        $isEnd = $booking->end_time == $slot;
+                                        $isStart = $booking->start_time == $slot . ':00';
+                                        $isEnd = $booking->end_time == $slot . ':00';
                                     @endphp
                                     <button class="my-booking-btn w-full py-3 px-4 font-semibold rounded-xl border-2 border-blue-300 bg-blue-100 text-blue-700 hover:bg-blue-200 transition-all transform hover:scale-105 shadow-sm"
                                             data-booking-id="{{ $booking->id }}">
@@ -240,36 +243,49 @@
     </div>
 
     <!-- Multi-Slot Selection Panel -->
-    <div id="multi-slot-panel" class="fixed bottom-0 left-0 right-0 bg-white border-t-2 border-blue-200 shadow-2xl transform translate-y-full transition-transform duration-300 z-40">
-        <div class="max-w-7xl mx-auto px-4 py-4">
-            <div class="flex items-center justify-between mb-4">
-                <h3 class="text-lg font-bold text-gray-800 flex items-center gap-2">
-                    <svg class="w-6 h-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                    </svg>
-                    Selected Time Slots
-                </h3>
-                <button id="clear-selection" class="text-sm text-red-600 hover:text-red-800 font-medium">
-                    Clear All
-                </button>
-            </div>
-            
-            <div id="selected-slots" class="flex flex-wrap gap-2 mb-4">
-                <!-- Selected slots will be displayed here -->
-            </div>
-            
-            <div class="flex items-center justify-between">
-                <div class="text-sm text-gray-600">
-                    <span id="total-slots">0</span> slot(s) selected • 
-                    <span id="total-price">RM 0</span>
-                </div>
-                <div class="flex gap-3">
-                    <button id="cancel-selection" class="px-4 py-2 text-gray-600 hover:text-gray-800 font-medium">
-                        Cancel
-                    </button>
-                    <button id="confirm-multi-booking" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold disabled:opacity-50 disabled:cursor-not-allowed" disabled>
-                        Confirm Booking
-                    </button>
+    <div id="multi-slot-panel" class="fixed bottom-0 left-0 right-0 transform translate-y-full transition-transform duration-300 z-[99999]" style="display: none;">
+        <div class="max-w-6xl mx-auto px-4 py-3">
+            <div class="max-w-4xl mx-auto">
+                <!-- Clean rounded container like date navigation -->
+                <div class="bg-white rounded-lg shadow-lg border border-gray-200 p-4">
+                    <div class="flex items-center justify-between gap-4">
+                        <!-- Left: Title and Selected Slots -->
+                        <div class="flex items-center gap-3 flex-1 min-w-0">
+                            <div class="flex items-center gap-2 flex-shrink-0">
+                                <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                                    <svg class="w-4 h-4 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                                    </svg>
+                                </div>
+                                <span class="text-sm font-semibold text-gray-800">Selected Time Slots:</span>
+                            </div>
+                            
+                            <!-- Selected Slots Display -->
+                            <div id="selected-slots" class="flex flex-wrap gap-2 flex-1 min-w-0">
+                                <!-- Selected slots will be displayed here -->
+                            </div>
+                        </div>
+                        
+                        <!-- Right: Summary and Actions -->
+                        <div class="flex items-center gap-3 flex-shrink-0">
+                            <div class="text-sm text-gray-700 bg-gray-50 px-3 py-2 rounded-lg">
+                                <span id="total-slots" class="text-blue-600 font-bold">0</span> slots • 
+                                <span id="total-price" class="text-green-600 font-bold">RM 0</span>
+                            </div>
+                            
+                            <button id="clear-selection" class="px-3 py-2 text-red-600 hover:text-red-800 font-medium border border-red-200 rounded-lg hover:bg-red-50 text-sm">
+                                Clear
+                            </button>
+                            
+                            <button id="cancel-selection" class="px-4 py-2 text-gray-600 hover:text-gray-800 font-medium border border-gray-300 rounded-lg hover:bg-gray-50 text-sm">
+                                Cancel
+                            </button>
+                            
+                            <button id="confirm-multi-booking" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold disabled:opacity-50 disabled:cursor-not-allowed text-sm shadow-sm" disabled>
+                                Confirm Booking
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -313,6 +329,9 @@
 </div>
 
 <script>
+    // Version: 3.3 - Fixed panel hiding when cleared and added more debugging
+    console.log('Booking system v3.3 loaded - Fixed panel hiding when cleared and added more debugging');
+    
     // Multi-slot selection state
     let selectedSlots = new Map(); // Map of slotId -> {courtId, time, courtName}
     let isMultiSelectMode = false;
@@ -335,13 +354,16 @@
     // Multi-slot selection functions
     function toggleSlotSelection(courtId, time, courtName) {
         const slotId = `${courtId}-${time}`;
+        console.log('toggleSlotSelection called:', { courtId, time, courtName, slotId });
         
         if (selectedSlots.has(slotId)) {
             // Remove from selection
+            console.log('Removing slot from selection');
             selectedSlots.delete(slotId);
             updateSlotButton(courtId, time, false);
         } else {
             // Add to selection
+            console.log('Adding slot to selection');
             selectedSlots.set(slotId, {
                 court_id: courtId,
                 time: time,
@@ -350,6 +372,7 @@
             updateSlotButton(courtId, time, true);
         }
         
+        console.log('Current selectedSlots:', selectedSlots);
         updateMultiSlotPanel();
     }
 
@@ -387,20 +410,26 @@
         const totalPrice = document.getElementById('total-price');
         const confirmButton = document.getElementById('confirm-multi-booking');
 
+        console.log('updateMultiSlotPanel called, selectedSlots.size:', selectedSlots.size);
+        console.log('Panel element found:', !!panel);
+
         if (selectedSlots.size > 0) {
             // Show panel
+            console.log('Showing panel...');
             panel.classList.remove('translate-y-full');
+            panel.style.display = 'block';
             isMultiSelectMode = true;
             
             // Update selected slots display
             selectedSlotsContainer.innerHTML = '';
             selectedSlots.forEach((slot, slotId) => {
                 const slotElement = document.createElement('div');
-                slotElement.className = 'flex items-center gap-2 bg-blue-100 text-blue-800 px-3 py-2 rounded-lg text-sm font-medium';
+                slotElement.className = 'flex items-center gap-2 bg-blue-50 text-blue-800 px-3 py-2 rounded-lg text-sm font-medium border border-blue-200 whitespace-nowrap shadow-sm';
                 slotElement.innerHTML = `
-                    <span>${slot.courtName} - ${formatTime(slot.time)}</span>
-                    <button onclick="removeSlot('${slotId}')" class="text-blue-600 hover:text-blue-800">
-                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <div class="w-2 h-2 bg-blue-500 rounded-full"></div>
+                    <span class="font-semibold">${formatTime(slot.time)}</span>
+                    <button onclick="removeSlot('${slotId}')" class="text-blue-600 hover:text-blue-800 hover:bg-blue-200 rounded-full p-1 transition-colors" title="Remove this slot">
+                        <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                         </svg>
                     </button>
@@ -414,27 +443,38 @@
             confirmButton.disabled = false;
         } else {
             // Hide panel
+            console.log('Hiding panel...');
             panel.classList.add('translate-y-full');
+            panel.style.display = 'none';
             isMultiSelectMode = false;
             confirmButton.disabled = true;
         }
     }
 
     function removeSlot(slotId) {
+        console.log('removeSlot called with slotId:', slotId);
         const slot = selectedSlots.get(slotId);
         if (slot) {
+            console.log('Removing slot:', slot);
             updateSlotButton(slot.courtId, slot.time, false);
             selectedSlots.delete(slotId);
             updateMultiSlotPanel();
+            console.log('Slot removed, remaining slots:', selectedSlots.size);
+        } else {
+            console.log('Slot not found:', slotId);
         }
     }
 
     function clearAllSelections() {
+        console.log('clearAllSelections called, selectedSlots.size:', selectedSlots.size);
         selectedSlots.forEach((slot, slotId) => {
+            console.log('Clearing slot:', slotId, slot);
             updateSlotButton(slot.courtId, slot.time, false);
         });
         selectedSlots.clear();
+        console.log('selectedSlots cleared, new size:', selectedSlots.size);
         updateMultiSlotPanel();
+        console.log('All selections cleared and panel updated');
     }
 
     function formatTime(time) {
@@ -525,6 +565,13 @@
     function submitMultiBooking(bookingData) {
         console.log('Submitting multi-booking with data:', bookingData);
         
+        // Disable the submit button to prevent double submission
+        const submitButton = document.getElementById('submit-multi-booking');
+        if (submitButton) {
+            submitButton.disabled = true;
+            submitButton.textContent = 'Processing...';
+        }
+        
         // Create form data
         const formData = new FormData();
         formData.append('_token', document.querySelector('meta[name="csrf-token"]').getAttribute('content'));
@@ -534,47 +581,75 @@
         
         console.log('Form data slots:', JSON.stringify(bookingData.slots));
 
-        // Submit booking
-        fetch('/bookings/multi', {
+        // Submit booking with cache-busting
+        const url = '/bookings/multi?v=' + Date.now(); // Cache busting
+        fetch(url, {
             method: 'POST',
             body: formData,
             headers: {
-                'X-Requested-With': 'XMLHttpRequest'
-            }
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json',
+                'Cache-Control': 'no-cache'
+            },
+            cache: 'no-cache'
         })
         .then(response => {
             console.log('Response status:', response.status);
+            if (!response.ok) {
+                throw new Error(`Server returned ${response.status}`);
+            }
             return response.json();
         })
         .then(data => {
             console.log('Response data:', data);
             
+            // Clear selections and hide panel
+            clearAllSelections();
+            document.getElementById('booking-modal').classList.add('hidden');
+            
             if (data.success) {
-                // Clear selections and hide panel
-                clearAllSelections();
-                document.getElementById('booking-modal').classList.add('hidden');
-                
                 // Show success message
                 if (data.bookings_created === data.total_slots) {
-                    alert('All bookings confirmed successfully!');
+                    alert('All bookings confirmed successfully! The page will refresh to show your bookings.');
                 } else {
-                    alert(`${data.bookings_created} booking(s) confirmed successfully!\n\nSome slots were unavailable:\n${data.errors.join('\n')}`);
+                    const errorText = data.errors && data.errors.length > 0 ? data.errors.join('\n') : 'No specific errors reported';
+                    alert(`${data.bookings_created} booking(s) confirmed successfully!\n\nSome slots were unavailable:\n${errorText}\n\nThe page will refresh to show your bookings.`);
                 }
                 
                 // Reload page to show updated bookings
-                location.reload();
+                setTimeout(() => location.reload(), 500);
             } else {
-                // Show detailed error message
-                let errorMsg = data.message || 'Failed to create booking';
-                if (data.errors && data.errors.length > 0) {
-                    errorMsg += '\n\nUnavailable slots:\n' + data.errors.join('\n');
+                // Even if success is false, some bookings might have been created
+                if (data.bookings_created > 0) {
+                    const errorText = data.errors && data.errors.length > 0 ? data.errors.join('\n') : 'No specific errors reported';
+                    alert(`${data.bookings_created} booking(s) confirmed successfully!\n\nSome slots were unavailable:\n${errorText}\n\nThe page will refresh to show your bookings.`);
+                    setTimeout(() => location.reload(), 500);
+                } else {
+                    // No bookings were created at all
+                    let errorMsg = data.message || 'Failed to create booking';
+                    if (data.errors && data.errors.length > 0) {
+                        errorMsg += '\n\nUnavailable slots:\n' + data.errors.join('\n');
+                    }
+                    alert('Error: ' + errorMsg);
+                    // Re-enable the button
+                    if (submitButton) {
+                        submitButton.disabled = false;
+                        submitButton.textContent = 'Confirm & Pay';
+                    }
                 }
-                alert('Error: ' + errorMsg);
             }
         })
         .catch(error => {
             console.error('Network or parsing error:', error);
             alert('Network error creating booking. Please check your connection and try again.');
+            // Clear selections and hide panel
+            clearAllSelections();
+            document.getElementById('booking-modal').classList.add('hidden');
+            // Re-enable the button
+            if (submitButton) {
+                submitButton.disabled = false;
+                submitButton.textContent = 'Confirm & Pay';
+            }
         });
     }
 
@@ -593,7 +668,10 @@
         const courtName = document.querySelector(`th[data-court-id='${courtId}']`)?.innerText || '';
         const date = document.getElementById('date-input').value;
         const startTime = slot;
-        const endTime = (parseInt(startTime.split(':')[0]) + 1).toString().padStart(2, '0') + ':00';
+        // Calculate end time correctly (8am -> 9am, not 9am -> 10am)
+        const startHour = parseInt(startTime.split(':')[0]);
+        const endHour = startHour + 1;
+        const endTime = endHour.toString().padStart(2, '0') + ':00';
         const price = 20;
         
         console.log('Modal data:', { courtName, date, startTime, endTime, price });
@@ -635,21 +713,93 @@
                         </div>
                     </div>
                 </div>
-                <form method="POST" action="{{ route('bookings.store') }}">
-                    @csrf
-                    <input type="hidden" name="court_id" value="${courtId}">
-                    <input type="hidden" name="date" value="${date}">
-                    <input type="hidden" name="start_time" value="${startTime}">
-                    <input type="hidden" name="end_time" value="${endTime}">
-                    <button type="submit" class="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-4 rounded-xl font-bold hover:from-blue-700 hover:to-blue-800 transition-all transform hover:scale-105 text-lg shadow-lg">
-                        Confirm Booking
-                    </button>
-                </form>
+                <button id="single-booking-submit" type="button" class="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-4 rounded-xl font-bold hover:from-blue-700 hover:to-blue-800 transition-all transform hover:scale-105 text-lg shadow-lg">
+                    Confirm Booking
+                </button>
             </div>
         `;
         
         modal.classList.remove('hidden');
         setTimeout(() => modal.classList.add('opacity-100'), 10);
+        
+        // Add event listener for the submit button
+        document.getElementById('single-booking-submit').onclick = function() {
+            submitSingleBooking(courtId, date, startTime, endTime);
+        };
+    }
+    
+    function submitSingleBooking(courtId, date, startTime, endTime) {
+        const submitButton = document.getElementById('single-booking-submit');
+        if (submitButton) {
+            submitButton.disabled = true;
+            submitButton.textContent = 'Processing...';
+        }
+        
+        const formData = new FormData();
+        formData.append('_token', document.querySelector('meta[name="csrf-token"]').getAttribute('content'));
+        formData.append('court_id', courtId);
+        formData.append('date', date);
+        formData.append('start_time', startTime);
+        formData.append('end_time', endTime);
+        
+        // Submit with cache-busting
+        const url = '{{ route("bookings.store") }}?v=' + Date.now();
+        fetch(url, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json',
+                'Cache-Control': 'no-cache'
+            },
+            cache: 'no-cache'
+        })
+        .then(response => {
+            console.log('Response status:', response.status);
+            if (!response.ok) {
+                return response.json().then(err => {
+                    throw err;
+                });
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log('Response data:', data);
+            
+            // Hide modal
+            document.getElementById('booking-modal').classList.add('hidden');
+            
+            if (data.success) {
+                alert('Booking created successfully! The page will refresh to show your booking.');
+                setTimeout(() => location.reload(), 500);
+            } else {
+                alert('Error: ' + (data.message || 'Failed to create booking'));
+                if (submitButton) {
+                    submitButton.disabled = false;
+                    submitButton.textContent = 'Confirm Booking';
+                }
+            }
+        })
+        .catch(error => {
+            console.error('Booking error:', error);
+            document.getElementById('booking-modal').classList.add('hidden');
+            
+            let errorMessage = 'Failed to create booking. ';
+            if (error.message) {
+                errorMessage += error.message;
+            } else if (error.errors) {
+                errorMessage += Object.values(error.errors).flat().join(', ');
+            } else {
+                errorMessage += 'Please check your connection and try again.';
+            }
+            
+            alert(errorMessage);
+            
+            if (submitButton) {
+                submitButton.disabled = false;
+                submitButton.textContent = 'Confirm Booking';
+            }
+        });
     }
 
     // Event Listeners
@@ -902,9 +1052,38 @@
     }
 
     // Multi-slot panel event listeners
-    document.getElementById('clear-selection').onclick = clearAllSelections;
-    document.getElementById('cancel-selection').onclick = clearAllSelections;
-    document.getElementById('confirm-multi-booking').onclick = confirmMultiBooking;
+    function setupMultiSlotEventListeners() {
+        console.log('Setting up multi-slot event listeners...');
+        const clearButton = document.getElementById('clear-selection');
+        const cancelButton = document.getElementById('cancel-selection');
+        const confirmButton = document.getElementById('confirm-multi-booking');
+        
+        console.log('Buttons found:', {
+            clearButton: !!clearButton,
+            cancelButton: !!cancelButton,
+            confirmButton: !!confirmButton
+        });
+        
+        if (clearButton) {
+            clearButton.onclick = clearAllSelections;
+            console.log('Clear button event listener set');
+        }
+        if (cancelButton) {
+            cancelButton.onclick = clearAllSelections;
+            console.log('Cancel button event listener set');
+        }
+        if (confirmButton) {
+            confirmButton.onclick = confirmMultiBooking;
+            console.log('Confirm button event listener set');
+        }
+    }
+    
+    // Setup event listeners when DOM is ready
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', setupMultiSlotEventListeners);
+    } else {
+        setupMultiSlotEventListeners();
+    }
 
     // Initial event listeners setup
     console.log('Initializing booking page...');
