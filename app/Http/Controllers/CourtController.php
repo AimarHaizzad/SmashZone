@@ -40,7 +40,7 @@ class CourtController extends Controller
             'name' => 'required|string|max:255',
             'status' => 'required|in:active,maintenance,closed',
             'location' => 'nullable|in:middle,edge,corner,center,side,front,back',
-            'image' => 'nullable|image|max:2048',
+            'image' => 'nullable|image|max:10240',
         ]);
 
         if ($request->hasFile('image')) {
@@ -84,7 +84,7 @@ class CourtController extends Controller
             'name' => 'required|string|max:255',
             'status' => 'required|in:active,maintenance,closed',
             'location' => 'nullable|in:middle,edge,corner,center,side,front,back',
-            'image' => 'nullable|image|max:2048',
+            'image' => 'nullable|image|max:10240',
         ]);
 
         if ($request->hasFile('image')) {

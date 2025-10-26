@@ -3,9 +3,16 @@
         @csrf
     </form>
 
-    <form method="post" action="{{ route('profile.update') }}" class="space-y-6">
+    <form method="post" action="{{ route('profile.update') }}" enctype="multipart/form-data" class="space-y-6">
         @csrf
         @method('patch')
+
+        <!-- Hidden file input for profile picture -->
+        <input type="file" 
+               id="profile-picture-form-input" 
+               name="profile_picture" 
+               accept="image/*" 
+               class="hidden">
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <!-- Name Field -->

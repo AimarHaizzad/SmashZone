@@ -42,7 +42,7 @@ Route::get('/mobile-auth-check', function() {
     ]);
 });
 
-Route::get('/dashboard', fn () => view('dashboard'))
+Route::get('/dashboard', [App\Http\Controllers\DashboardController::class, 'index'])
     ->middleware(['mobile.auth', 'auth', 'verified'])
     ->name('dashboard');
 
@@ -337,6 +337,7 @@ Route::get('booking-availability', [App\Http\Controllers\BookingController::clas
 Route::get('booking-grid-availability', [App\Http\Controllers\BookingController::class, 'gridAvailability'])->name('bookings.gridAvailability');
 Route::get('booking-details/{id}', [App\Http\Controllers\BookingController::class, 'showDetails'])->name('bookings.details');
 Route::get('user-bookings', [App\Http\Controllers\BookingController::class, 'userBookings'])->name('bookings.userBookings');
+Route::post('bookings/multi', [App\Http\Controllers\BookingController::class, 'storeMulti'])->name('bookings.store-multi');
 Route::get('cart', [App\Http\Controllers\CartController::class, 'index'])->name('cart.index');
 Route::post('cart/add', [App\Http\Controllers\CartController::class, 'add'])->name('cart.add');
 Route::post('cart/update', [App\Http\Controllers\CartController::class, 'update'])->name('cart.update');

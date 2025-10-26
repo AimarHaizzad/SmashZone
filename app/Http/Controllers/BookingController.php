@@ -375,4 +375,146 @@ class BookingController extends Controller
 
         return redirect()->back()->with('success', $message);
     }
+
+    /**
+     * Store multiple slot bookings
+     */
+    public function storeMulti(Request $request)
+    {
+        if (!Auth::user()->isCustomer()) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
+        }
+
+        // Handle JSON string for slots
+        $slots = $request->input('slots');
+        \Log::info('Raw slots input:', ['slots' => $slots, 'type' => gettype($slots)]);
+        
+        if (is_string($slots)) {
+            $slots = json_decode($slots, true);
+            \Log::info('Decoded slots:', ['slots' => $slots, 'type' => gettype($slots)]);
+        }
+        
+        \Log::info('Final slots before validation:', ['slots' => $slots]);
+
+        $validated = $request->validate([
+            'date' => 'required|date|after_or_equal:today',
+            'total_price' => 'required|numeric|min:0',
+        ]);
+
+        // Validate slots manually
+        if (!is_array($slots) || empty($slots)) {
+            return response()->json(['success' => false, 'message' => 'Slots must be an array'], 400);
+        }
+
+        foreach ($slots as $index => $slot) {
+            // Handle both court_id and courtId for backward compatibility
+            $courtId = $slot['court_id'] ?? $slot['courtId'] ?? null;
+            
+            if (!$courtId || !isset($slot['time'])) {
+                return response()->json(['success' => false, 'message' => "Slot {$index} is missing required fields (court_id and time)"], 400);
+            }
+            if (!\App\Models\Court::where('id', $courtId)->exists()) {
+                return response()->json(['success' => false, 'message' => "Court {$courtId} does not exist"], 400);
+            }
+            if (!preg_match('/^\d{2}:\d{2}$/', $slot['time'])) {
+                return response()->json(['success' => false, 'message' => "Invalid time format for slot {$index}"], 400);
+            }
+            
+            // Normalize the slot data
+            $slots[$index]['court_id'] = $courtId;
+        }
+
+        $validated['slots'] = $slots;
+
+        $bookings = [];
+        $errors = [];
+
+        // Process each slot
+        foreach ($validated['slots'] as $slot) {
+            $startTime = $slot['time'];
+            $endTime = date('H:i:s', strtotime($startTime . ' +1 hour'));
+
+            // Check for overlapping bookings with more precise logic
+            $overlap = Booking::where('court_id', $slot['court_id'])
+                ->where('date', $validated['date'])
+                ->where('status', '!=', 'cancelled') // Don't consider cancelled bookings
+                ->where(function($query) use ($startTime, $endTime) {
+                    // Check if new booking overlaps with existing booking
+                    $query->where(function($q) use ($startTime, $endTime) {
+                        // New booking starts before existing ends AND new booking ends after existing starts
+                        $q->where('start_time', '<', $endTime)
+                          ->where('end_time', '>', $startTime);
+                    });
+                })->first();
+
+            if ($overlap) {
+                $courtName = \App\Models\Court::find($slot['court_id'])->name ?? "Court {$slot['court_id']}";
+                $errors[] = "{$courtName} at " . date('g:i A', strtotime($startTime)) . " is already booked (existing: " . date('g:i A', strtotime($overlap->start_time)) . " - " . date('g:i A', strtotime($overlap->end_time)) . ")";
+                continue;
+            }
+
+            // Create booking
+            $booking = Booking::create([
+                'user_id' => Auth::id(),
+                'court_id' => $slot['court_id'],
+                'date' => $validated['date'],
+                'start_time' => $startTime,
+                'end_time' => $endTime,
+                'status' => 'pending',
+                'total_price' => 20, // RM20 per hour
+            ]);
+
+            // Create payment record
+            $booking->payment()->create([
+                'user_id' => Auth::id(),
+                'booking_id' => $booking->id,
+                'amount' => 20,
+                'status' => 'pending',
+                'payment_date' => null,
+            ]);
+
+            $bookings[] = $booking;
+
+            // Send booking confirmation email
+            try {
+                $booking->user->notify(new BookingConfirmation($booking));
+            } catch (\Exception $e) {
+                \Log::error('Failed to send booking confirmation email', [
+                    'booking_id' => $booking->id,
+                    'error' => $e->getMessage()
+                ]);
+            }
+        }
+
+        if (!empty($errors)) {
+            $message = count($bookings) > 0 
+                ? count($bookings) . ' booking(s) created successfully, but ' . count($errors) . ' slot(s) could not be booked'
+                : 'No bookings could be created - all selected slots are unavailable';
+            
+            \Log::info('Multi-slot booking partial success', [
+                'bookings_created' => count($bookings),
+                'errors' => $errors,
+                'user_id' => Auth::id()
+            ]);
+                
+            return response()->json([
+                'success' => count($bookings) > 0, // Partial success if some bookings were created
+                'message' => $message,
+                'errors' => $errors,
+                'bookings_created' => count($bookings),
+                'total_slots' => count($validated['slots'])
+            ]);
+        }
+
+        \Log::info('Multi-slot booking completed successfully', [
+            'bookings_created' => count($bookings),
+            'user_id' => Auth::id()
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'All ' . count($bookings) . ' booking(s) created successfully',
+            'bookings_created' => count($bookings)
+        ]);
+    }
 }

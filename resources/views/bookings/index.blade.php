@@ -100,7 +100,7 @@
                             $hasMyBooking = false;
                             foreach($courts as $court) {
                                 $booking = $bookings->first(function($b) use ($court, $slot, $timeSlots, $slotIdx) {
-                                    return $b->court_id == $court->id && $b->start_time <= $slot && $b->end_time >= $slot;
+                                    return $b->court_id == $court->id && $b->start_time <= $slot && $b->end_time > $slot;
                                 });
                                 if ($booking && $booking->user_id == auth()->id()) {
                                     $hasMyBooking = true;
@@ -116,14 +116,14 @@
                         @foreach($courts as $court)
                             @php
                                 $booking = $bookings->first(function($b) use ($court, $slot, $timeSlots, $slotIdx) {
-                                    return $b->court_id == $court->id && $b->start_time <= $slot && $b->end_time >= $slot;
+                                    return $b->court_id == $court->id && $b->start_time <= $slot && $b->end_time > $slot;
                                 });
                                 $isMine = $booking && $booking->user_id == auth()->id();
                                 $isBooked = $booking && !$isMine;
                                 $isStart = $booking && $booking->start_time == $slot;
                                 $isEnd = $booking && $booking->end_time == $slot;
                                 
-                                // Check if user has any booking in this court during this time period
+                                // Check if user has a booking that covers this time slot
                                 $hasMyBookingInCourt = $bookings->contains(function($b) use ($court, $slot) {
                                     return $b->court_id == $court->id && 
                                            $b->user_id == auth()->id() && 
@@ -140,7 +140,7 @@
                                         
                                         return $b->court_id == $court->id && 
                                                $b->user_id == auth()->id() && 
-                                               $slotTime->between($startTime, $endTime);
+                                               $slotTime->between($startTime, $endTime, false);
                                     });
                                 }
                                 
@@ -164,7 +164,7 @@
                                             
                                             return $b->court_id == $court->id && 
                                                    $b->user_id == auth()->id() && 
-                                                   $slotTime->between($startTime, $endTime);
+                                                   $slotTime->between($startTime, $endTime, false);
                                         });
                                     }
                                 }
@@ -183,13 +183,31 @@
                             @endphp
                             <td class="px-3 py-4 border-b border-gray-100 text-center{{ $borderClass }}{{ $bgClass }}" data-court="{{ $court->id }}" data-time="{{ $slot }}">
                                 @if($hasMyBookingInCourt && $booking)
+                                    @php
+                                        $startTime = \Carbon\Carbon::createFromFormat('H:i:s', $booking->start_time);
+                                        $endTime = \Carbon\Carbon::createFromFormat('H:i:s', $booking->end_time);
+                                        $duration = $startTime->diffInHours($endTime);
+                                        $isStart = $booking->start_time == $slot;
+                                        $isEnd = $booking->end_time == $slot;
+                                    @endphp
                                     <button class="my-booking-btn w-full py-3 px-4 font-semibold rounded-xl border-2 border-blue-300 bg-blue-100 text-blue-700 hover:bg-blue-200 transition-all transform hover:scale-105 shadow-sm"
                                             data-booking-id="{{ $booking->id }}">
-                                        <div class="flex items-center justify-center gap-2">
-                                            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                                            </svg>
-                                            My Booking
+                                        <div class="flex flex-col items-center justify-center gap-1">
+                                            <div class="flex items-center gap-2">
+                                                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                                </svg>
+                                                @if($isStart)
+                                                    My Booking
+                                                @else
+                                                    {{ $duration }}h Booking
+                                                @endif
+                                            </div>
+                                            @if($isStart)
+                                                <div class="text-xs text-blue-600">
+                                                    {{ $startTime->format('g:i A') }} - {{ $endTime->format('g:i A') }}
+                                                </div>
+                                            @endif
                                         </div>
                                     </button>
                                 @elseif($booking)
@@ -202,13 +220,13 @@
                                 @else
                                     <button class="select-slot-btn w-full py-3 px-4 font-semibold rounded-xl border-2 border-green-200 bg-green-50 text-green-800 hover:bg-green-100 hover:border-green-300 transition-all transform hover:scale-105 shadow-sm" 
                                             data-court="{{ $court->id }}" data-time="{{ $slot }}"
-                                            title="Book {{ $court->name }} at {{ \Carbon\Carbon::createFromFormat('H:i', $slot)->format('g:i A') }}"
-                                            aria-label="Book {{ $court->name }} at {{ \Carbon\Carbon::createFromFormat('H:i', $slot)->format('g:i A') }}">
+                                            title="Select {{ $court->name }} at {{ \Carbon\Carbon::createFromFormat('H:i', $slot)->format('g:i A') }}"
+                                            aria-label="Select {{ $court->name }} at {{ \Carbon\Carbon::createFromFormat('H:i', $slot)->format('g:i A') }}">
                                         <div class="flex items-center justify-center gap-2">
                                             <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                                             </svg>
-                                            Book Now
+                                            Select
                                         </div>
                                     </button>
                                 @endif
@@ -218,6 +236,42 @@
                     @endforeach
                 </tbody>
             </table>
+        </div>
+    </div>
+
+    <!-- Multi-Slot Selection Panel -->
+    <div id="multi-slot-panel" class="fixed bottom-0 left-0 right-0 bg-white border-t-2 border-blue-200 shadow-2xl transform translate-y-full transition-transform duration-300 z-40">
+        <div class="max-w-7xl mx-auto px-4 py-4">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-bold text-gray-800 flex items-center gap-2">
+                    <svg class="w-6 h-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                    </svg>
+                    Selected Time Slots
+                </h3>
+                <button id="clear-selection" class="text-sm text-red-600 hover:text-red-800 font-medium">
+                    Clear All
+                </button>
+            </div>
+            
+            <div id="selected-slots" class="flex flex-wrap gap-2 mb-4">
+                <!-- Selected slots will be displayed here -->
+            </div>
+            
+            <div class="flex items-center justify-between">
+                <div class="text-sm text-gray-600">
+                    <span id="total-slots">0</span> slot(s) selected • 
+                    <span id="total-price">RM 0</span>
+                </div>
+                <div class="flex gap-3">
+                    <button id="cancel-selection" class="px-4 py-2 text-gray-600 hover:text-gray-800 font-medium">
+                        Cancel
+                    </button>
+                    <button id="confirm-multi-booking" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                        Confirm Booking
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -259,6 +313,11 @@
 </div>
 
 <script>
+    // Multi-slot selection state
+    let selectedSlots = new Map(); // Map of slotId -> {courtId, time, courtName}
+    let isMultiSelectMode = false;
+    const pricePerHour = 20;
+
     function setToday() {
         const today = new Date().toISOString().split('T')[0];
         document.getElementById('date-input').value = today;
@@ -271,6 +330,252 @@
         date.setDate(date.getDate() + offset);
         input.value = date.toISOString().split('T')[0];
         input.form.submit();
+    }
+
+    // Multi-slot selection functions
+    function toggleSlotSelection(courtId, time, courtName) {
+        const slotId = `${courtId}-${time}`;
+        
+        if (selectedSlots.has(slotId)) {
+            // Remove from selection
+            selectedSlots.delete(slotId);
+            updateSlotButton(courtId, time, false);
+        } else {
+            // Add to selection
+            selectedSlots.set(slotId, {
+                court_id: courtId,
+                time: time,
+                courtName: courtName
+            });
+            updateSlotButton(courtId, time, true);
+        }
+        
+        updateMultiSlotPanel();
+    }
+
+    function updateSlotButton(courtId, time, isSelected) {
+        const button = document.querySelector(`button[data-court="${courtId}"][data-time="${time}"]`);
+        if (!button) return;
+
+        if (isSelected) {
+            button.className = 'select-slot-btn w-full py-3 px-4 font-semibold rounded-xl border-2 border-blue-500 bg-blue-100 text-blue-800 hover:bg-blue-200 transition-all transform hover:scale-105 shadow-sm';
+            button.innerHTML = `
+                <div class="flex items-center justify-center gap-2">
+                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                    </svg>
+                    Selected
+                </div>
+            `;
+        } else {
+            button.className = 'select-slot-btn w-full py-3 px-4 font-semibold rounded-xl border-2 border-green-200 bg-green-50 text-green-800 hover:bg-green-100 hover:border-green-300 transition-all transform hover:scale-105 shadow-sm';
+            button.innerHTML = `
+                <div class="flex items-center justify-center gap-2">
+                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                    </svg>
+                    Select
+                </div>
+            `;
+        }
+    }
+
+    function updateMultiSlotPanel() {
+        const panel = document.getElementById('multi-slot-panel');
+        const selectedSlotsContainer = document.getElementById('selected-slots');
+        const totalSlots = document.getElementById('total-slots');
+        const totalPrice = document.getElementById('total-price');
+        const confirmButton = document.getElementById('confirm-multi-booking');
+
+        if (selectedSlots.size > 0) {
+            // Show panel
+            panel.classList.remove('translate-y-full');
+            isMultiSelectMode = true;
+            
+            // Update selected slots display
+            selectedSlotsContainer.innerHTML = '';
+            selectedSlots.forEach((slot, slotId) => {
+                const slotElement = document.createElement('div');
+                slotElement.className = 'flex items-center gap-2 bg-blue-100 text-blue-800 px-3 py-2 rounded-lg text-sm font-medium';
+                slotElement.innerHTML = `
+                    <span>${slot.courtName} - ${formatTime(slot.time)}</span>
+                    <button onclick="removeSlot('${slotId}')" class="text-blue-600 hover:text-blue-800">
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                `;
+                selectedSlotsContainer.appendChild(slotElement);
+            });
+            
+            // Update totals
+            totalSlots.textContent = selectedSlots.size;
+            totalPrice.textContent = `RM ${selectedSlots.size * pricePerHour}`;
+            confirmButton.disabled = false;
+        } else {
+            // Hide panel
+            panel.classList.add('translate-y-full');
+            isMultiSelectMode = false;
+            confirmButton.disabled = true;
+        }
+    }
+
+    function removeSlot(slotId) {
+        const slot = selectedSlots.get(slotId);
+        if (slot) {
+            updateSlotButton(slot.courtId, slot.time, false);
+            selectedSlots.delete(slotId);
+            updateMultiSlotPanel();
+        }
+    }
+
+    function clearAllSelections() {
+        selectedSlots.forEach((slot, slotId) => {
+            updateSlotButton(slot.courtId, slot.time, false);
+        });
+        selectedSlots.clear();
+        updateMultiSlotPanel();
+    }
+
+    function formatTime(time) {
+        const [hours, minutes] = time.split(':');
+        const hour = parseInt(hours);
+        const ampm = hour >= 12 ? 'PM' : 'AM';
+        const displayHour = hour % 12 || 12;
+        return `${displayHour}:${minutes} ${ampm}`;
+    }
+
+    function confirmMultiBooking() {
+        if (selectedSlots.size === 0) return;
+
+        const date = document.getElementById('date-input').value;
+        const slots = Array.from(selectedSlots.values());
+        
+        // Create booking data
+        const bookingData = {
+            date: date,
+            slots: slots,
+            total_price: slots.length * pricePerHour
+        };
+
+        // Show confirmation modal
+        showMultiBookingConfirmation(bookingData);
+    }
+
+    function showMultiBookingConfirmation(bookingData) {
+        const modal = document.getElementById('booking-modal');
+        const modalContent = document.getElementById('modal-content');
+        
+        const slotsHtml = bookingData.slots.map(slot => 
+            `<div class="flex justify-between items-center py-2 border-b border-gray-100 last:border-b-0">
+                <span class="font-medium">${slot.courtName}</span>
+                <span class="text-gray-600">${formatTime(slot.time)}</span>
+            </div>`
+        ).join('');
+
+        modalContent.innerHTML = `
+            <div class="text-center">
+                <div class="w-20 h-20 bg-gradient-to-br from-blue-500 to-green-500 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <svg class="w-10 h-10 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                    </svg>
+                </div>
+                <h2 class="text-2xl font-bold mb-4 text-gray-800">Confirm Multi-Slot Booking</h2>
+                <div class="bg-gray-50 rounded-xl p-6 mb-6">
+                    <div class="text-left mb-4">
+                        <span class="text-gray-600 text-sm">Date</span>
+                        <p class="font-semibold text-gray-800">${bookingData.date}</p>
+                    </div>
+                    <div class="text-left mb-4">
+                        <span class="text-gray-600 text-sm">Selected Slots</span>
+                        <div class="mt-2">
+                            ${slotsHtml}
+                        </div>
+                    </div>
+                    <div class="mt-4 pt-4 border-t border-gray-200">
+                        <div class="flex justify-between items-center">
+                            <span class="text-lg font-semibold text-gray-800">Total Price</span>
+                            <span class="text-2xl font-bold text-blue-600">RM ${bookingData.total_price}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex gap-3">
+                    <button id="cancel-multi-booking" class="flex-1 px-4 py-3 text-gray-600 hover:text-gray-800 font-medium">
+                        Cancel
+                    </button>
+                    <button id="submit-multi-booking" class="flex-1 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold">
+                        Confirm & Pay
+                    </button>
+                </div>
+            </div>
+        `;
+        
+        modal.classList.remove('hidden');
+        
+        // Add event listeners
+        document.getElementById('cancel-multi-booking').onclick = () => {
+            modal.classList.add('hidden');
+        };
+        
+        document.getElementById('submit-multi-booking').onclick = () => {
+            submitMultiBooking(bookingData);
+        };
+    }
+
+    function submitMultiBooking(bookingData) {
+        console.log('Submitting multi-booking with data:', bookingData);
+        
+        // Create form data
+        const formData = new FormData();
+        formData.append('_token', document.querySelector('meta[name="csrf-token"]').getAttribute('content'));
+        formData.append('date', bookingData.date);
+        formData.append('slots', JSON.stringify(bookingData.slots));
+        formData.append('total_price', bookingData.total_price);
+        
+        console.log('Form data slots:', JSON.stringify(bookingData.slots));
+
+        // Submit booking
+        fetch('/bookings/multi', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => {
+            console.log('Response status:', response.status);
+            return response.json();
+        })
+        .then(data => {
+            console.log('Response data:', data);
+            
+            if (data.success) {
+                // Clear selections and hide panel
+                clearAllSelections();
+                document.getElementById('booking-modal').classList.add('hidden');
+                
+                // Show success message
+                if (data.bookings_created === data.total_slots) {
+                    alert('All bookings confirmed successfully!');
+                } else {
+                    alert(`${data.bookings_created} booking(s) confirmed successfully!\n\nSome slots were unavailable:\n${data.errors.join('\n')}`);
+                }
+                
+                // Reload page to show updated bookings
+                location.reload();
+            } else {
+                // Show detailed error message
+                let errorMsg = data.message || 'Failed to create booking';
+                if (data.errors && data.errors.length > 0) {
+                    errorMsg += '\n\nUnavailable slots:\n' + data.errors.join('\n');
+                }
+                alert('Error: ' + errorMsg);
+            }
+        })
+        .catch(error => {
+            console.error('Network or parsing error:', error);
+            alert('Network error creating booking. Please check your connection and try again.');
+        });
     }
 
     // DISABLED: Enhanced Live Grid Coloring (was causing incorrect display)
@@ -441,7 +746,7 @@
     function addSlotSelectionListeners() {
         console.log('Setting up slot selection listeners...');
         const buttons = document.querySelectorAll('.select-slot-btn');
-        console.log('Found', buttons.length, 'Book Now buttons');
+        console.log('Found', buttons.length, 'Select buttons');
         
         buttons.forEach((btn, index) => {
             console.log('Setting up listener for button', index + 1, 'with data:', {
@@ -451,11 +756,12 @@
             
             btn.onclick = function(e) {
                 e.preventDefault();
-                console.log('Book Now button clicked!');
+                console.log('Select button clicked!');
                 const courtId = this.getAttribute('data-court');
                 const slot = this.getAttribute('data-time');
-                console.log('Court ID:', courtId, 'Slot:', slot);
-                showBookingModal(courtId, slot);
+                const courtName = document.querySelector(`th[data-court-id='${courtId}']`)?.innerText || `Court ${courtId}`;
+                console.log('Court ID:', courtId, 'Slot:', slot, 'Court Name:', courtName);
+                toggleSlotSelection(courtId, slot, courtName);
             };
         });
     }
@@ -594,6 +900,11 @@
             });
         };
     }
+
+    // Multi-slot panel event listeners
+    document.getElementById('clear-selection').onclick = clearAllSelections;
+    document.getElementById('cancel-selection').onclick = clearAllSelections;
+    document.getElementById('confirm-multi-booking').onclick = confirmMultiBooking;
 
     // Initial event listeners setup
     console.log('Initializing booking page...');

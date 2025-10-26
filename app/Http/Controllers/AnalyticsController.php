@@ -8,6 +8,7 @@ use App\Models\Court;
 use App\Models\Payment;
 use App\Models\User;
 use App\Models\Product;
+use App\Services\BookingPredictionService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use PDF;
@@ -35,12 +36,17 @@ class AnalyticsController extends Controller
         
         // Performance Metrics
         $performanceData = $this->getPerformanceMetrics($user);
+        
+        // AI Booking Predictions
+        $predictionService = new BookingPredictionService();
+        $predictionData = $predictionService->predictWeeklyTrends($user->id);
 
         return view('analytics.index', compact(
             'revenueData',
             'utilizationData', 
             'customerData',
-            'performanceData'
+            'performanceData',
+            'predictionData'
         ));
     }
 

@@ -87,6 +87,88 @@
         </div>
     </div>
 
+    <!-- AI Booking Predictions -->
+    <div class="mb-8">
+        <div class="bg-gradient-to-r from-purple-50 to-indigo-50 rounded-2xl shadow-sm border border-purple-100 p-8">
+            <div class="flex items-center justify-between mb-6">
+                <div>
+                    <h2 class="text-2xl font-bold text-gray-900 flex items-center gap-3">
+                        <svg class="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                        </svg>
+                        AI-Powered Booking Predictions
+                    </h2>
+                    <p class="text-gray-600 mt-2">Predictive analytics for the next 7 days to maximize your income</p>
+                </div>
+                <div class="text-right">
+                    <div class="text-sm text-gray-500">Confidence Score</div>
+                    <div class="text-2xl font-bold text-purple-600">{{ $predictionData['confidence']['overall'] }}%</div>
+                </div>
+            </div>
+
+            <!-- Weekly Predictions Chart -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">7-Day Booking Forecast</h3>
+                    <div class="h-64">
+                        <canvas id="predictionChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Daily Predictions</h3>
+                    <div class="space-y-3">
+                        @foreach($predictionData['predictions'] as $prediction)
+                        <div class="flex items-center justify-between p-4 rounded-lg {{ $prediction['is_peak_day'] ? 'bg-green-50 border border-green-200' : ($prediction['is_low_day'] ? 'bg-yellow-50 border border-yellow-200' : 'bg-gray-50 border border-gray-200') }}">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-full flex items-center justify-center {{ $prediction['is_peak_day'] ? 'bg-green-500' : ($prediction['is_low_day'] ? 'bg-yellow-500' : 'bg-gray-500') }} text-white font-bold">
+                                    {{ $prediction['predicted_bookings'] }}
+                                </div>
+                                <div>
+                                    <div class="font-semibold text-gray-900">{{ $prediction['day_name'] }}</div>
+                                    <div class="text-sm text-gray-500">{{ \Carbon\Carbon::parse($prediction['date'])->format('M d') }}</div>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <div class="font-semibold text-gray-900">RM {{ number_format($prediction['revenue_estimate'], 0) }}</div>
+                                <div class="text-sm text-gray-500">{{ $prediction['confidence'] }}% confidence</div>
+                            </div>
+                        </div>
+                        @endforeach
+                    </div>
+                </div>
+            </div>
+
+            <!-- AI Recommendations -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                    <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                    </svg>
+                    AI Recommendations
+                </h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    @foreach($predictionData['recommendations'] as $recommendation)
+                    <div class="p-4 rounded-lg border {{ $recommendation['type'] === 'peak_days' ? 'bg-green-50 border-green-200' : ($recommendation['type'] === 'low_days' ? 'bg-yellow-50 border-yellow-200' : 'bg-blue-50 border-blue-200') }}">
+                        <h4 class="font-semibold text-gray-900 mb-2">{{ $recommendation['title'] }}</h4>
+                        <p class="text-sm text-gray-600 mb-3">{{ $recommendation['description'] }}</p>
+                        <ul class="space-y-1">
+                            @foreach($recommendation['actions'] as $action)
+                            <li class="text-sm text-gray-700 flex items-start gap-2">
+                                <svg class="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                </svg>
+                                {{ $action }}
+                            </li>
+                            @endforeach
+                        </ul>
+                    </div>
+                    @endforeach
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Revenue Analytics -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
         <!-- Monthly Revenue Chart -->
@@ -306,6 +388,86 @@ const peakChart = new Chart(peakCtx, {
         }
     }
 });
+
+// AI Prediction Chart
+const predictionCtx = document.getElementById('predictionChart').getContext('2d');
+
+// Prepare prediction data
+const predictionData = @json($predictionData['predictions']);
+const labels = predictionData.map(p => p.day_name);
+const data = predictionData.map(p => p.predicted_bookings || 0);
+const pointColors = predictionData.map(p => {
+    if (p.is_peak_day) return 'rgb(34, 197, 94)';
+    if (p.is_low_day) return 'rgb(245, 158, 11)';
+    return 'rgb(107, 114, 128)';
+});
+
+try {
+const predictionChart = new Chart(predictionCtx, {
+    type: 'line',
+    data: {
+        labels: labels,
+        datasets: [{
+            label: 'Predicted Bookings',
+            data: data,
+            borderColor: 'rgb(147, 51, 234)',
+            backgroundColor: 'rgba(147, 51, 234, 0.1)',
+            borderWidth: 3,
+            fill: true,
+            tension: 0.4,
+            pointBackgroundColor: pointColors,
+            pointBorderColor: pointColors,
+            pointRadius: 8,
+            pointHoverRadius: 10
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                display: false
+            },
+            tooltip: {
+                callbacks: {
+                    afterLabel: function(context) {
+                        const prediction = predictionData[context.dataIndex];
+                        return [
+                            'Revenue: RM ' + (prediction.revenue_estimate || 0).toLocaleString(),
+                            'Confidence: ' + (prediction.confidence || 0) + '%',
+                            prediction.is_peak_day ? '🔥 Peak Day' : 
+                            prediction.is_low_day ? '📉 Low Day' : '📊 Normal Day'
+                        ];
+                    }
+                }
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                title: {
+                    display: true,
+                    text: 'Number of Bookings'
+                }
+            },
+            x: {
+                title: {
+                    display: true,
+                    text: 'Days of Week'
+                }
+            }
+        },
+        elements: {
+            point: {
+                hoverBackgroundColor: 'rgb(147, 51, 234)'
+            }
+        }
+    }
+});
+
+} catch (error) {
+    console.error('Error creating prediction chart:', error);
+}
 </script>
 @endpush
 @endsection 
