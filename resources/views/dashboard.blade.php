@@ -7,21 +7,21 @@
     <div class="mb-12">
         <!-- Owner Analytics Cards -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-10">
-            <div class="bg-gradient-to-br from-blue-100 to-blue-300 rounded-2xl shadow-lg p-8 flex flex-col items-center border-t-4 border-blue-400 animate-fade-in">
+            <div class="bg-gradient-to-br from-blue-100 to-blue-300 rounded-2xl shadow-lg p-8 flex flex-col items-center border-t-4 border-blue-200 animate-fade-in">
                 <div class="bg-blue-500 text-white rounded-full p-4 mb-3">
                     <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 21m5.25-4l.75 4m-7.5-4h10.5a2.25 2.25 0 002.25-2.25V7.5A2.25 2.25 0 0017.25 5.25H6.75A2.25 2.25 0 004.5 7.5v7.25A2.25 2.25 0 006.75 17z"/></svg>
                 </div>
                 <div class="text-3xl font-bold text-blue-800">{{ $user->courts->count() }}</div>
                 <div class="text-gray-700 mt-1 font-medium">Courts Owned</div>
             </div>
-            <div class="bg-gradient-to-br from-green-100 to-green-300 rounded-2xl shadow-lg p-8 flex flex-col items-center border-t-4 border-green-400 animate-fade-in">
+            <div class="bg-gradient-to-br from-green-100 to-green-300 rounded-2xl shadow-lg p-8 flex flex-col items-center border-t-4 border-green-200 animate-fade-in">
                 <div class="bg-green-500 text-white rounded-full p-4 mb-3">
                     <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 17l4-4 4 4m0 0V3m0 14a4 4 0 01-8 0"/></svg>
                 </div>
                 <div class="text-3xl font-bold text-green-800">{{ $user->courts->flatMap->bookings->count() }}</div>
                 <div class="text-gray-700 mt-1 font-medium">Total Bookings</div>
             </div>
-            <div class="bg-gradient-to-br from-yellow-100 to-yellow-300 rounded-2xl shadow-lg p-8 flex flex-col items-center border-t-4 border-yellow-400 animate-fade-in">
+            <div class="bg-gradient-to-br from-yellow-100 to-yellow-300 rounded-2xl shadow-lg p-8 flex flex-col items-center border-t-4 border-yellow-200 animate-fade-in">
                 <div class="bg-yellow-500 text-white rounded-full p-4 mb-3">
                     <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 1.343-3 3s1.343 3 3 3 3-1.343 3-3-1.343-3-3-3zm0 0V4m0 7v7"/></svg>
                 </div>
@@ -72,39 +72,309 @@
     </div>
 @elseif($user->isStaff())
     <div class="mb-12">
-        <h1 class="text-3xl font-bold mb-6">Staff Dashboard</h1>
-        <div class="max-w-7xl mx-auto px-4 mb-8">
-            <div class="bg-white rounded-2xl shadow-lg p-6 border-t-4 border-green-100">
-                <h2 class="text-xl font-bold mb-4 flex items-center">
-                    <svg class="w-5 h-5 mr-2 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 17l4-4 4 4m0 0V3m0 14a4 4 0 01-8 0"/></svg>
-                    All Bookings
-                </h2>
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left border-separate border-spacing-y-2">
-                        <thead><tr class="text-gray-600 text-sm"><th class="py-2">Court</th><th>Date</th><th>Time</th><th>User</th><th>Status</th></tr></thead>
-                    <tbody>
-                    @foreach(\App\Models\Booking::orderBy('date', 'desc')->take(10)->get() as $booking)
-                                                    <tr class="bg-green-50 hover:bg-green-100 transition rounded-xl">
-                                <td class="py-2 font-semibold">{{ $booking->court->name }}</td>
-                            <td>{{ $booking->date }}</td>
-                            <td>{{ $booking->start_time }} - {{ $booking->end_time }}</td>
-                            <td>{{ $booking->user->name }}</td>
-                                <td>
-                                    <span class="inline-block px-3 py-1 rounded-full text-xs font-bold
-                                        @if($booking->status === 'paid') bg-green-200 text-green-800
-                                        @elseif($booking->status === 'confirmed') bg-blue-200 text-blue-800
-                                        @elseif($booking->status === 'completed') bg-gray-200 text-gray-800
-                                        @elseif($booking->status === 'pending') bg-yellow-200 text-yellow-800
-                                        @else bg-red-200 text-red-800 @endif">
-                                        {{ ucfirst($booking->status) }}
-                                    </span>
-                                </td>
-                            </tr>
-                    @endforeach
-                    </tbody>
-                </table>
+        <!-- Professional Staff Dashboard Header -->
+        <div class="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl shadow-sm border border-blue-100 p-8 mb-8">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-4">
+                    <div class="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg">
+                        <svg class="w-8 h-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    </div>
+                    <div>
+                        <h1 class="text-3xl font-bold text-gray-900 mb-2">Staff Dashboard</h1>
+                        <p class="text-gray-600">Welcome back, {{ $user->name }}! Manage bookings and monitor court operations.</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-3">
+                    <a href="{{ route('staff.bookings') }}" class="inline-flex items-center px-6 py-3 border border-transparent text-sm font-medium rounded-xl shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                        </svg>
+                        View All Bookings
+                    </a>
                 </div>
             </div>
+        </div>
+
+        <!-- Analytics Cards -->
+        @php
+            $allBookings = \App\Models\Booking::with(['court', 'user', 'payment'])->get();
+            $todayBookings = $allBookings->where('date', now()->toDateString());
+            $pendingPayments = $allBookings->where('payment.status', 'pending');
+            $totalRevenue = $allBookings->where('payment.status', 'paid')->sum('payment.amount');
+        @endphp
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <!-- Total Bookings Card -->
+            <div class="bg-white rounded-2xl shadow-lg p-6 border-t-4 border-blue-200 hover:shadow-xl transition-shadow">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-600 mb-1">Total Bookings</p>
+                        <p class="text-3xl font-bold text-gray-900">{{ $allBookings->count() }}</p>
+                        <p class="text-sm text-gray-500 mt-1">All time</p>
+                    </div>
+                    <div class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
+                        <svg class="w-6 h-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 17l4-4 4 4m0 0V3m0 14a4 4 0 01-8 0" />
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Today's Bookings Card -->
+            <div class="bg-white rounded-2xl shadow-lg p-6 border-t-4 border-green-200 hover:shadow-xl transition-shadow">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-600 mb-1">Today's Bookings</p>
+                        <p class="text-3xl font-bold text-gray-900">{{ $todayBookings->count() }}</p>
+                        <p class="text-sm text-gray-500 mt-1">{{ now()->format('M d, Y') }}</p>
+                    </div>
+                    <div class="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
+                        <svg class="w-6 h-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pending Payments Card -->
+            <div class="bg-white rounded-2xl shadow-lg p-6 border-t-4 border-yellow-200 hover:shadow-xl transition-shadow">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-600 mb-1">Pending Payments</p>
+                        <p class="text-3xl font-bold text-gray-900">{{ $pendingPayments->count() }}</p>
+                        <p class="text-sm text-gray-500 mt-1">Requires attention</p>
+                    </div>
+                    <div class="w-12 h-12 bg-yellow-100 rounded-xl flex items-center justify-center">
+                        <svg class="w-6 h-6 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Total Revenue Card -->
+            <div class="bg-white rounded-2xl shadow-lg p-6 border-t-4 border-purple-200 hover:shadow-xl transition-shadow">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-600 mb-1">Total Revenue</p>
+                        <p class="text-3xl font-bold text-gray-900">RM {{ number_format($totalRevenue, 2) }}</p>
+                        <p class="text-sm text-gray-500 mt-1">From paid bookings</p>
+                    </div>
+                    <div class="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
+                        <svg class="w-6 h-6 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 1.343-3 3s1.343 3 3 3 3-1.343 3-3-1.343-3-3-3zm0 0V4m0 7v7" />
+                        </svg>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="bg-white rounded-2xl shadow-lg p-6 mb-8 border-t-4 border-indigo-200">
+            <h2 class="text-xl font-bold mb-4 flex items-center">
+                <svg class="w-5 h-5 mr-2 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+                Quick Actions
+            </h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <a href="{{ route('staff.bookings') }}" class="flex items-center p-4 bg-blue-50 rounded-xl hover:bg-blue-100 transition-colors">
+                    <div class="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center mr-3">
+                        <svg class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                        </svg>
+                    </div>
+                    <div>
+                        <p class="font-semibold text-gray-900">Manage Bookings</p>
+                        <p class="text-sm text-gray-600">View and manage all bookings</p>
+                    </div>
+                </a>
+                
+                <a href="{{ route('payments.index') }}" class="flex items-center p-4 bg-green-50 rounded-xl hover:bg-green-100 transition-colors">
+                    <div class="w-10 h-10 bg-green-500 rounded-lg flex items-center justify-center mr-3">
+                        <svg class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+                        </svg>
+                    </div>
+                    <div>
+                        <p class="font-semibold text-gray-900">Payment Management</p>
+                        <p class="text-sm text-gray-600">Process and track payments</p>
+                    </div>
+                </a>
+                
+                <a href="{{ route('courts.index') }}" class="flex items-center p-4 bg-purple-50 rounded-xl hover:bg-purple-100 transition-colors">
+                    <div class="w-10 h-10 bg-purple-500 rounded-lg flex items-center justify-center mr-3">
+                        <svg class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 21m5.25-4l.75 4m-7.5-4h10.5a2.25 2.25 0 002.25-2.25V7.5A2.25 2.25 0 0017.25 5.25H6.75A2.25 2.25 0 004.5 7.5v7.25A2.25 2.25 0 006.75 17z" />
+                        </svg>
+                    </div>
+                    <div>
+                        <p class="font-semibold text-gray-900">Court Management</p>
+                        <p class="text-sm text-gray-600">Manage court availability</p>
+                    </div>
+                </a>
+            </div>
+        </div>
+
+        <!-- Recent Bookings Table -->
+        <div class="bg-white rounded-2xl shadow-lg p-6 border-t-4 border-green-200">
+            <div class="flex items-center justify-between mb-6">
+                <h2 class="text-xl font-bold flex items-center">
+                    <svg class="w-5 h-5 mr-2 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 17l4-4 4 4m0 0V3m0 14a4 4 0 01-8 0"/>
+                    </svg>
+                    Recent Bookings
+                </h2>
+                <a href="{{ route('staff.bookings') }}" class="text-blue-600 hover:text-blue-800 font-medium text-sm">
+                    View All →
+                </a>
+            </div>
+            
+            @if($allBookings->count() > 0)
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider">Court</th>
+                                <th class="px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider">Customer</th>
+                                <th class="px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider">Date & Time</th>
+                                <th class="px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider">Status</th>
+                                <th class="px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider">Payment</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-200">
+                            @foreach($allBookings->sortByDesc('date')->take(5) as $booking)
+                                <tr class="hover:bg-gray-50 transition-colors">
+                                    <td class="px-4 py-4 whitespace-nowrap">
+                                        <div class="flex items-center">
+                                            <div class="w-8 h-8 bg-gradient-to-br from-blue-500 to-green-500 rounded-lg flex items-center justify-center mr-3">
+                                                <svg class="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 21m5.25-4l.75 4m-7.5-4h10.5a2.25 2.25 0 002.25-2.25V7.5A2.25 2.25 0 0017.25 5.25H6.75A2.25 2.25 0 004.5 7.5v7.25A2.25 2.25 0 006.75 17z" />
+                                                </svg>
+                                            </div>
+                                            <div class="text-sm font-semibold text-gray-900">{{ $booking->court->name ?? 'N/A' }}</div>
+                                        </div>
+                                    </td>
+                                    <td class="px-4 py-4 whitespace-nowrap">
+                                        <div class="text-sm font-medium text-gray-900">{{ $booking->user->name ?? 'N/A' }}</div>
+                                        <div class="text-sm text-gray-500">{{ $booking->user->email ?? 'N/A' }}</div>
+                                    </td>
+                                    <td class="px-4 py-4 whitespace-nowrap">
+                                        <div class="text-sm text-gray-900 font-medium">{{ $booking->date }}</div>
+                                        <div class="text-sm text-gray-500">{{ $booking->start_time }} - {{ $booking->end_time }}</div>
+                                    </td>
+                                    <td class="px-4 py-4 whitespace-nowrap">
+                                        <span class="inline-flex px-3 py-1 text-xs font-semibold rounded-full
+                                            @if($booking->status === 'confirmed') bg-green-100 text-green-800
+                                            @elseif($booking->status === 'completed') bg-gray-100 text-gray-800
+                                            @elseif($booking->status === 'pending') bg-yellow-100 text-yellow-800
+                                            @else bg-red-100 text-red-800 @endif">
+                                            {{ ucfirst($booking->status) }}
+                                        </span>
+                                    </td>
+                                    <td class="px-4 py-4 whitespace-nowrap">
+                                        @if($booking->payment)
+                                            <div class="flex items-center gap-2">
+                                                <span class="inline-flex px-3 py-1 text-xs font-semibold rounded-full
+                                                    @if($booking->payment->status === 'paid') bg-green-100 text-green-800
+                                                    @elseif($booking->payment->status === 'pending') bg-yellow-100 text-yellow-800
+                                                    @else bg-red-100 text-red-800 @endif">
+                                                    {{ ucfirst($booking->payment->status) }}
+                                                </span>
+                                                <div class="text-sm font-semibold text-gray-900">
+                                                    RM {{ number_format($booking->payment->amount, 2) }}
+                                                </div>
+                                            </div>
+                                        @else
+                                            <span class="text-sm text-gray-500">No payment</span>
+                                        @endif
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            @else
+                <div class="text-center py-12">
+                    <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <svg class="w-8 h-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 17l4-4 4 4m0 0V3m0 14a4 4 0 01-8 0" />
+                        </svg>
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-600 mb-2">No Bookings Yet</h3>
+                    <p class="text-gray-500">Bookings will appear here once customers start making reservations.</p>
+                </div>
+            @endif
+        </div>
+
+        <!-- Recent Activity Feed -->
+        <div class="bg-white rounded-2xl shadow-lg p-6 border-t-4 border-orange-200 mb-8">
+            <h2 class="text-xl font-bold mb-6 flex items-center">
+                <svg class="w-5 h-5 mr-2 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                Recent Activity
+            </h2>
+            
+            <div class="space-y-4">
+                @php
+                    $recentBookings = $allBookings->sortByDesc('created_at')->take(5);
+                @endphp
+                
+                @forelse($recentBookings as $booking)
+                    <div class="flex items-center p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors">
+                        <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center mr-4 shadow-sm">
+                            <svg class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 17l4-4 4 4m0 0V3m0 14a4 4 0 01-8 0" />
+                            </svg>
+                        </div>
+                        <div class="flex-1">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-sm font-semibold text-gray-900">
+                                        New booking by {{ $booking->user->name }}
+                                    </p>
+                                    <p class="text-sm text-gray-600">
+                                        {{ $booking->court->name }} • {{ \Carbon\Carbon::parse($booking->date)->format('M d, Y') }} at {{ $booking->start_time }}
+                                    </p>
+                                </div>
+                                <div class="text-right">
+                                    <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full
+                                        @if($booking->status === 'confirmed') bg-green-100 text-green-800
+                                        @elseif($booking->status === 'pending') bg-yellow-100 text-yellow-800
+                                        @else bg-gray-100 text-gray-800 @endif">
+                                        {{ ucfirst($booking->status) }}
+                                    </span>
+                                    <p class="text-xs text-gray-500 mt-1">{{ $booking->created_at->diffForHumans() }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                @empty
+                    <div class="text-center py-8">
+                        <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <svg class="w-8 h-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                        </div>
+                        <h3 class="text-lg font-semibold text-gray-600 mb-2">No Recent Activity</h3>
+                        <p class="text-gray-500">Activity will appear here as bookings are made.</p>
+                    </div>
+                @endforelse
+            </div>
+            
+            @if($recentBookings->count() > 0)
+                <div class="mt-6 text-center">
+                    <a href="{{ route('staff.bookings') }}" class="inline-flex items-center px-4 py-2 bg-orange-100 text-orange-800 rounded-lg hover:bg-orange-200 transition-colors text-sm font-medium">
+                        View All Activity
+                        <svg class="w-4 h-4 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                        </svg>
+                    </a>
+                </div>
+            @endif
         </div>
     </div>
 @else

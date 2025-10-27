@@ -7,6 +7,8 @@ use App\Http\Controllers\Api\CourtController;
 use App\Http\Controllers\Api\BookingController;
 use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\WebUrlController;
+use App\Http\Controllers\Api\DashboardController;
+use App\Http\Controllers\Api\NotificationController;
 
 /*
 |--------------------------------------------------------------------------
@@ -28,6 +30,9 @@ Route::prefix('auth')->group(function () {
 
 // Protected API Routes (require authentication)
 Route::middleware('auth:sanctum')->group(function () {
+    // Dashboard - NEW!
+    Route::get('/dashboard', [DashboardController::class, 'getDashboardData']);
+    
     // Courts
     Route::get('/courts', [CourtController::class, 'index']);
     Route::get('/courts/{court}', [CourtController::class, 'show']);
@@ -43,11 +48,17 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/payments', [PaymentController::class, 'index']);
     Route::get('/payments/{payment}', [PaymentController::class, 'show']);
     Route::post('/payments/{payment}/process', [PaymentController::class, 'processPayment']);
+    
+    // Generate authenticated web URL for mobile app
+    Route::get('/generate-web-url', [WebUrlController::class, 'generateWebUrl']);
+    
+    // Push Notifications
+    Route::post('/fcm-token', [NotificationController::class, 'storeFCMToken']);
+    Route::delete('/fcm-token', [NotificationController::class, 'deleteFCMToken']);
+    Route::get('/notifications', [NotificationController::class, 'getNotifications']);
+    Route::get('/notifications/unread-count', [NotificationController::class, 'getUnreadCount']);
 });
 
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
-
-// Generate authenticated web URL for mobile app
-Route::middleware('auth:sanctum')->get('/generate-web-url', [WebUrlController::class, 'generateWebUrl']);

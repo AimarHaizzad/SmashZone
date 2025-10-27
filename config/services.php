@@ -45,4 +45,8 @@ return [
         'key' => env('NEWSAPI_KEY'),
     ],
 
+    'firebase' => [
+        'server_key' => env('FIREBASE_SERVER_KEY'),
+    ],
+
 ];

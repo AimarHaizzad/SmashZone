@@ -115,8 +115,174 @@ Route::get('/test-middleware', function() {
     return 'It works!';
 })->middleware('owner');
 
-Route::get('/test-hello', function() {
-    return 'Hello World';
+use App\Services\FCMService;
+
+Route::get('/test-notification', function () {
+    $fcm = new FCMService();
+    
+    // Test notification
+    $fcm->sendToUser(
+        1,  // Replace with your user ID
+        "Test Notification 🔔",
+        "If you see this, Firebase is working!",
+        ['type' => 'test']
+    );
+    
+    return "Notification sent! Check your phone.";
+});
+
+Route::get('/test-notification-simple', function () {
+    // Get FCM token from database
+    $fcmTokenRecord = DB::table('fcm_tokens')->where('user_id', 1)->first();
+    
+    if (!$fcmTokenRecord) {
+        return response()->json([
+            'error' => 'No FCM token found for user ID 1',
+            'message' => 'Please login to the Android app first to generate an FCM token'
+        ]);
+    }
+    
+    $fcmToken = $fcmTokenRecord->token;
+    
+    // Firebase Server Key
+    $serverKey = 'AIzaSyA-SNazjDMqucspdRCRaDcmPJ_yG6yV7Ko';
+    
+    // Notification data
+    $data = [
+        'to' => $fcmToken,
+        'notification' => [
+            'title' => 'SmashZone Test 🔔',
+            'body' => 'This is a test notification from Laravel!',
+            'sound' => 'default'
+        ],
+        'data' => [
+            'type' => 'test',
+            'message' => 'Simple test notification'
+        ]
+    ];
+    
+    // Send notification
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, 'https://fcm.googleapis.com/fcm/send');
+    curl_setopt($ch, CURLOPT_POST, true);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, [
+        'Authorization: key=' . $serverKey,
+        'Content-Type: application/json'
+    ]);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 30);
+    
+    $response = curl_exec($ch);
+    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $error = curl_error($ch);
+    curl_close($ch);
+    
+    // Parse response
+    $responseData = json_decode($response, true);
+    
+    return response()->json([
+        'message' => $httpCode === 200 ? 'Notification sent! Check your phone.' : 'Failed to send notification',
+        'http_code' => $httpCode,
+        'response' => $responseData ?: $response,
+        'error' => $error,
+        'token_preview' => substr($fcmToken, 0, 30) . '...',
+        'server_key_preview' => substr($serverKey, 0, 20) . '...'
+    ]);
+});
+
+Route::get('/test-firebase-key', function () {
+    // Test Firebase Server Key validity
+    $serverKey = 'AIzaSyA-SNazjDMqucspdRCRaDcmPJ_yG6yV7Ko';
+    
+    // Test with a dummy token to check if server key is valid
+    $data = [
+        'to' => 'dummy_token_for_testing',
+        'notification' => [
+            'title' => 'Test',
+            'body' => 'Test'
+        ]
+    ];
+    
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, 'https://fcm.googleapis.com/fcm/send');
+    curl_setopt($ch, CURLOPT_POST, true);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, [
+        'Authorization: key=' . $serverKey,
+        'Content-Type: application/json'
+    ]);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 30);
+    
+    $response = curl_exec($ch);
+    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $error = curl_error($ch);
+    curl_close($ch);
+    
+    $responseData = json_decode($response, true);
+    
+    return response()->json([
+        'message' => 'Firebase Server Key Test',
+        'http_code' => $httpCode,
+        'response' => $responseData ?: $response,
+        'error' => $error,
+        'server_key_preview' => substr($serverKey, 0, 20) . '...',
+        'key_length' => strlen($serverKey),
+        'expected_http_codes' => [
+            '200' => 'Success (but notification not sent due to invalid token)',
+            '400' => 'Bad Request (invalid server key or request format)',
+            '401' => 'Unauthorized (invalid server key)',
+            '404' => 'Not Found (invalid endpoint or server key)'
+        ],
+        'troubleshooting' => [
+            'step_1' => 'Check Firebase Console > Project Settings > Cloud Messaging > Server Key',
+            'step_2' => 'Ensure the server key is from the correct Firebase project',
+            'step_3' => 'Verify the Android app is registered in the same Firebase project',
+            'step_4' => 'Check if FCM is enabled in Firebase Console'
+        ]
+    ]);
+});
+
+Route::get('/firebase-key-help', function () {
+    return response()->json([
+        'message' => 'Firebase Key Type Identification',
+        'key_analysis' => [
+            'provided_key' => 'AIzaSyA-SNazjDMqucspdRCRaDcmPJ_yG6yV7Ko',
+            'key_length' => 39,
+            'key_type' => 'Web API Key (NOT Server Key)',
+            'explanation' => 'This appears to be a Web API Key, not a Server Key for FCM'
+        ],
+        'firebase_key_types' => [
+            'web_api_key' => [
+                'format' => 'AIzaSy...',
+                'length' => '~39 characters',
+                'purpose' => 'Used for web applications, not FCM',
+                'location' => 'Firebase Console > Project Settings > General > Web API Key'
+            ],
+            'server_key' => [
+                'format' => 'AAAA...',
+                'length' => '~150+ characters',
+                'purpose' => 'Used for FCM push notifications',
+                'location' => 'Firebase Console > Project Settings > Cloud Messaging > Server Key'
+            ]
+        ],
+        'how_to_find_server_key' => [
+            'step_1' => 'Open Firebase Console: https://console.firebase.google.com',
+            'step_2' => 'Select your SmashZone project',
+            'step_3' => 'Click the gear icon (⚙️) > Project Settings',
+            'step_4' => 'Go to "Cloud Messaging" tab',
+            'step_5' => 'Look for "Server Key" (NOT "Web API Key")',
+            'step_6' => 'Copy the Server Key (starts with AAAA...)'
+        ],
+        'current_issue' => [
+            'problem' => 'Using Web API Key instead of Server Key',
+            'solution' => 'Get the correct Server Key from Cloud Messaging section',
+            'note' => 'Web API Key is for web apps, Server Key is for FCM'
+        ]
+    ]);
 });
 
 Route::get('/test-courts', function() {

@@ -66,9 +66,15 @@ class CourtController extends Controller
      */
     public function edit(Court $court)
     {
-        if (!auth()->user() || (!auth()->user()->isOwner() && !auth()->user()->isStaff()) || $court->owner_id !== auth()->id()) {
+        if (!auth()->user() || (!auth()->user()->isOwner() && !auth()->user()->isStaff())) {
             abort(403);
         }
+        
+        // Staff can edit any court, owners can only edit their own courts
+        if (auth()->user()->isOwner() && $court->owner_id !== auth()->id()) {
+            abort(403);
+        }
+        
         return view('courts.edit', compact('court'));
     }
 
@@ -77,9 +83,15 @@ class CourtController extends Controller
      */
     public function update(Request $request, Court $court)
     {
-        if (!auth()->user() || (!auth()->user()->isOwner() && !auth()->user()->isStaff()) || $court->owner_id !== auth()->id()) {
+        if (!auth()->user() || (!auth()->user()->isOwner() && !auth()->user()->isStaff())) {
             abort(403);
         }
+        
+        // Staff can update any court, owners can only update their own courts
+        if (auth()->user()->isOwner() && $court->owner_id !== auth()->id()) {
+            abort(403);
+        }
+        
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'status' => 'required|in:active,maintenance,closed',
@@ -103,9 +115,15 @@ class CourtController extends Controller
      */
     public function destroy(Court $court)
     {
-        if (!auth()->user() || (!auth()->user()->isOwner() && !auth()->user()->isStaff()) || $court->owner_id !== auth()->id()) {
+        if (!auth()->user() || (!auth()->user()->isOwner() && !auth()->user()->isStaff())) {
             abort(403);
         }
+        
+        // Staff can delete any court, owners can only delete their own courts
+        if (auth()->user()->isOwner() && $court->owner_id !== auth()->id()) {
+            abort(403);
+        }
+        
         if ($court->image) {
             Storage::disk('public')->delete($court->image);
         }

@@ -119,21 +119,23 @@
 
                     
                     <!-- Owner/Staff Actions -->
-                    @if(auth()->user() && (auth()->user()->role === 'owner' || auth()->user()->role === 'staff') && auth()->user()->id === $court->owner_id)
-                        <div class="flex gap-2 mt-3 pt-3 border-t border-gray-100">
-                            <a href="{{ route('courts.edit', $court) }}" 
-                               class="flex-1 px-3 py-2 bg-blue-100 text-blue-700 rounded-lg font-medium hover:bg-blue-200 transition-colors text-center text-xs">
-                                Edit
-                            </a>
-                            <form action="{{ route('courts.destroy', $court) }}" method="POST" class="flex-1" onsubmit="return confirm('Are you sure you want to delete this court?')">
-                                @csrf
-                                @method('DELETE')
-                                <button type="submit" 
-                                        class="w-full px-3 py-2 bg-red-100 text-red-700 rounded-lg font-medium hover:bg-red-200 transition-colors text-xs">
-                                    Delete
-                                </button>
-                            </form>
-                        </div>
+                    @if(auth()->user() && (auth()->user()->role === 'owner' || auth()->user()->role === 'staff'))
+                        @if(auth()->user()->role === 'staff' || auth()->user()->id === $court->owner_id)
+                            <div class="flex gap-2 mt-3 pt-3 border-t border-gray-100">
+                                <a href="{{ route('courts.edit', $court) }}" 
+                                   class="flex-1 px-3 py-2 bg-blue-100 text-blue-700 rounded-lg font-medium hover:bg-blue-200 transition-colors text-center text-xs">
+                                    Edit
+                                </a>
+                                <form action="{{ route('courts.destroy', $court) }}" method="POST" class="flex-1" onsubmit="return confirm('Are you sure you want to delete this court?')">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" 
+                                            class="w-full px-3 py-2 bg-red-100 text-red-700 rounded-lg font-medium hover:bg-red-200 transition-colors text-xs">
+                                        Delete
+                                    </button>
+                                </form>
+                            </div>
+                        @endif
                     @endif
                 </div>
             </div>
