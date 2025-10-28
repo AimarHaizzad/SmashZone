@@ -2,7 +2,7 @@
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
     <head>
         <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
         <meta name="csrf-token" content="{{ csrf_token() }}">
 
         <title>{{ config('app.name', 'Laravel') }}</title>
@@ -32,17 +32,19 @@
     </head>
     <body class="font-sans antialiased">
         <div class="min-h-screen bg-gray-100 flex flex-col">
-                    @include('layouts.navigation')
-                    @isset($header)
-                        <header class="bg-white shadow">
-                            <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-                                {{ $header }}
-                            </div>
-                        </header>
-                    @endisset
-            <main class="flex-1">
-                @yield('content')
-                    </main>
+            @include('layouts.navigation')
+            @isset($header)
+                <header class="bg-white shadow">
+                    <div class="max-w-7xl mx-auto py-3 px-3 sm:py-6 sm:px-6 lg:px-8">
+                        {{ $header }}
+                    </div>
+                </header>
+            @endisset
+            <main class="flex-1 pb-16 sm:pb-0">
+                <div class="px-3 sm:px-6 lg:px-8">
+                    @yield('content')
+                </div>
+            </main>
         </div>
 
         <!-- PWA Service Worker Registration -->

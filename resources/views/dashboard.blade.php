@@ -1,68 +1,107 @@
 @extends('layouts.app')
 
 @section('content')
-@php $user = Auth::user(); @endphp
+@php 
+    use Illuminate\Support\Facades\Storage;
+    $user = Auth::user(); 
+@endphp
 
 @if($user->isOwner())
     <div class="mb-12">
+        <!-- Owner Dashboard Header -->
+        <div class="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl shadow-sm border border-blue-100 p-4 sm:p-6 lg:p-8 mb-6 sm:mb-8">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div class="flex items-center gap-3 sm:gap-4">
+                    @if($user->profile_picture)
+                        <img src="{{ Storage::url($user->profile_picture) }}" 
+                             alt="{{ $user->name }}" 
+                             class="w-12 h-12 sm:w-16 sm:h-16 rounded-2xl object-cover shadow-lg border-2 border-white">
+                    @else
+                        <div class="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg">
+                            <span class="text-white text-lg sm:text-2xl font-bold">{{ strtoupper(substr($user->name, 0, 1)) }}</span>
+                        </div>
+                    @endif
+                    <div>
+                        <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 mb-1 sm:mb-2">Owner Dashboard</h1>
+                        <p class="text-sm sm:text-base text-gray-600">Welcome back, {{ $user->name }}! Manage your courts and monitor business performance.</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-3">
+                    <a href="{{ route('courts.index') }}" class="inline-flex items-center px-4 sm:px-6 py-2 sm:py-3 border border-transparent text-xs sm:text-sm font-medium rounded-xl shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
+                        <svg class="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V7a2 2 0 00-2-2H6a2 2 0 00-2 2v6m16 0v6a2 2 0 01-2 2H6a2 2 0 01-2-2v-6m16 0H4"/>
+                        </svg>
+                        <span class="hidden sm:inline">Manage Courts</span>
+                        <span class="sm:hidden">Courts</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+        
         <!-- Owner Analytics Cards -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-10">
-            <div class="bg-gradient-to-br from-blue-100 to-blue-300 rounded-2xl shadow-lg p-8 flex flex-col items-center border-t-4 border-blue-200 animate-fade-in">
-                <div class="bg-blue-500 text-white rounded-full p-4 mb-3">
-                    <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 21m5.25-4l.75 4m-7.5-4h10.5a2.25 2.25 0 002.25-2.25V7.5A2.25 2.25 0 0017.25 5.25H6.75A2.25 2.25 0 004.5 7.5v7.25A2.25 2.25 0 006.75 17z"/></svg>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8 mb-6 sm:mb-10">
+            <div class="bg-gradient-to-br from-blue-100 to-blue-300 rounded-2xl shadow-lg p-4 sm:p-6 lg:p-8 flex flex-col items-center border-t-4 border-blue-200 animate-fade-in">
+                <div class="bg-blue-500 text-white rounded-full p-3 sm:p-4 mb-2 sm:mb-3">
+                    <svg class="w-5 h-5 sm:w-6 sm:h-6 lg:w-7 lg:h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 21m5.25-4l.75 4m-7.5-4h10.5a2.25 2.25 0 002.25-2.25V7.5A2.25 2.25 0 0017.25 5.25H6.75A2.25 2.25 0 004.5 7.5v7.25A2.25 2.25 0 006.75 17z"/></svg>
                 </div>
-                <div class="text-3xl font-bold text-blue-800">{{ $user->courts->count() }}</div>
-                <div class="text-gray-700 mt-1 font-medium">Courts Owned</div>
+                <div class="text-2xl sm:text-3xl font-bold text-blue-800">{{ $user->courts->count() }}</div>
+                <div class="text-gray-700 mt-1 font-medium text-sm sm:text-base">Courts Owned</div>
             </div>
-            <div class="bg-gradient-to-br from-green-100 to-green-300 rounded-2xl shadow-lg p-8 flex flex-col items-center border-t-4 border-green-200 animate-fade-in">
-                <div class="bg-green-500 text-white rounded-full p-4 mb-3">
-                    <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 17l4-4 4 4m0 0V3m0 14a4 4 0 01-8 0"/></svg>
+            <div class="bg-gradient-to-br from-green-100 to-green-300 rounded-2xl shadow-lg p-4 sm:p-6 lg:p-8 flex flex-col items-center border-t-4 border-green-200 animate-fade-in">
+                <div class="bg-green-500 text-white rounded-full p-3 sm:p-4 mb-2 sm:mb-3">
+                    <svg class="w-5 h-5 sm:w-6 sm:h-6 lg:w-7 lg:h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 17l4-4 4 4m0 0V3m0 14a4 4 0 01-8 0"/></svg>
                 </div>
-                <div class="text-3xl font-bold text-green-800">{{ $user->courts->flatMap->bookings->count() }}</div>
-                <div class="text-gray-700 mt-1 font-medium">Total Bookings</div>
+                <div class="text-2xl sm:text-3xl font-bold text-green-800">{{ $user->courts->flatMap->bookings->count() }}</div>
+                <div class="text-gray-700 mt-1 font-medium text-sm sm:text-base">Total Bookings</div>
             </div>
-            <div class="bg-gradient-to-br from-yellow-100 to-yellow-300 rounded-2xl shadow-lg p-8 flex flex-col items-center border-t-4 border-yellow-200 animate-fade-in">
-                <div class="bg-yellow-500 text-white rounded-full p-4 mb-3">
-                    <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 1.343-3 3s1.343 3 3 3 3-1.343 3-3-1.343-3-3-3zm0 0V4m0 7v7"/></svg>
+            <div class="bg-gradient-to-br from-yellow-100 to-yellow-300 rounded-2xl shadow-lg p-4 sm:p-6 lg:p-8 flex flex-col items-center border-t-4 border-yellow-200 animate-fade-in sm:col-span-2 lg:col-span-1">
+                <div class="bg-yellow-500 text-white rounded-full p-3 sm:p-4 mb-2 sm:mb-3">
+                    <svg class="w-5 h-5 sm:w-6 sm:h-6 lg:w-7 lg:h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 1.343-3 3s1.343 3 3 3 3-1.343 3-3-1.343-3-3-3zm0 0V4m0 7v7"/></svg>
                 </div>
-                <div class="text-3xl font-bold text-yellow-800">RM {{ number_format($user->courts->flatMap->bookings->sum('total_price'), 2) }}</div>
-                <div class="text-gray-700 mt-1 font-medium">Total Revenue</div>
+                <div class="text-2xl sm:text-3xl font-bold text-yellow-800">RM {{ number_format($user->courts->flatMap->bookings->sum('total_price'), 2) }}</div>
+                <div class="text-gray-700 mt-1 font-medium text-sm sm:text-base">Total Revenue</div>
             </div>
         </div>
         <!-- Recent Bookings Table -->
-        <div class="max-w-7xl mx-auto px-4 mb-8">
-            <div class="bg-white rounded-2xl shadow-lg p-6 border-t-4 border-blue-100">
-                <h2 class="text-xl font-bold mb-4 flex items-center">
-                    <svg class="w-5 h-5 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 17l4-4 4 4m0 0V3m0 14a4 4 0 01-8 0"/></svg>
+        <div class="mb-6 sm:mb-8">
+            <div class="bg-white rounded-2xl shadow-lg p-4 sm:p-6 border-t-4 border-blue-100">
+                <h2 class="text-lg sm:text-xl font-bold mb-4 flex items-center">
+                    <svg class="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 17l4-4 4 4m0 0V3m0 14a4 4 0 01-8 0"/></svg>
                     Recent Bookings
                 </h2>
                 <div class="overflow-x-auto">
                     <table class="w-full text-left border-separate border-spacing-y-2">
                         <thead>
-                            <tr class="text-gray-600 text-sm">
+                            <tr class="text-gray-600 text-xs sm:text-sm">
                                 <th class="py-2">Court</th>
-                                <th>Date</th>
-                                <th>Time</th>
+                                <th class="hidden sm:table-cell">Date</th>
+                                <th class="hidden sm:table-cell">Time</th>
                                 <th>Status</th>
                             </tr>
                         </thead>
                     <tbody>
                     @foreach($user->courts->flatMap->bookings->sortByDesc('date')->take(5) as $booking)
-                                                    <tr class="bg-blue-50 hover:bg-blue-100 transition rounded-xl">
-                                <td class="py-2 font-semibold">{{ $booking->court->name }}</td>
-                            <td>{{ $booking->date }}</td>
-                            <td>{{ $booking->start_time }} - {{ $booking->end_time }}</td>
-                                <td>
-                                    <span class="inline-block px-3 py-1 rounded-full text-xs font-bold
-                                        @if($booking->status === 'paid') bg-green-200 text-green-800
-                                        @elseif($booking->status === 'confirmed') bg-blue-200 text-blue-800
-                                        @elseif($booking->status === 'completed') bg-gray-200 text-gray-800
-                                        @elseif($booking->status === 'pending') bg-yellow-200 text-yellow-800
-                                        @else bg-red-200 text-red-800 @endif">
-                                        {{ ucfirst($booking->status) }}
-                                    </span>
-                                </td>
-                            </tr>
+                        <tr class="bg-blue-50 hover:bg-blue-100 transition rounded-xl">
+                            <td class="py-2 font-semibold text-sm sm:text-base">
+                                <div class="sm:hidden">
+                                    <div>{{ $booking->court->name }}</div>
+                                    <div class="text-xs text-gray-600 mt-1">{{ $booking->date }} {{ $booking->start_time }}-{{ $booking->end_time }}</div>
+                                </div>
+                                <div class="hidden sm:block">{{ $booking->court->name }}</div>
+                            </td>
+                            <td class="hidden sm:table-cell text-sm">{{ $booking->date }}</td>
+                            <td class="hidden sm:table-cell text-sm">{{ $booking->start_time }} - {{ $booking->end_time }}</td>
+                            <td>
+                                <span class="inline-block px-2 sm:px-3 py-1 rounded-full text-xs font-bold
+                                    @if($booking->status === 'paid') bg-green-200 text-green-800
+                                    @elseif($booking->status === 'confirmed') bg-blue-200 text-blue-800
+                                    @elseif($booking->status === 'completed') bg-gray-200 text-gray-800
+                                    @elseif($booking->status === 'pending') bg-yellow-200 text-yellow-800
+                                    @else bg-red-200 text-red-800 @endif">
+                                    {{ ucfirst($booking->status) }}
+                                </span>
+                            </td>
+                        </tr>
                     @endforeach
                     </tbody>
                 </table>
@@ -73,25 +112,30 @@
 @elseif($user->isStaff())
     <div class="mb-12">
         <!-- Professional Staff Dashboard Header -->
-        <div class="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl shadow-sm border border-blue-100 p-8 mb-8">
-            <div class="flex items-center justify-between">
-                <div class="flex items-center gap-4">
-                    <div class="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg">
-                        <svg class="w-8 h-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                    </div>
+        <div class="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl shadow-sm border border-blue-100 p-4 sm:p-6 lg:p-8 mb-6 sm:mb-8">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div class="flex items-center gap-3 sm:gap-4">
+                    @if($user->profile_picture)
+                        <img src="{{ Storage::url($user->profile_picture) }}" 
+                             alt="{{ $user->name }}" 
+                             class="w-12 h-12 sm:w-16 sm:h-16 rounded-2xl object-cover shadow-lg border-2 border-white">
+                    @else
+                        <div class="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg">
+                            <span class="text-white text-lg sm:text-2xl font-bold">{{ strtoupper(substr($user->name, 0, 1)) }}</span>
+                        </div>
+                    @endif
                     <div>
-                        <h1 class="text-3xl font-bold text-gray-900 mb-2">Staff Dashboard</h1>
-                        <p class="text-gray-600">Welcome back, {{ $user->name }}! Manage bookings and monitor court operations.</p>
+                        <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 mb-1 sm:mb-2">Staff Dashboard</h1>
+                        <p class="text-sm sm:text-base text-gray-600">Welcome back, {{ $user->name }}! Manage bookings and monitor court operations.</p>
                     </div>
                 </div>
                 <div class="flex items-center gap-3">
-                    <a href="{{ route('staff.bookings') }}" class="inline-flex items-center px-6 py-3 border border-transparent text-sm font-medium rounded-xl shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
-                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <a href="{{ route('staff.bookings') }}" class="inline-flex items-center px-4 sm:px-6 py-2 sm:py-3 border border-transparent text-xs sm:text-sm font-medium rounded-xl shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
+                        <svg class="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                         </svg>
-                        View All Bookings
+                        <span class="hidden sm:inline">View All Bookings</span>
+                        <span class="sm:hidden">Bookings</span>
                     </a>
                 </div>
             </div>
@@ -105,17 +149,17 @@
             $totalRevenue = $allBookings->where('payment.status', 'paid')->sum('payment.amount');
         @endphp
         
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8">
             <!-- Total Bookings Card -->
-            <div class="bg-white rounded-2xl shadow-lg p-6 border-t-4 border-blue-200 hover:shadow-xl transition-shadow">
+            <div class="bg-white rounded-2xl shadow-lg p-4 sm:p-6 border-t-4 border-blue-200 hover:shadow-xl transition-shadow">
                 <div class="flex items-center justify-between">
                     <div>
-                        <p class="text-sm font-medium text-gray-600 mb-1">Total Bookings</p>
-                        <p class="text-3xl font-bold text-gray-900">{{ $allBookings->count() }}</p>
-                        <p class="text-sm text-gray-500 mt-1">All time</p>
+                        <p class="text-xs sm:text-sm font-medium text-gray-600 mb-1">Total Bookings</p>
+                        <p class="text-2xl sm:text-3xl font-bold text-gray-900">{{ $allBookings->count() }}</p>
+                        <p class="text-xs sm:text-sm text-gray-500 mt-1">All time</p>
                     </div>
-                    <div class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
-                        <svg class="w-6 h-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <div class="w-10 h-10 sm:w-12 sm:h-12 bg-blue-100 rounded-xl flex items-center justify-center">
+                        <svg class="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 17l4-4 4 4m0 0V3m0 14a4 4 0 01-8 0" />
                         </svg>
                     </div>
@@ -123,15 +167,15 @@
             </div>
 
             <!-- Today's Bookings Card -->
-            <div class="bg-white rounded-2xl shadow-lg p-6 border-t-4 border-green-200 hover:shadow-xl transition-shadow">
+            <div class="bg-white rounded-2xl shadow-lg p-4 sm:p-6 border-t-4 border-green-200 hover:shadow-xl transition-shadow">
                 <div class="flex items-center justify-between">
                     <div>
-                        <p class="text-sm font-medium text-gray-600 mb-1">Today's Bookings</p>
-                        <p class="text-3xl font-bold text-gray-900">{{ $todayBookings->count() }}</p>
-                        <p class="text-sm text-gray-500 mt-1">{{ now()->format('M d, Y') }}</p>
+                        <p class="text-xs sm:text-sm font-medium text-gray-600 mb-1">Today's Bookings</p>
+                        <p class="text-2xl sm:text-3xl font-bold text-gray-900">{{ $todayBookings->count() }}</p>
+                        <p class="text-xs sm:text-sm text-gray-500 mt-1">{{ now()->format('M d, Y') }}</p>
                     </div>
-                    <div class="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
-                        <svg class="w-6 h-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <div class="w-10 h-10 sm:w-12 sm:h-12 bg-green-100 rounded-xl flex items-center justify-center">
+                        <svg class="w-5 h-5 sm:w-6 sm:h-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                         </svg>
                     </div>
@@ -139,15 +183,15 @@
             </div>
 
             <!-- Pending Payments Card -->
-            <div class="bg-white rounded-2xl shadow-lg p-6 border-t-4 border-yellow-200 hover:shadow-xl transition-shadow">
+            <div class="bg-white rounded-2xl shadow-lg p-4 sm:p-6 border-t-4 border-yellow-200 hover:shadow-xl transition-shadow">
                 <div class="flex items-center justify-between">
                     <div>
-                        <p class="text-sm font-medium text-gray-600 mb-1">Pending Payments</p>
-                        <p class="text-3xl font-bold text-gray-900">{{ $pendingPayments->count() }}</p>
-                        <p class="text-sm text-gray-500 mt-1">Requires attention</p>
+                        <p class="text-xs sm:text-sm font-medium text-gray-600 mb-1">Pending Payments</p>
+                        <p class="text-2xl sm:text-3xl font-bold text-gray-900">{{ $pendingPayments->count() }}</p>
+                        <p class="text-xs sm:text-sm text-gray-500 mt-1">Requires attention</p>
                     </div>
-                    <div class="w-12 h-12 bg-yellow-100 rounded-xl flex items-center justify-center">
-                        <svg class="w-6 h-6 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <div class="w-10 h-10 sm:w-12 sm:h-12 bg-yellow-100 rounded-xl flex items-center justify-center">
+                        <svg class="w-5 h-5 sm:w-6 sm:h-6 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
                     </div>
@@ -155,15 +199,15 @@
             </div>
 
             <!-- Total Revenue Card -->
-            <div class="bg-white rounded-2xl shadow-lg p-6 border-t-4 border-purple-200 hover:shadow-xl transition-shadow">
+            <div class="bg-white rounded-2xl shadow-lg p-4 sm:p-6 border-t-4 border-purple-200 hover:shadow-xl transition-shadow sm:col-span-2 lg:col-span-1">
                 <div class="flex items-center justify-between">
                     <div>
-                        <p class="text-sm font-medium text-gray-600 mb-1">Total Revenue</p>
-                        <p class="text-3xl font-bold text-gray-900">RM {{ number_format($totalRevenue, 2) }}</p>
-                        <p class="text-sm text-gray-500 mt-1">From paid bookings</p>
+                        <p class="text-xs sm:text-sm font-medium text-gray-600 mb-1">Total Revenue</p>
+                        <p class="text-2xl sm:text-3xl font-bold text-gray-900">RM {{ number_format($totalRevenue, 2) }}</p>
+                        <p class="text-xs sm:text-sm text-gray-500 mt-1">From paid bookings</p>
                     </div>
-                    <div class="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
-                        <svg class="w-6 h-6 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <div class="w-10 h-10 sm:w-12 sm:h-12 bg-purple-100 rounded-xl flex items-center justify-center">
+                        <svg class="w-5 h-5 sm:w-6 sm:h-6 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 1.343-3 3s1.343 3 3 3 3-1.343 3-3-1.343-3-3-3zm0 0V4m0 7v7" />
                         </svg>
                     </div>
@@ -382,9 +426,15 @@
         <!-- Welcome Card -->
         <div class="bg-gradient-to-br from-green-50 to-blue-50 rounded-2xl shadow-lg p-8 flex items-center mb-10 border-t-4 border-green-200 animate-fade-in">
             <div class="flex-shrink-0 mr-6">
-                <div class="w-20 h-20 bg-gradient-to-br from-green-400 to-blue-500 rounded-full flex items-center justify-center text-white text-3xl font-bold shadow-lg">
-                    {{ strtoupper(substr($user->name, 0, 1)) }}
-                </div>
+                @if($user->profile_picture)
+                    <img src="{{ Storage::url($user->profile_picture) }}" 
+                         alt="{{ $user->name }}" 
+                         class="w-20 h-20 rounded-full object-cover shadow-lg border-4 border-white">
+                @else
+                    <div class="w-20 h-20 bg-gradient-to-br from-green-400 to-blue-500 rounded-full flex items-center justify-center text-white text-3xl font-bold shadow-lg">
+                        {{ strtoupper(substr($user->name, 0, 1)) }}
+                    </div>
+                @endif
             </div>
             <div>
                 <h1 class="text-2xl font-bold text-gray-900 mb-1">Welcome, {{ $user->name }}!</h1>
