@@ -535,7 +535,7 @@ private void handleNotificationClick() {
 ### Test from Laravel:
 
 1. **Login to your app**
-2. **Visit:** `http://10.62.93.132:8000/test-notification`
+2. **Visit:** `http://10.62.86.15:8000/test-notification`
 3. **Check your phone** - You should receive a notification!
 
 ---
@@ -571,7 +571,7 @@ adb logcat | grep -E "(FCM|Firebase|Token)"
 
 ```bash
 # Visit test route
-curl http://10.62.93.132:8000/test-notification
+curl http://10.62.86.15:8000/test-notification
 ```
 
 ---

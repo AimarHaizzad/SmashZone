@@ -109,9 +109,9 @@ $token = $customer->createToken('dashboard-test')->plainTextToken;
 
 echo "\n=== API Testing Information ===\n";
 echo "Customer Token: {$token}\n";
-echo "API Endpoint: http://10.62.93.132:8000/api/dashboard\n";
+echo "API Endpoint: http://10.62.86.15:8000/api/dashboard\n";
 echo "\nTest with curl:\n";
-echo "curl -X GET http://10.62.93.132:8000/api/dashboard \\\n";
+echo "curl -X GET http://10.62.86.15:8000/api/dashboard \\\n";
 echo "  -H \"Authorization: Bearer {$token}\" \\\n";
 echo "  -H \"Accept: application/json\"\n";
 

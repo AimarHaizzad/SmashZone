@@ -508,10 +508,10 @@ php artisan optimize
 
 ```bash
 cd /Users/aimarhaizzad/SmashZone/SmashZone
-php artisan serve --host=10.62.93.132 --port=8000
+php artisan serve --host=10.62.86.15 --port=8000
 ```
 
-**Replace `10.62.93.132` with your actual IP address.**
+**Replace `10.62.86.15` with your actual IP address.**
 
 ### To find your IP:
 
@@ -543,7 +543,7 @@ ip addr show
 **1. First, login to get a token:**
 
 ```bash
-curl -X POST http://10.62.93.132:8000/api/auth/login \
+curl -X POST http://10.62.86.15:8000/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{
     "email": "your-email@example.com",
@@ -567,7 +567,7 @@ curl -X POST http://10.62.93.132:8000/api/auth/login \
 **2. Test the dashboard endpoint:**
 
 ```bash
-curl -X GET http://10.62.93.132:8000/api/dashboard \
+curl -X GET http://10.62.86.15:8000/api/dashboard \
   -H "Authorization: Bearer YOUR_TOKEN_HERE" \
   -H "Accept: application/json"
 ```
@@ -787,7 +787,7 @@ php artisan migrate:status
 php artisan migrate
 
 # Start server
-php artisan serve --host=10.62.93.132 --port=8000
+php artisan serve --host=10.62.86.15 --port=8000
 
 # View logs
 tail -f storage/logs/laravel.log

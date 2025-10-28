@@ -151,7 +151,7 @@ php artisan migrate:status
 ## ✅ Step 4: Update IP Address Configuration (1 minute)
 
 ### Current IP Address Detection
-Your current IP should be: **`10.62.93.132`**
+Your current IP should be: **`10.62.86.15`**
 
 **Update these files with your current IP:**
 
@@ -176,16 +176,16 @@ private const val BASE_URL = "http://YOUR_CURRENT_IP:8000/api/"  // Update line 
 
 ```bash
 cd /Users/aimarhaizzad/SmashZone/SmashZone
-php artisan serve --host=10.62.93.132 --port=8000
+php artisan serve --host=10.62.86.15 --port=8000
 ```
 
-**Replace `10.62.93.132` with your current IP address.**
+**Replace `10.62.86.15` with your current IP address.**
 
 ---
 
 ## ✅ Step 6: Test Laravel Dashboard (1 minute)
 
-1. Open browser and go to: `http://10.62.93.132:8000/dashboard`
+1. Open browser and go to: `http://10.62.86.15:8000/dashboard`
 2. You should see the professional dashboard with:
    - ✅ Welcome message
    - ✅ Analytics cards (Total Bookings, Revenue, etc.)
@@ -320,13 +320,13 @@ INSERT INTO payments (booking_id, amount, status, payment_method) VALUES
 ## 📱 Current Configuration
 
 ### Laravel Server
-- **URL**: `http://10.62.93.132:8000`
-- **API Base**: `http://10.62.93.132:8000/api/`
-- **Dashboard**: `http://10.62.93.132:8000/dashboard`
+- **URL**: `http://10.62.86.15:8000`
+- **API Base**: `http://10.62.86.15:8000/api/`
+- **Dashboard**: `http://10.62.86.15:8000/dashboard`
 
 ### Android App
-- **API Service**: Points to `http://10.62.93.132:8000/api/`
-- **Network Config**: Allows `10.62.93.132`
+- **API Service**: Points to `http://10.62.86.15:8000/api/`
+- **Network Config**: Allows `10.62.86.15`
 - **Authentication**: Uses Laravel Sanctum tokens
 
 ---

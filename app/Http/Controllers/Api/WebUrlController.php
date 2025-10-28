@@ -39,7 +39,7 @@ class WebUrlController extends Controller
         $targetPage = $targetPages[$pageType] ?? 'dashboard';
         
         // Generate mobile-auth URL with user data
-        $baseUrl = 'http://10.62.93.132:8000';  // Force correct server URL
+        $baseUrl = 'http://10.62.86.15:8000';  // Force correct server URL
         $webUrl = $baseUrl . '/mobile-auth?' . http_build_query([
             'authenticated' => 'true',
             'user_id' => $user->id,

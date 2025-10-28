@@ -192,6 +192,34 @@ Route::get('/test-notification-simple', function () {
     ]);
 });
 
+Route::get('/test-notification-v1', function () {
+    try {
+        $fcm = new FCMService();
+        
+        // Test notification using HTTP v1 API
+        $result = $fcm->sendToUser(
+            1,  // User ID
+            "SmashZone Test v1 🔔",
+            "This is a test notification using FCM HTTP v1 API!",
+            ['type' => 'test_v1', 'message' => 'HTTP v1 API test']
+        );
+        
+        return response()->json([
+            'message' => 'FCM HTTP v1 notification sent! Check your phone.',
+            'result' => $result,
+            'api_version' => 'HTTP v1',
+            'project_id' => 'smashzone-dff82'
+        ]);
+        
+    } catch (\Exception $e) {
+        return response()->json([
+            'error' => 'FCM HTTP v1 test failed',
+            'message' => $e->getMessage(),
+            'api_version' => 'HTTP v1'
+        ]);
+    }
+});
+
 Route::get('/test-firebase-key', function () {
     // Test Firebase Server Key validity
     $serverKey = 'AIzaSyA-SNazjDMqucspdRCRaDcmPJ_yG6yV7Ko';
@@ -282,6 +310,45 @@ Route::get('/firebase-key-help', function () {
             'solution' => 'Get the correct Server Key from Cloud Messaging section',
             'note' => 'Web API Key is for web apps, Server Key is for FCM'
         ]
+    ]);
+});
+
+Route::get('/get-server-key', function () {
+    return response()->json([
+        'message' => 'Firebase Service Account Analysis',
+        'project_info' => [
+            'project_id' => 'smashzone-dff82',
+            'client_email' => 'firebase-adminsdk-fbsvc@smashzone-dff82.iam.gserviceaccount.com',
+            'key_type' => 'Service Account (NOT Server Key)',
+            'explanation' => 'This is a Service Account JSON file, not a Server Key for FCM'
+        ],
+        'key_types_explained' => [
+            'service_account' => [
+                'format' => 'JSON file with private key',
+                'purpose' => 'Server-to-server authentication',
+                'usage' => 'Not for FCM push notifications'
+            ],
+            'server_key' => [
+                'format' => 'AAAA... (long string)',
+                'purpose' => 'FCM push notifications',
+                'location' => 'Firebase Console > Cloud Messaging'
+            ]
+        ],
+        'how_to_get_server_key' => [
+            'step_1' => 'Open Firebase Console: https://console.firebase.google.com',
+            'step_2' => 'Select project: smashzone-dff82',
+            'step_3' => 'Click gear icon (⚙️) > Project Settings',
+            'step_4' => 'Go to "Cloud Messaging" tab',
+            'step_5' => 'Look for "Server Key" (NOT "Web API Key")',
+            'step_6' => 'Copy the Server Key (starts with AAAA...)',
+            'step_7' => 'Update your .env file: FIREBASE_SERVER_KEY=YOUR_SERVER_KEY'
+        ],
+        'current_issue' => [
+            'problem' => 'You have Service Account JSON, but need Server Key',
+            'solution' => 'Get Server Key from Firebase Console Cloud Messaging section',
+            'note' => 'Service Account is for server authentication, Server Key is for FCM'
+        ],
+        'firebase_console_url' => 'https://console.firebase.google.com/project/smashzone-dff82/settings/cloudmessaging'
     ]);
 });
 
@@ -750,4 +817,109 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/staff/{staff}/edit', [App\Http\Controllers\StaffController::class, 'edit'])->name('staff.edit');
     Route::put('/staff/{staff}', [App\Http\Controllers\StaffController::class, 'update'])->name('staff.update');
     Route::delete('/staff/{staff}', [App\Http\Controllers\StaffController::class, 'destroy'])->name('staff.destroy');
+});
+
+Route::get('/android-notification-debug', function () {
+    try {
+        // Get FCM tokens from database
+        $tokens = DB::table('fcm_tokens')->get();
+        
+        // Test sending to each token
+        $results = [];
+        $fcm = new FCMService();
+        
+        foreach ($tokens as $tokenRecord) {
+            $result = $fcm->sendToUser(
+                $tokenRecord->user_id,
+                "Android Debug Test 🔔",
+                "Testing notification delivery to your Android device",
+                ['type' => 'debug', 'timestamp' => now()->toISOString()]
+            );
+            
+            $results[] = [
+                'user_id' => $tokenRecord->user_id,
+                'token_preview' => substr($tokenRecord->token, 0, 30) . '...',
+                'device_type' => $tokenRecord->device_type ?? 'Not set',
+                'created_at' => $tokenRecord->created_at,
+                'notification_sent' => $result ? 'Success' : 'Failed',
+                'result' => $result
+            ];
+        }
+        
+        // Check recent notifications
+        $recentNotifications = DB::table('notifications')
+            ->orderBy('created_at', 'desc')
+            ->limit(5)
+            ->get();
+        
+        return response()->json([
+            'message' => 'Android Notification Debug Test',
+            'server_status' => 'Running on 10.62.86.15:8000',
+            'fcm_tokens_found' => $tokens->count(),
+            'test_results' => $results,
+            'recent_notifications' => $recentNotifications,
+            'troubleshooting_steps' => [
+                'step_1' => 'Check if Android app is running in foreground',
+                'step_2' => 'Check if notifications are enabled in Android settings',
+                'step_3' => 'Verify FCM token is valid and not expired',
+                'step_4' => 'Check Android app logs for FCM errors',
+                'step_5' => 'Ensure Firebase project matches Android app package name',
+                'step_6' => 'Test with a simple notification from Firebase Console'
+            ],
+            'firebase_console_test' => [
+                'url' => 'https://console.firebase.google.com/project/smashzone-dff82/messaging',
+                'instructions' => 'Send a test message from Firebase Console to verify FCM setup'
+            ]
+        ]);
+        
+    } catch (\Exception $e) {
+        return response()->json([
+            'error' => 'Debug test failed',
+            'message' => $e->getMessage(),
+            'trace' => $e->getTraceAsString()
+        ]);
+    }
+});
+
+// Test all booking notification types
+Route::get('/test-booking-notifications', function () {
+    $results = [];
+    
+    // Test booking confirmed
+    $response1 = Http::get('http://10.62.86.15:8000/test-booking-confirmed');
+    $results['booking_confirmed'] = $response1->json();
+    
+    // Test booking reminder
+    $response2 = Http::get('http://10.62.86.15:8000/test-booking-reminder');
+    $results['booking_reminder'] = $response2->json();
+    
+    // Test booking starting soon
+    $response3 = Http::get('http://10.62.86.15:8000/test-booking-starting-soon');
+    $results['booking_starting_soon'] = $response3->json();
+    
+    // Test booking cancelled
+    $response4 = Http::get('http://10.62.86.15:8000/test-booking-cancelled');
+    $results['booking_cancelled'] = $response4->json();
+    
+    // Test payment reminder
+    $response5 = Http::get('http://10.62.86.15:8000/test-payment-reminder');
+    $results['payment_reminder'] = $response5->json();
+    
+    return response()->json([
+        'message' => 'All booking notification tests completed!',
+        'results' => $results,
+        'timestamp' => now()->toDateTimeString()
+    ]);
+});
+
+// Quick test for specific notification type
+Route::get('/test-notification/{type}', function ($type) {
+    $validTypes = ['booking_confirmed', 'booking_reminder', 'booking_starting_soon', 'booking_cancelled', 'payment_reminder'];
+    
+    if (!in_array($type, $validTypes)) {
+        return response()->json(['error' => 'Invalid notification type'], 400);
+    }
+    
+    $response = Http::get("http://10.62.86.15:8000/test-{$type}");
+    return $response->json();
 });

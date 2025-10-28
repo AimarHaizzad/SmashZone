@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\WebUrlController;
 use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\NotificationController;
+use App\Http\Controllers\Api\BookingNotificationController;
 
 /*
 |--------------------------------------------------------------------------
@@ -57,6 +58,39 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/fcm-token', [NotificationController::class, 'deleteFCMToken']);
     Route::get('/notifications', [NotificationController::class, 'getNotifications']);
     Route::get('/notifications/unread-count', [NotificationController::class, 'getUnreadCount']);
+    
+    // Booking Notifications
+    Route::post('/booking/{id}/confirm-notification', [BookingNotificationController::class, 'sendBookingConfirmation']);
+    Route::post('/booking/{id}/reminder-notification', [BookingNotificationController::class, 'sendBookingReminder']);
+    Route::post('/booking/{id}/starting-soon-notification', [BookingNotificationController::class, 'sendBookingStartingSoon']);
+    Route::post('/booking/{id}/cancelled-notification', [BookingNotificationController::class, 'sendBookingCancelled']);
+    Route::post('/booking/{id}/payment-reminder', [BookingNotificationController::class, 'sendPaymentReminder']);
+});
+
+// Public routes for testing and cron jobs
+Route::get('/test-booking-notification', [BookingNotificationController::class, 'testBookingNotification']);
+Route::get('/send-pending-reminders', [BookingNotificationController::class, 'sendPendingReminders']);
+Route::get('/send-starting-soon-notifications', [BookingNotificationController::class, 'sendStartingSoonNotifications']);
+
+// Test routes for different notification types
+Route::get('/test-booking-confirmed', function () {
+    return app(BookingNotificationController::class)->testBookingNotification(request()->merge(['type' => 'booking_confirmed']));
+});
+
+Route::get('/test-booking-reminder', function () {
+    return app(BookingNotificationController::class)->testBookingNotification(request()->merge(['type' => 'booking_reminder']));
+});
+
+Route::get('/test-booking-starting-soon', function () {
+    return app(BookingNotificationController::class)->testBookingNotification(request()->merge(['type' => 'booking_starting_soon']));
+});
+
+Route::get('/test-booking-cancelled', function () {
+    return app(BookingNotificationController::class)->testBookingNotification(request()->merge(['type' => 'booking_cancelled']));
+});
+
+Route::get('/test-payment-reminder', function () {
+    return app(BookingNotificationController::class)->testBookingNotification(request()->merge(['type' => 'payment_reminder']));
 });
 
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {

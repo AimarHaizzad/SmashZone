@@ -15,7 +15,7 @@
 3. **Start Server**
    ```bash
    cd /Users/aimarhaizzad/SmashZone/SmashZone
-   php artisan serve --host=10.62.93.132 --port=8000
+   php artisan serve --host=10.62.86.15 --port=8000
    ```
 
 ### For Android App (2 minutes):
@@ -67,10 +67,10 @@ Choose the right guide for your needs:
 ```bash
 # Laravel: Start server
 cd /Users/aimarhaizzad/SmashZone/SmashZone
-php artisan serve --host=10.62.93.132 --port=8000
+php artisan serve --host=10.62.86.15 --port=8000
 
 # Laravel: Test API
-curl -X GET http://10.62.93.132:8000/api/dashboard \
+curl -X GET http://10.62.86.15:8000/api/dashboard \
   -H "Authorization: Bearer YOUR_TOKEN"
 
 # Laravel: Check routes
