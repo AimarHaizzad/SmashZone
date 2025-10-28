@@ -80,14 +80,14 @@
                             </tr>
                         </thead>
                     <tbody>
-                    @foreach($user->courts->flatMap->bookings->sortByDesc('date')->take(5) as $booking)
+                    @foreach($allBookings->sortByDesc('date')->take(5) as $booking)
                         <tr class="bg-blue-50 hover:bg-blue-100 transition rounded-xl">
                             <td class="py-2 font-semibold text-sm sm:text-base">
                                 <div class="sm:hidden">
-                                    <div>{{ $booking->court->name }}</div>
+                                    <div>{{ $booking->court->name ?? 'N/A' }}</div>
                                     <div class="text-xs text-gray-600 mt-1">{{ $booking->date }} {{ $booking->start_time }}-{{ $booking->end_time }}</div>
                                 </div>
-                                <div class="hidden sm:block">{{ $booking->court->name }}</div>
+                                <div class="hidden sm:block">{{ $booking->court->name ?? 'N/A' }}</div>
                             </td>
                             <td class="hidden sm:table-cell text-sm">{{ $booking->date }}</td>
                             <td class="hidden sm:table-cell text-sm">{{ $booking->start_time }} - {{ $booking->end_time }}</td>
@@ -465,9 +465,9 @@
                 <table class="w-full text-left border-separate border-spacing-y-2">
                     <thead><tr class="text-gray-600 text-sm"><th class="py-2">Court</th><th>Date</th><th>Time</th><th>Status</th></tr></thead>
                 <tbody>
-                @foreach($user->bookings()->where('date', '>=', now()->toDateString())->orderBy('date')->take(5)->get() as $booking)
+                @foreach($allBookings->where('date', '>=', now()->toDateString())->sortBy('date')->take(5) as $booking)
                         <tr class="bg-blue-50 hover:bg-blue-100 transition rounded-xl">
-                            <td class="py-2 font-semibold">{{ $booking->court->name }}</td>
+                            <td class="py-2 font-semibold">{{ $booking->court->name ?? 'N/A' }}</td>
                         <td>{{ $booking->date }}</td>
                         <td>{{ $booking->start_time }} - {{ $booking->end_time }}</td>
                             <td>

@@ -96,23 +96,27 @@
                 <tbody>
                     @foreach($timeSlots as $slotIdx => $slot)
                         @php
-                            // Check if any court in this time slot is booked by current user
+                            // Check if any court in this time slot is booked by current user or other users
                             $hasMyBooking = false;
+                            $hasOtherBooking = false;
                             foreach($courts as $court) {
                                 $booking = $bookings->first(function($b) use ($court, $slot) {
                                     // Convert slot to H:i:s format for comparison
                                     $slotTime = $slot . ':00';
                                     return $b->court_id == $court->id && $b->start_time == $slotTime;
                                 });
-                                if ($booking && $booking->user_id == auth()->id()) {
-                                    $hasMyBooking = true;
-                                    break;
+                                if ($booking) {
+                                    if ($booking->user_id == auth()->id()) {
+                                        $hasMyBooking = true;
+                                    } else {
+                                        $hasOtherBooking = true;
+                                    }
                                 }
                             }
-                            $rowClass = $hasMyBooking ? 'bg-blue-50 hover:bg-blue-100' : 'hover:bg-gray-50';
+                            $rowClass = $hasMyBooking ? 'bg-blue-50 hover:bg-blue-100' : ($hasOtherBooking ? 'bg-red-50 hover:bg-red-100' : 'hover:bg-gray-50');
                         @endphp
                     <tr class="{{ $rowClass }} transition-colors">
-                        <td class="px-4 py-4 border-b border-gray-100 text-right font-bold text-blue-700 {{ $hasMyBooking ? 'bg-blue-100' : 'bg-blue-50' }} sticky left-0 z-10 text-lg">
+                        <td class="px-4 py-4 border-b border-gray-100 text-right font-bold {{ $hasMyBooking ? 'text-blue-700 bg-blue-100' : ($hasOtherBooking ? 'text-red-700 bg-red-100' : 'text-blue-700 bg-blue-50') }} sticky left-0 z-10 text-lg">
                             {{ \Carbon\Carbon::createFromFormat('H:i', $slot)->format('g:i A') }}
                         </td>
                         @foreach($courts as $court)
@@ -181,7 +185,7 @@
                                 }
                                 $bgClass = '';
                                 if ($booking) {
-                                    $bgClass = $isMine ? ' bg-blue-100 text-blue-700 border-blue-300' : ' bg-blue-100 text-blue-600 border-blue-200';
+                                    $bgClass = $isMine ? ' bg-blue-100 text-blue-700 border-blue-300' : ' bg-red-100 text-red-700 border-red-300';
                                 }
                             @endphp
                             <td class="px-3 py-4 border-b border-gray-100 text-center{{ $borderClass }}{{ $bgClass }}" data-court="{{ $court->id }}" data-time="{{ $slot }}">
@@ -214,11 +218,31 @@
                                         </div>
                                     </button>
                                 @elseif($booking)
-                                    <div class="flex items-center justify-center gap-2 rounded-xl py-3 px-4 w-full font-semibold text-base shadow-sm bg-blue-100 text-blue-600 border-2 border-blue-200 cursor-not-allowed">
-                                        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                                        </svg>
-                                        Booked
+                                    @php
+                                        $startTime = \Carbon\Carbon::createFromFormat('H:i:s', $booking->start_time);
+                                        $endTime = \Carbon\Carbon::createFromFormat('H:i:s', $booking->end_time);
+                                        $duration = $startTime->diffInHours($endTime);
+                                        $isStart = $booking->start_time == $slot . ':00';
+                                        $isEnd = $booking->end_time == $slot . ':00';
+                                    @endphp
+                                    <div class="other-booking-btn w-full py-3 px-4 font-semibold rounded-xl border-2 border-red-300 bg-red-100 text-red-700 cursor-not-allowed shadow-sm">
+                                        <div class="flex flex-col items-center justify-center gap-1">
+                                            <div class="flex items-center gap-2">
+                                                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                                                </svg>
+                                                @if($isStart)
+                                                    Booked
+                                                @else
+                                                    {{ $duration }}h Booked
+                                                @endif
+                                            </div>
+                                            @if($isStart)
+                                                <div class="text-xs text-red-600">
+                                                    {{ $startTime->format('g:i A') }} - {{ $endTime->format('g:i A') }}
+                                                </div>
+                                            @endif
+                                        </div>
                                     </div>
                                 @else
                                     <button class="select-slot-btn w-full py-3 px-4 font-semibold rounded-xl border-2 border-green-200 bg-green-50 text-green-800 hover:bg-green-100 hover:border-green-300 transition-all transform hover:scale-105 shadow-sm" 

@@ -76,6 +76,30 @@ class User extends Authenticatable
     }
 
     /**
+     * Get the web notifications for the user.
+     */
+    public function webNotifications()
+    {
+        return $this->hasMany(WebNotification::class);
+    }
+
+    /**
+     * Get unread web notifications for the user.
+     */
+    public function unreadWebNotifications()
+    {
+        return $this->webNotifications()->unread();
+    }
+
+    /**
+     * Get unread web notifications count for the user.
+     */
+    public function unreadWebNotificationsCount()
+    {
+        return $this->unreadWebNotifications()->count();
+    }
+
+    /**
      * Check if user is owner.
      */
     public function isOwner()

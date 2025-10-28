@@ -5,9 +5,16 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Court;
 use Illuminate\Support\Facades\Storage;
+use App\Services\WebNotificationService;
 
 class CourtController extends Controller
 {
+    protected $webNotificationService;
+
+    public function __construct(WebNotificationService $webNotificationService)
+    {
+        $this->webNotificationService = $webNotificationService;
+    }
     /**
      * Display a listing of the resource.
      */
@@ -48,7 +55,18 @@ class CourtController extends Controller
         }
 
         $validated['owner_id'] = auth()->id();
-        Court::create($validated);
+        $court = Court::create($validated);
+
+        // Send web notifications
+        try {
+            $this->webNotificationService->notifyNewCourt($court);
+        } catch (\Exception $e) {
+            \Log::error('Failed to send web notification for new court', [
+                'court_id' => $court->id,
+                'error' => $e->getMessage()
+            ]);
+        }
+
         return redirect()->route('courts.index')->with('success', 'Court created successfully.');
     }
 
@@ -107,6 +125,17 @@ class CourtController extends Controller
         }
 
         $court->update($validated);
+
+        // Send web notifications
+        try {
+            $this->webNotificationService->notifyCourtUpdated($court);
+        } catch (\Exception $e) {
+            \Log::error('Failed to send web notification for court update', [
+                'court_id' => $court->id,
+                'error' => $e->getMessage()
+            ]);
+        }
+
         return redirect()->route('courts.index')->with('success', 'Court updated successfully.');
     }
 
@@ -124,10 +153,25 @@ class CourtController extends Controller
             abort(403);
         }
         
+        // Store court info before deletion for notifications
+        $courtName = $court->name;
+        $ownerId = $court->owner_id;
+
         if ($court->image) {
             Storage::disk('public')->delete($court->image);
         }
         $court->delete();
+
+        // Send web notifications
+        try {
+            $this->webNotificationService->notifyCourtDeleted($courtName, $ownerId);
+        } catch (\Exception $e) {
+            \Log::error('Failed to send web notification for court deletion', [
+                'court_name' => $courtName,
+                'error' => $e->getMessage()
+            ]);
+        }
+
         return redirect()->route('courts.index')->with('success', 'Court deleted successfully.');
     }
 

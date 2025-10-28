@@ -9,9 +9,16 @@ use Illuminate\Support\Facades\Auth;
 use App\Notifications\BookingConfirmation;
 use App\Notifications\BookingCancellation;
 use App\Services\RefundService;
+use App\Services\WebNotificationService;
 
 class BookingController extends Controller
 {
+    protected $webNotificationService;
+
+    public function __construct(WebNotificationService $webNotificationService)
+    {
+        $this->webNotificationService = $webNotificationService;
+    }
     /**
      * Display a listing of the resource.
      */
@@ -125,6 +132,14 @@ class BookingController extends Controller
         } catch (\Exception $e) {
             // Log the error but don't fail the booking creation
             \Log::error('Failed to send booking confirmation email: ' . $e->getMessage());
+        }
+
+        // Send web notifications
+        try {
+            $this->webNotificationService->notifyNewBooking($booking);
+        } catch (\Exception $e) {
+            // Log the error but don't fail the booking creation
+            \Log::error('Failed to send web notification for new booking: ' . $e->getMessage());
         }
 
         // Check if this is an AJAX request
@@ -348,6 +363,16 @@ class BookingController extends Controller
         // Update booking status to completed
         $booking->update(['status' => 'completed']);
 
+        // Send web notifications
+        try {
+            $this->webNotificationService->notifyBookingCompleted($booking);
+        } catch (\Exception $e) {
+            \Log::error('Failed to send web notification for completed booking', [
+                'booking_id' => $booking->id,
+                'error' => $e->getMessage()
+            ]);
+        }
+
         return redirect()->back()->with('success', 'Booking marked as completed successfully!');
     }
 
@@ -385,6 +410,16 @@ class BookingController extends Controller
 
         // Update booking status to cancelled
         $booking->update(['status' => 'cancelled']);
+
+        // Send web notifications
+        try {
+            $this->webNotificationService->notifyBookingCancelled($booking);
+        } catch (\Exception $e) {
+            \Log::error('Failed to send web notification for cancelled booking', [
+                'booking_id' => $booking->id,
+                'error' => $e->getMessage()
+            ]);
+        }
 
         // Handle different cancellation rules based on payment method
         if ($booking->payment) {
@@ -511,6 +546,16 @@ class BookingController extends Controller
                 $booking->user->notify(new BookingConfirmation($booking));
             } catch (\Exception $e) {
                 \Log::error('Failed to send booking confirmation email', [
+                    'booking_id' => $booking->id,
+                    'error' => $e->getMessage()
+                ]);
+            }
+
+            // Send web notifications
+            try {
+                $this->webNotificationService->notifyNewBooking($booking);
+            } catch (\Exception $e) {
+                \Log::error('Failed to send web notification for new booking', [
                     'booking_id' => $booking->id,
                     'error' => $e->getMessage()
                 ]);

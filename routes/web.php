@@ -10,6 +10,7 @@ use App\Http\Controllers\ProductController;
 use App\Http\Controllers\CourtController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\StaffController;
+use App\Http\Controllers\WebNotificationController;
 
 /*
 |--------------------------------------------------------------------------
@@ -540,11 +541,40 @@ Route::middleware(['auth'])->group(function () {
     Route::get('payments/{payment}/cancel', [PaymentController::class, 'paymentCancel'])->name('payments.cancel');
     Route::patch('payments/{payment}/mark-paid', [PaymentController::class, 'markAsPaid'])->name('payments.mark-paid');
 
-    // Refunds
-    Route::get('refunds', [App\Http\Controllers\RefundController::class, 'index'])->name('refunds.index');
-    Route::get('refunds/{refund}', [App\Http\Controllers\RefundController::class, 'show'])->name('refunds.show');
-    Route::post('refunds/{refund}/retry', [App\Http\Controllers\RefundController::class, 'retry'])->name('refunds.retry');
-    Route::post('refunds/{refund}/manual', [App\Http\Controllers\RefundController::class, 'manualRefund'])->name('refunds.manual');
+    // Refunds (Staff and Owners only)
+    Route::middleware(['auth'])->group(function () {
+        Route::get('refunds', function() {
+            $user = auth()->user();
+            if (!$user->isOwner() && !$user->isStaff()) {
+                abort(403, 'Unauthorized access to refunds.');
+            }
+            return app(App\Http\Controllers\RefundController::class)->index();
+        })->name('refunds.index');
+        
+        Route::get('refunds/{refund}', function($refund) {
+            $user = auth()->user();
+            if (!$user->isOwner() && !$user->isStaff()) {
+                abort(403, 'Unauthorized access to refunds.');
+            }
+            return app(App\Http\Controllers\RefundController::class)->show($refund);
+        })->name('refunds.show');
+        
+        Route::post('refunds/{refund}/retry', function($refund) {
+            $user = auth()->user();
+            if (!$user->isOwner() && !$user->isStaff()) {
+                abort(403, 'Unauthorized access to refunds.');
+            }
+            return app(App\Http\Controllers\RefundController::class)->retry($refund);
+        })->name('refunds.retry');
+        
+        Route::post('refunds/{refund}/manual', function($refund) {
+            $user = auth()->user();
+            if (!$user->isOwner() && !$user->isStaff()) {
+                abort(403, 'Unauthorized access to refunds.');
+            }
+            return app(App\Http\Controllers\RefundController::class)->manualRefund(request(), $refund);
+        })->name('refunds.manual');
+    });
 
     // Analytics & Reports
     Route::get('analytics', [App\Http\Controllers\AnalyticsController::class, 'index'])->name('analytics.index');
@@ -922,4 +952,95 @@ Route::get('/test-notification/{type}', function ($type) {
     
     $response = Http::get("http://10.62.86.15:8000/test-{$type}");
     return $response->json();
+});
+
+/*
+|--------------------------------------------------------------------------
+| Web Notification Routes
+|--------------------------------------------------------------------------
+*/
+
+// Web notification routes (authenticated users only)
+Route::middleware(['auth'])->group(function () {
+    // Get notifications
+    Route::get('/notifications', [WebNotificationController::class, 'index'])->name('notifications.index');
+    
+    // Get unread count
+    Route::get('/notifications/unread-count', [WebNotificationController::class, 'unreadCount'])->name('notifications.unread-count');
+    
+    // Mark notification as read
+    Route::patch('/notifications/{id}/read', [WebNotificationController::class, 'markAsRead'])->name('notifications.mark-read');
+    
+    // Mark all notifications as read
+    Route::patch('/notifications/mark-all-read', [WebNotificationController::class, 'markAllAsRead'])->name('notifications.mark-all-read');
+    
+    // Delete notification
+    Route::delete('/notifications/{id}', [WebNotificationController::class, 'destroy'])->name('notifications.destroy');
+    
+    // Get notification statistics
+    Route::get('/notifications/stats', [WebNotificationController::class, 'stats'])->name('notifications.stats');
+    
+    // Get notifications by type
+    Route::get('/notifications/type/{type}', [WebNotificationController::class, 'byType'])->name('notifications.by-type');
+});
+
+// Test routes for web notifications (remove in production)
+Route::get('/test-web-notifications', function () {
+    $user = Auth::user();
+    if (!$user) {
+        return response()->json(['error' => 'Not authenticated'], 401);
+    }
+
+    $notificationService = new \App\Services\WebNotificationService();
+
+    // Create sample notifications
+    $notifications = [
+        [
+            'user_id' => $user->id,
+            'type' => 'booking_created',
+            'title' => 'New Booking Received',
+            'message' => 'John Doe has booked Court 1 for 2024-10-29 at 14:00',
+            'data' => [
+                'booking_id' => 1,
+                'court_id' => 1,
+                'customer_id' => 2,
+                'booking_date' => '2024-10-29',
+                'booking_time' => '14:00',
+            ],
+        ],
+        [
+            'user_id' => $user->id,
+            'type' => 'payment_received',
+            'title' => 'Payment Received',
+            'message' => 'Payment of RM 40.00 received for booking at Court 2',
+            'data' => [
+                'booking_id' => 2,
+                'court_id' => 2,
+                'customer_id' => 3,
+                'amount' => 40.00,
+                'booking_date' => '2024-10-29',
+            ],
+        ],
+        [
+            'user_id' => $user->id,
+            'type' => 'court_added',
+            'title' => 'New Court Added',
+            'message' => 'A new court \'Court 3\' has been added to the system',
+            'data' => [
+                'court_id' => 3,
+                'court_name' => 'Court 3',
+                'owner_id' => 1,
+            ],
+        ],
+    ];
+
+    foreach ($notifications as $notificationData) {
+        $notificationService->create($notificationData);
+    }
+
+    return response()->json([
+        'success' => true,
+        'message' => 'Sample web notifications created successfully!',
+        'notifications_created' => count($notifications),
+    ]);
 });
