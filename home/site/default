@@ -10,8 +10,9 @@ server {
     }
 
     location ~ \.php$ {
-        # Try Unix socket first, fallback to TCP
-        fastcgi_pass unix:/run/php/php-fpm.sock;
+        # Azure App Service PHP-FPM configuration
+        # Try TCP first (Azure standard), fallback to Unix socket
+        fastcgi_pass 127.0.0.1:9000;
         fastcgi_index index.php;
         fastcgi_param SCRIPT_FILENAME $realpath_root$fastcgi_script_name;
         include fastcgi_params;
