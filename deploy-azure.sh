@@ -51,7 +51,7 @@ fi
 # Variables
 RESOURCE_GROUP="smashzone-rg"
 APP_NAME="smashzone-app-$(date +%s)"  # Add timestamp to make unique
-MYSQL_SERVER="smashzone-mysql-$(date +%s)"
+SQL_SERVER="smashzone-sql-$(date +%s)"
 DATABASE_NAME="smashzone_db"
 LOCATION="Southeast Asia"
 ADMIN_USER="smashzoneadmin"
@@ -79,48 +79,47 @@ else
     exit 1
 fi
 
-# Step 3: Create MySQL Flexible Server
-print_status "Creating MySQL Flexible server: $MYSQL_SERVER"
-az mysql flexible-server create \
+# Step 3: Create Azure SQL Server (Logical Server)
+print_status "Creating Azure SQL Server: $SQL_SERVER"
+az sql server create \
   --resource-group $RESOURCE_GROUP \
-  --name $MYSQL_SERVER \
+  --name $SQL_SERVER \
   --location "$LOCATION" \
   --admin-user $ADMIN_USER \
   --admin-password "$ADMIN_PASSWORD" \
-  --sku-name Standard_B1ms \
-  --tier Burstable \
-  --public-access 0.0.0.0 \
-  --storage-size 32 \
   --output none
 
 if [ $? -eq 0 ]; then
-    print_success "MySQL server created successfully"
+    print_success "Azure SQL Server created successfully"
 else
-    print_error "Failed to create MySQL server"
+    print_error "Failed to create Azure SQL Server"
     exit 1
 fi
 
-# Step 4: Create Database
-print_status "Creating database: $DATABASE_NAME"
-az mysql flexible-server db create \
+# Step 4: Create Azure SQL Database (Basic Tier - Low Cost)
+print_status "Creating Azure SQL Database (Basic tier - low cost): $DATABASE_NAME"
+az sql db create \
   --resource-group $RESOURCE_GROUP \
-  --server-name $MYSQL_SERVER \
-  --database-name $DATABASE_NAME \
+  --server $SQL_SERVER \
+  --name $DATABASE_NAME \
+  --service-objective Basic \
+  --backup-storage-redundancy Local \
+  --yes \
   --output none
 
 if [ $? -eq 0 ]; then
-    print_success "Database created successfully"
+    print_success "Azure SQL Database created successfully (Basic tier - ~$5/month)"
 else
     print_error "Failed to create database"
     exit 1
 fi
 
-# Step 5: Configure Firewall
-print_status "Configuring MySQL firewall rules..."
-az mysql flexible-server firewall-rule create \
+# Step 5: Configure Firewall Rules
+print_status "Configuring SQL Server firewall rules..."
+az sql server firewall-rule create \
   --resource-group $RESOURCE_GROUP \
-  --name $MYSQL_SERVER \
-  --rule-name AllowAzureServices \
+  --server $SQL_SERVER \
+  --name AllowAzureServices \
   --start-ip-address 0.0.0.0 \
   --end-ip-address 0.0.0.0 \
   --output none
@@ -154,7 +153,7 @@ az webapp create \
   --resource-group $RESOURCE_GROUP \
   --plan smashzone-plan \
   --name $APP_NAME \
-  --runtime "PHP|8.1" \
+  --runtime "PHP|8.2" \
   --output none
 
 if [ $? -eq 0 ]; then
@@ -178,12 +177,14 @@ az webapp config appsettings set \
     APP_DEBUG=false \
     APP_KEY="$APP_KEY" \
     APP_URL="https://$APP_NAME.azurewebsites.net" \
-    DB_CONNECTION=mysql \
-    DB_HOST="$MYSQL_SERVER.mysql.database.azure.com" \
-    DB_PORT=3306 \
+    DB_CONNECTION=sqlsrv \
+    DB_HOST="$SQL_SERVER.database.windows.net" \
+    DB_PORT=1433 \
     DB_DATABASE=$DATABASE_NAME \
     DB_USERNAME="$ADMIN_USER" \
     DB_PASSWORD="$ADMIN_PASSWORD" \
+    DB_ENCRYPT=yes \
+    DB_TRUST_SERVER_CERTIFICATE=false \
     MAIL_MAILER=smtp \
     MAIL_HOST=smtp.gmail.com \
     MAIL_PORT=587 \
@@ -312,8 +313,8 @@ echo ""
 echo "📋 Deployment Details:"
 echo "  🌐 App URL: https://$APP_NAME.azurewebsites.net"
 echo "  📊 Resource Group: $RESOURCE_GROUP"
-echo "  🗄️  MySQL Server: $MYSQL_SERVER.mysql.database.azure.com"
-echo "  💾 Database: $DATABASE_NAME"
+echo "  🗄️  SQL Server: $SQL_SERVER.database.windows.net"
+echo "  💾 Database: $DATABASE_NAME (Basic tier - ~$5/month)"
 echo "  👤 Admin User: $ADMIN_USER"
 echo "  🔑 Admin Password: $ADMIN_PASSWORD"
 echo ""
@@ -331,9 +332,9 @@ echo "   php artisan route:cache"
 echo "   php artisan view:cache"
 echo ""
 echo "🔧 Manual Database Setup (if needed):"
-echo "   az mysql server firewall-rule create \\"
+echo "   az sql server firewall-rule create \\"
 echo "     --resource-group $RESOURCE_GROUP \\"
-echo "     --server $MYSQL_SERVER \\"
+echo "     --server $SQL_SERVER \\"
 echo "     --name AllowMyIP \\"
 echo "     --start-ip-address YOUR_IP \\"
 echo "     --end-ip-address YOUR_IP"
