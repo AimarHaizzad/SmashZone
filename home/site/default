@@ -10,11 +10,14 @@ server {
     }
 
     location ~ \.php$ {
-        fastcgi_pass 127.0.0.1:9000;
+        # Try Unix socket first, fallback to TCP
+        fastcgi_pass unix:/run/php/php-fpm.sock;
         fastcgi_index index.php;
         fastcgi_param SCRIPT_FILENAME $realpath_root$fastcgi_script_name;
         include fastcgi_params;
         fastcgi_param HTTP_PROXY "";
+        fastcgi_read_timeout 300;
+        fastcgi_connect_timeout 300;
     }
 
     location ~ /\.(?!well-known).* {
