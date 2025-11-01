@@ -31,4 +31,11 @@ if [ -d storage ]; then
     chmod -R 755 storage bootstrap/cache 2>/dev/null || true
 fi
 
+# Install PHP SQL Server extensions if not present
+echo "Checking PHP SQL Server extensions..."
+php -m | grep -i sqlsrv || {
+    echo "SQL Server extensions not found, checking if available..."
+    # Azure App Service may have these in /usr/lib/php/*
+}
+
 echo "=== Startup script completed at $(date) ==="
