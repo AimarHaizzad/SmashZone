@@ -103,6 +103,16 @@ if [ ! -z "$MYSQLHOST" ]; then
 elif [ ! -z "$DB_HOST" ]; then
     set_env_var "DB_HOST" "$DB_HOST"
     echo "✅ Using DB_HOST: $DB_HOST"
+    # Warn if using localhost (won't work on Railway)
+    if [ "$DB_HOST" = "127.0.0.1" ] || [ "$DB_HOST" = "localhost" ]; then
+        echo "⚠️ WARNING: DB_HOST is set to $DB_HOST (localhost)"
+        echo "   This won't work on Railway! MySQL must be a separate service."
+        echo "   Please:"
+        echo "   1. Add a MySQL service in Railway (if not already added)"
+        echo "   2. Connect the MySQL service to this app service"
+        echo "   3. Remove DB_HOST from environment variables (Railway will auto-provide MYSQLHOST)"
+        echo "   OR use Railway service reference: DB_HOST=\${{MySQL.MYSQLHOST}}"
+    fi
 else
     echo "⚠️ WARNING: No database host found! MySQL service may not be connected."
     echo "   Please add a MySQL service in Railway and connect it to this app."
