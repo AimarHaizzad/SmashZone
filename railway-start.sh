@@ -91,19 +91,29 @@ fi
 [ ! -z "$APP_ENV" ] && set_env_var "APP_ENV" "$APP_ENV"
 [ ! -z "$APP_DEBUG" ] && set_env_var "APP_DEBUG" "$APP_DEBUG"
 [ ! -z "$APP_URL" ] && set_env_var "APP_URL" "$APP_URL"
-[ ! -z "$DB_CONNECTION" ] && set_env_var "DB_CONNECTION" "$DB_CONNECTION"
+
+# Always set DB_CONNECTION to mysql on Railway
+set_env_var "DB_CONNECTION" "mysql"
 
 # Handle Railway MySQL variables (Railway uses MYSQLHOST, MYSQLPORT, etc.)
+# Priority: Railway variables (MYSQL*) > Standard variables (DB_*)
 if [ ! -z "$MYSQLHOST" ]; then
     set_env_var "DB_HOST" "$MYSQLHOST"
+    echo "✅ Using Railway MySQL host: $MYSQLHOST"
 elif [ ! -z "$DB_HOST" ]; then
     set_env_var "DB_HOST" "$DB_HOST"
+    echo "✅ Using DB_HOST: $DB_HOST"
+else
+    echo "⚠️ WARNING: No database host found! MySQL service may not be connected."
+    echo "   Please add a MySQL service in Railway and connect it to this app."
 fi
 
 if [ ! -z "$MYSQLPORT" ]; then
     set_env_var "DB_PORT" "$MYSQLPORT"
 elif [ ! -z "$DB_PORT" ]; then
     set_env_var "DB_PORT" "$DB_PORT"
+else
+    set_env_var "DB_PORT" "3306"
 fi
 
 if [ ! -z "$MYSQLDATABASE" ]; then
@@ -124,6 +134,10 @@ elif [ ! -z "$DB_PASSWORD" ]; then
     set_env_var "DB_PASSWORD" "$DB_PASSWORD"
 fi
 
+# Display final database configuration (without password)
+echo "📋 Final database configuration in .env:"
+grep "^DB_" .env | sed 's/DB_PASSWORD=.*/DB_PASSWORD=***hidden***/' || echo "   No DB_ variables found in .env"
+
 # Generate application key if not set
 if [ -z "$APP_KEY" ]; then
     echo "🔑 Generating application key..."
@@ -135,29 +149,34 @@ else
     set_env_var "APP_KEY" "$APP_KEY"
 fi
 
+# Clear config cache to ensure .env changes are picked up
+echo "🔄 Clearing configuration cache..."
+php artisan config:clear || true
+
 # Test database connection before running migrations
 echo "🔍 Testing database connection..."
-echo "   Database configuration:"
-echo "   - Host: ${DB_HOST:-${MYSQLHOST:-not set}}"
-echo "   - Port: ${DB_PORT:-${MYSQLPORT:-3306}}"
-echo "   - Database: ${DB_DATABASE:-${MYSQLDATABASE:-not set}}"
-echo "   - Username: ${DB_USERNAME:-${MYSQLUSER:-not set}}"
-echo "   - Password: ${DB_PASSWORD:+***set***}${DB_PASSWORD:-${MYSQLPASSWORD:+***set***}${MYSQLPASSWORD:-not set}}"
-
-php artisan db:show --database=mysql 2>/dev/null || {
-    echo "⚠️ Database connection test failed. Will attempt migrations anyway..."
-    echo "   Note: If migrations fail, check that MySQL service is added and connected in Railway."
+php artisan db:show --database=mysql 2>/dev/null && echo "✅ Database connection successful!" || {
+    echo "⚠️ Database connection test failed."
+    echo "   This might be normal if the database is still starting up."
+    echo "   Will attempt migrations anyway..."
 }
 
 # Run migrations
 echo "📦 Running database migrations..."
-php artisan migrate --force || echo "⚠️ Migration failed, continuing..."
+php artisan migrate --force || {
+    echo "⚠️ Migration failed!"
+    echo "   Please check:"
+    echo "   1. MySQL service is added in Railway"
+    echo "   2. MySQL service is connected to this app service"
+    echo "   3. Database credentials are correct"
+    echo "   Continuing anyway..."
+}
 
 # Create storage link
 echo "🔗 Creating storage link..."
 php artisan storage:link || echo "⚠️ Storage link already exists"
 
-# Clear and cache configuration
+# Cache configuration for better performance
 echo "⚡ Optimizing application..."
 php artisan config:cache || true
 php artisan route:cache || true
