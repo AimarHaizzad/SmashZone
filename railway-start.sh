@@ -11,9 +11,40 @@ echo "   PORT: ${PORT:-not set (will use 80)}"
 echo "   DB_CONNECTION: ${DB_CONNECTION:-not set}"
 echo "   Working directory: $(pwd)"
 
+# Fix storage permissions (critical for Laravel to write logs and cache)
+echo "🔧 Setting up storage permissions..."
+mkdir -p storage/logs storage/framework/cache storage/framework/sessions storage/framework/views bootstrap/cache
+chown -R www-data:www-data storage bootstrap/cache
+chmod -R 775 storage bootstrap/cache
+# Ensure log file exists and is writable
+touch storage/logs/laravel.log
+chown www-data:www-data storage/logs/laravel.log
+chmod 664 storage/logs/laravel.log
+
 # Wait for database to be ready (Railway provides DB connection automatically)
 echo "⏳ Waiting for database connection..."
-sleep 2
+# Wait up to 30 seconds for database to be ready
+for i in {1..10}; do
+    if php -r "
+    try {
+        \$host = getenv('MYSQLHOST') ?: getenv('DB_HOST') ?: '127.0.0.1';
+        \$port = getenv('MYSQLPORT') ?: getenv('DB_PORT') ?: 3306;
+        \$socket = @fsockopen(\$host, \$port, \$errno, \$errstr, 2);
+        if (\$socket) {
+            fclose(\$socket);
+            exit(0);
+        }
+        exit(1);
+    } catch (Exception \$e) {
+        exit(1);
+    }
+    " 2>/dev/null; then
+        echo "✅ Database is ready!"
+        break
+    fi
+    echo "   Attempt $i/10: Database not ready yet, waiting..."
+    sleep 3
+done
 
 # Ensure we're using MySQL on Railway
 # Railway provides MySQL connection via environment variables
@@ -103,6 +134,20 @@ else
     # If APP_KEY is set in environment, update .env file
     set_env_var "APP_KEY" "$APP_KEY"
 fi
+
+# Test database connection before running migrations
+echo "🔍 Testing database connection..."
+echo "   Database configuration:"
+echo "   - Host: ${DB_HOST:-${MYSQLHOST:-not set}}"
+echo "   - Port: ${DB_PORT:-${MYSQLPORT:-3306}}"
+echo "   - Database: ${DB_DATABASE:-${MYSQLDATABASE:-not set}}"
+echo "   - Username: ${DB_USERNAME:-${MYSQLUSER:-not set}}"
+echo "   - Password: ${DB_PASSWORD:+***set***}${DB_PASSWORD:-${MYSQLPASSWORD:+***set***}${MYSQLPASSWORD:-not set}}"
+
+php artisan db:show --database=mysql 2>/dev/null || {
+    echo "⚠️ Database connection test failed. Will attempt migrations anyway..."
+    echo "   Note: If migrations fail, check that MySQL service is added and connected in Railway."
+}
 
 # Run migrations
 echo "📦 Running database migrations..."

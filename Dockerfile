@@ -31,9 +31,17 @@ COPY . /var/www/html
 # Copy existing application directory permissions
 RUN chown -R www-data:www-data /var/www/html
 
-# Set permissions
-RUN chmod -R 755 /var/www/html/storage
-RUN chmod -R 755 /var/www/html/bootstrap/cache
+# Create storage directories and set proper permissions
+RUN mkdir -p /var/www/html/storage/logs \
+    /var/www/html/storage/framework/cache \
+    /var/www/html/storage/framework/sessions \
+    /var/www/html/storage/framework/views \
+    /var/www/html/bootstrap/cache
+
+# Set permissions (775 allows www-data to write)
+RUN chmod -R 775 /var/www/html/storage
+RUN chmod -R 775 /var/www/html/bootstrap/cache
+RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
 
 # Install PHP dependencies
 RUN composer install --optimize-autoloader --no-dev --no-interaction
