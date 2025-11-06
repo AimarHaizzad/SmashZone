@@ -38,9 +38,11 @@ RUN chmod -R 755 /var/www/html/bootstrap/cache
 # Install PHP dependencies
 RUN composer install --optimize-autoloader --no-dev --no-interaction
 
-# Install Node dependencies and build assets
-RUN npm install --production
+# Install Node dependencies (including dev dependencies needed for build)
+# Build assets, then optionally clean up node_modules to reduce image size
+RUN npm install
 RUN npm run build
+RUN rm -rf node_modules
 
 # Configure Apache
 RUN echo '<VirtualHost *:80>\n\
