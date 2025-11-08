@@ -8,6 +8,7 @@ use App\Models\Court;
 use App\Models\Product;
 use App\Models\Booking;
 use App\Models\Payment;
+use Illuminate\Support\Str;
 
 class DatabaseSeeder extends Seeder
 {
@@ -17,12 +18,16 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         // --- Create 1 Owner ---
-        $owner = User::factory()->create([
-            'name' => 'Owner',
-            'email' => 'AimarHaizzad@gmail.com',
-            'password' => bcrypt('Aimar123'),
-            'role' => 'owner',
-        ]);
+        $owner = User::firstOrCreate(
+            ['email' => 'AimarHaizzad@gmail.com'],
+            [
+                'name' => 'Owner',
+                'password' => bcrypt('Aimar123'),
+                'role' => 'owner',
+                'email_verified_at' => now(),
+                'remember_token' => Str::random(10),
+            ]
+        );
 
         // --- Create 2 Staff ---
         $staff = User::factory(2)->create([
