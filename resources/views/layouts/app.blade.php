@@ -47,21 +47,6 @@
             </main>
         </div>
 
-        <!-- PWA Service Worker Registration -->
-        <script>
-            if ('serviceWorker' in navigator) {
-                window.addEventListener('load', function() {
-                    navigator.serviceWorker.register('/sw.js')
-                        .then(function(registration) {
-                            console.log('ServiceWorker registration successful');
-                        })
-                        .catch(function(err) {
-                            console.log('ServiceWorker registration failed');
-                        });
-                });
-            }
-        </script>
-
         <!-- 🏸 SmashZone Mobile App Authentication Integration -->
         <script>
         (function() {
@@ -303,5 +288,24 @@
         <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
         
         @stack('scripts')
+
+        <!-- Temporary: unregister old service workers and clear caches -->
+        <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.getRegistrations().then(function(registrations) {
+                registrations.forEach(function(registration) {
+                    registration.unregister().catch(function() {});
+                });
+            });
+        }
+
+        if (window.caches) {
+            caches.keys().then(function(cacheNames) {
+                cacheNames.forEach(function(cacheName) {
+                    caches.delete(cacheName).catch(function() {});
+                });
+            });
+        }
+        </script>
     </body>
 </html>
