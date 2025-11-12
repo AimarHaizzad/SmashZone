@@ -5,6 +5,12 @@ set -e
 # Ensure we're in the correct directory
 cd /var/www/html || exit 1
 
+# Ensure Node.js tooling exists for asset build
+if ! command -v npm >/dev/null 2>&1; then
+    echo "📦 npm not found. Installing Node.js runtime..."
+    apt-get update && apt-get install -y nodejs npm
+fi
+
 # Build frontend assets automatically if they are missing
 if command -v npm >/dev/null 2>&1 && [ -f package.json ]; then
     if [ ! -d node_modules ]; then
