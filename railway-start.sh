@@ -5,6 +5,22 @@ set -e
 # Ensure we're in the correct directory
 cd /var/www/html || exit 1
 
+# Build frontend assets automatically if they are missing
+if command -v npm >/dev/null 2>&1 && [ -f package.json ]; then
+    if [ ! -d node_modules ]; then
+        echo "📦 Installing Node dependencies (npm ci)..."
+        if ! npm ci --no-audit --no-fund; then
+            echo "⚠️ npm ci failed, attempting npm install fallback..."
+            npm install --no-audit --no-fund
+        fi
+    fi
+
+    echo "🎨 Building frontend assets for production..."
+    npm run build -- --emptyOutDir
+else
+    echo "⚠️ npm or package.json not available. Skipping frontend build."
+fi
+
 echo "🚀 Starting SmashZone on Railway..."
 echo "📋 Environment check:"
 echo "   PORT: ${PORT:-not set (will use 80)}"
