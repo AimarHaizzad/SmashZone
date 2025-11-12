@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Notifications\Channels\BrevoChannel;
+use Illuminate\Notifications\ChannelManager;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
@@ -30,5 +32,9 @@ class AppServiceProvider extends ServiceProvider
                 URL::forceScheme('https');
             }
         }
+
+        $this->app->make(ChannelManager::class)->extend('brevo', function ($app) {
+            return $app->make(BrevoChannel::class);
+        });
     }
 }

@@ -49,4 +49,8 @@ return [
         'server_key' => env('FIREBASE_SERVER_KEY'),
     ],
 
+    'brevo' => [
+        'api_key' => env('BREVO_API_KEY'),
+    ],
+
 ];
