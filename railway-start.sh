@@ -11,14 +11,12 @@ if ! command -v npm >/dev/null 2>&1; then
     apt-get update && apt-get install -y nodejs npm
 fi
 
-# Build frontend assets automatically if they are missing
+# Reinstall dependencies every boot (container filesystem may be ephemeral)
 if command -v npm >/dev/null 2>&1 && [ -f package.json ]; then
-    if [ ! -d node_modules ]; then
-        echo "📦 Installing Node dependencies (npm ci)..."
-        if ! npm ci --no-audit --no-fund; then
-            echo "⚠️ npm ci failed, attempting npm install fallback..."
-            npm install --no-audit --no-fund
-        fi
+    echo "📦 Installing Node dependencies (npm ci)..."
+    if ! npm ci --no-audit --no-fund; then
+        echo "⚠️ npm ci failed, attempting npm install fallback..."
+        npm install --no-audit --no-fund
     fi
 
     echo "🎨 Building frontend assets for production..."
