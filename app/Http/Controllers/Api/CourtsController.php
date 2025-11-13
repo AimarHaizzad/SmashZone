@@ -25,40 +25,67 @@ class CourtsController extends Controller
         }
         
         try {
-            // Get courts - adjust table name according to your database
-            // Assuming you have a 'courts' table
-            // Try with price_per_hour first, then fallback to price
-            $courts = DB::table('courts')
-                ->select(
-                    'id',
-                    'name',
-                    'location',
-                    DB::raw('CONCAT("RM ", FORMAT(COALESCE(price_per_hour, price, 0), 2)) as price'),
-                    'image',
-                    DB::raw('CASE WHEN status = "available" THEN true ELSE false END as available')
-                )
-                ->where(function($query) {
-                    $query->where('status', 'available')
-                          ->orWhereNull('status');
-                })
-                ->orderBy('name', 'asc')
-                ->get();
+            // Check if courts table exists
+            if (!DB::getSchemaBuilder()->hasTable('courts')) {
+                return response()->json([
+                    'success' => true,
+                    'courts' => []
+                ]);
+            }
             
-            // If no courts found or price column issue, try alternative query
-            if ($courts->isEmpty()) {
+            $query = DB::table('courts');
+            
+            // Determine price column
+            $priceColumn = 'price';
+            if (DB::getSchemaBuilder()->hasColumn('courts', 'price_per_hour')) {
+                $priceColumn = 'price_per_hour';
+            } elseif (!DB::getSchemaBuilder()->hasColumn('courts', 'price')) {
+                $priceColumn = null;
+            }
+            
+            // Build select query
+            $selectFields = [
+                'id',
+                'name',
+                DB::raw('COALESCE(location, "") as location'),
+            ];
+            
+            if ($priceColumn) {
+                $selectFields[] = DB::raw('CONCAT("RM ", FORMAT(' . $priceColumn . ', 2)) as price');
+            } else {
+                $selectFields[] = DB::raw('"RM 0.00" as price');
+            }
+            
+            $selectFields[] = DB::raw('COALESCE(image, "") as image');
+            
+            // Handle available status
+            if (DB::getSchemaBuilder()->hasColumn('courts', 'status')) {
+                $selectFields[] = DB::raw('CASE 
+                    WHEN status = "available" OR status = "active" OR status IS NULL OR status = "" THEN true 
+                    ELSE false 
+                END as available');
+            } else {
+                $selectFields[] = DB::raw('true as available');
+            }
+            
+            $courts = $query->select($selectFields);
+            
+            // Less restrictive status filter
+            if (DB::getSchemaBuilder()->hasColumn('courts', 'status')) {
+                $courts = $courts->where(function($q) {
+                    $q->where('status', 'available')
+                      ->orWhere('status', 'active')
+                      ->orWhere('status', '=', '')
+                      ->orWhereNull('status');
+                });
+            }
+            
+            $courts = $courts->orderBy('name', 'asc')->get();
+            
+            // If still empty, try getting all courts without status filter
+            if ($courts->isEmpty() && DB::getSchemaBuilder()->hasColumn('courts', 'status')) {
                 $courts = DB::table('courts')
-                    ->select(
-                        'id',
-                        'name',
-                        'location',
-                        DB::raw('CONCAT("RM ", FORMAT(COALESCE(price, 0), 2)) as price'),
-                        'image',
-                        DB::raw('CASE WHEN status = "available" THEN true ELSE false END as available')
-                    )
-                    ->where(function($query) {
-                        $query->where('status', 'available')
-                              ->orWhereNull('status');
-                    })
+                    ->select($selectFields)
                     ->orderBy('name', 'asc')
                     ->get();
             }
@@ -69,6 +96,9 @@ class CourtsController extends Controller
             ]);
             
         } catch (\Exception $e) {
+            // Log error for debugging
+            \Log::error('CourtsController Error: ' . $e->getMessage());
+            
             // If table doesn't exist or there's an error, return empty data
             return response()->json([
                 'success' => true,
@@ -77,4 +107,3 @@ class CourtsController extends Controller
         }
     }
 }
-

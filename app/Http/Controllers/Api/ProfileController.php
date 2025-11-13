@@ -30,10 +30,23 @@ class ProfileController extends Controller
                 ->where('user_id', $user->id)
                 ->count();
             
-            $totalSpent = DB::table('bookings')
-                ->where('user_id', $user->id)
-                ->where('status', 'confirmed')
-                ->sum(DB::raw('COALESCE(total_price, price, 0)'));
+            // Handle both total_price and price columns
+            $hasTotalPrice = DB::getSchemaBuilder()->hasColumn('bookings', 'total_price');
+            $hasPrice = DB::getSchemaBuilder()->hasColumn('bookings', 'price');
+            
+            if ($hasTotalPrice) {
+                $totalSpent = DB::table('bookings')
+                    ->where('user_id', $user->id)
+                    ->where('status', 'confirmed')
+                    ->sum('total_price');
+            } elseif ($hasPrice) {
+                $totalSpent = DB::table('bookings')
+                    ->where('user_id', $user->id)
+                    ->where('status', 'confirmed')
+                    ->sum('price');
+            } else {
+                $totalSpent = 0;
+            }
             
             $profile = [
                 'id' => (string)$user->id,
