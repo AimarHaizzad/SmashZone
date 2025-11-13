@@ -47,11 +47,11 @@ class AppServiceProvider extends ServiceProvider
             $endpoint = $config['endpoint'] ?? env('BREVO_API_ENDPOINT', 'default');
             $endpoint = $endpoint ?: 'default';
 
-            // Create HttpClient instance
+            // Create HttpClient instance (or null if not needed)
             $httpClient = HttpClient::create();
 
             $factory = new SendinblueTransportFactory(
-                $app['events'],
+                null, // Dispatcher - Laravel's dispatcher is not compatible with Symfony's interface
                 $httpClient,
                 $app->bound('log') ? $app['log'] : null
             );
