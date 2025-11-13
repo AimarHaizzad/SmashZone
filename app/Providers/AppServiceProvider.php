@@ -36,7 +36,8 @@ class AppServiceProvider extends ServiceProvider
             }
         }
 
-        $this->app->make(MailManager::class)->extend('brevo', function (array $config) {
+        $app = $this->app;
+        $this->app->make(MailManager::class)->extend('brevo', function (array $config) use ($app) {
             $apiKey = $config['api_key'] ?? env('BREVO_API_KEY');
 
             if (blank($apiKey)) {
@@ -46,10 +47,13 @@ class AppServiceProvider extends ServiceProvider
             $endpoint = $config['endpoint'] ?? env('BREVO_API_ENDPOINT', 'default');
             $endpoint = $endpoint ?: 'default';
 
+            // Create HttpClient instance
+            $httpClient = HttpClient::create();
+
             $factory = new SendinblueTransportFactory(
-                $this->app['events'],
-                HttpClient::create(),
-                $this->app->bound('log') ? $this->app['log'] : null
+                $app['events'],
+                $httpClient,
+                $app->bound('log') ? $app['log'] : null
             );
 
             return $factory->create(new Dsn(
