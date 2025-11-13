@@ -2,69 +2,70 @@
 
 @section('content')
 <!-- Enhanced Hero Section -->
-<div class="relative mb-12">
-    <div class="absolute inset-0 bg-gradient-to-r from-blue-900/90 to-green-900/90 rounded-3xl"></div>
-    <img src="/images/badminton-hero.jpg" alt="Badminton Hero" class="w-full h-64 object-cover rounded-3xl shadow-2xl">
-    <div class="absolute inset-0 flex flex-col justify-center items-center text-center px-4">
-        <div class="bg-white/10 backdrop-blur-sm rounded-2xl p-8 border border-white/20">
-            <h1 class="text-5xl font-extrabold text-white drop-shadow-lg mb-4">Book Your Court</h1>
-            <p class="text-xl text-blue-100 font-medium drop-shadow mb-6">Real-time availability • Instant booking • Professional courts</p>
-            <div class="flex items-center justify-center gap-6 text-white/90">
-                <div class="flex items-center gap-2">
-                    <div class="w-3 h-3 bg-green-400 rounded-full"></div>
-                    <span class="text-sm font-medium">Available</span>
+<div class="relative mb-6 md:mb-12">
+    <div class="absolute inset-0 bg-gradient-to-r from-blue-900/90 to-green-900/90 rounded-2xl md:rounded-3xl"></div>
+    <img src="/images/badminton-hero.jpg" alt="Badminton Hero" class="w-full h-40 md:h-64 object-cover rounded-2xl md:rounded-3xl shadow-2xl">
+    <div class="absolute inset-0 flex flex-col justify-center items-center text-center px-2 md:px-4">
+        <div class="bg-white/10 backdrop-blur-sm rounded-xl md:rounded-2xl p-4 md:p-8 border border-white/20">
+            <h1 class="text-2xl md:text-5xl font-extrabold text-white drop-shadow-lg mb-2 md:mb-4">Book Your Court</h1>
+            <p class="text-sm md:text-xl text-blue-100 font-medium drop-shadow mb-3 md:mb-6">Real-time availability • Instant booking • Professional courts</p>
+            <div class="flex flex-wrap items-center justify-center gap-3 md:gap-6 text-white/90">
+                <div class="flex items-center gap-1 md:gap-2">
+                    <div class="w-2 h-2 md:w-3 md:h-3 bg-green-400 rounded-full"></div>
+                    <span class="text-xs md:text-sm font-medium">Available</span>
                 </div>
-                <div class="flex items-center gap-2">
-                    <div class="w-3 h-3 bg-red-400 rounded-full"></div>
-                    <span class="text-sm font-medium">Booked</span>
+                <div class="flex items-center gap-1 md:gap-2">
+                    <div class="w-2 h-2 md:w-3 md:h-3 bg-red-400 rounded-full"></div>
+                    <span class="text-xs md:text-sm font-medium">Booked</span>
                 </div>
-                <div class="flex items-center gap-2">
-                    <div class="w-3 h-3 bg-blue-400 rounded-full"></div>
-                    <span class="text-sm font-medium">My Booking</span>
+                <div class="flex items-center gap-1 md:gap-2">
+                    <div class="w-2 h-2 md:w-3 md:h-3 bg-blue-400 rounded-full"></div>
+                    <span class="text-xs md:text-sm font-medium">My Booking</span>
                 </div>
             </div>
         </div>
     </div>
 </div>
 
-<div class="max-w-7xl mx-auto py-8 px-4">
+<div class="max-w-7xl mx-auto py-4 md:py-8 px-2 md:px-4">
     <!-- Enhanced Date Navigation -->
-    <div class="bg-white rounded-2xl shadow-lg p-6 mb-8 border border-gray-100">
-        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <div class="flex items-center gap-3">
-                <button onclick="changeDate(-1)" class="p-3 rounded-xl hover:bg-blue-50 transition-colors border border-gray-200"
+    <div class="bg-white rounded-xl md:rounded-2xl shadow-lg p-3 md:p-6 mb-4 md:mb-8 border border-gray-100">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 md:gap-4">
+            <div class="flex items-center gap-2 md:gap-3 w-full md:w-auto">
+                <button onclick="changeDate(-1)" class="p-2 md:p-3 rounded-lg md:rounded-xl hover:bg-blue-50 transition-colors border border-gray-200 flex-shrink-0"
                         title="Previous day"
                         aria-label="Go to previous day">
-                    <svg class="h-5 w-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                    <svg class="h-4 w-4 md:h-5 md:w-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
                     </svg>
                     <span class="sr-only">Previous day</span>
                 </button>
-                <form method="GET" action="" class="flex items-center gap-3">
-                    <div class="relative">
+                <form method="GET" action="" class="flex items-center gap-2 md:gap-3 flex-1 min-w-0">
+                    <div class="relative flex-1 min-w-0">
                         <input id="date-input" type="date" name="date" value="{{ $selectedDate }}" 
-                               class="border-2 border-blue-200 rounded-xl px-4 py-3 shadow-sm focus:ring-2 focus:ring-blue-300 text-lg font-semibold bg-white" 
+                               class="border-2 border-blue-200 rounded-lg md:rounded-xl px-2 md:px-4 py-2 md:py-3 shadow-sm focus:ring-2 focus:ring-blue-300 text-sm md:text-lg font-semibold bg-white w-full" 
                                onchange="this.form.submit()"
                                title="Select booking date"
                                aria-label="Select booking date">
-                        <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                            <svg class="h-5 w-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                        <div class="absolute inset-y-0 right-0 flex items-center pr-2 md:pr-3 pointer-events-none">
+                            <svg class="h-4 w-4 md:h-5 md:w-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                             </svg>
                         </div>
                     </div>
-                    <span class="text-blue-700 font-bold text-xl">{{ \Carbon\Carbon::parse($selectedDate)->format('j F Y') }}</span>
+                    <span class="text-blue-700 font-bold text-sm md:text-xl whitespace-nowrap hidden sm:inline">{{ \Carbon\Carbon::parse($selectedDate)->format('j F Y') }}</span>
+                    <span class="text-blue-700 font-bold text-xs sm:hidden">{{ \Carbon\Carbon::parse($selectedDate)->format('M j') }}</span>
                     <button type="button" onclick="setToday()" 
-                            class="px-4 py-2 bg-blue-50 text-blue-700 rounded-xl border border-blue-200 hover:bg-blue-100 transition font-medium"
+                            class="px-3 md:px-4 py-2 bg-blue-50 text-blue-700 rounded-lg md:rounded-xl border border-blue-200 hover:bg-blue-100 transition font-medium text-sm md:text-base whitespace-nowrap flex-shrink-0"
                             title="Go to today"
                             aria-label="Go to today's date">
                         Today
                     </button>
                 </form>
-                <button onclick="changeDate(1)" class="p-3 rounded-xl hover:bg-blue-50 transition-colors border border-gray-200"
+                <button onclick="changeDate(1)" class="p-2 md:p-3 rounded-lg md:rounded-xl hover:bg-blue-50 transition-colors border border-gray-200 flex-shrink-0"
                         title="Next day"
                         aria-label="Go to next day">
-                    <svg class="h-5 w-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                    <svg class="h-4 w-4 md:h-5 md:w-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
                     </svg>
                     <span class="sr-only">Next day</span>
@@ -76,8 +77,87 @@
 
 
 
-    <!-- Enhanced Booking Grid -->
-    <div class="bg-white rounded-3xl shadow-xl border border-gray-100 overflow-hidden">
+    <!-- Mobile-Friendly Booking Grid -->
+    <!-- Mobile Card View (visible on small screens) -->
+    <div class="block md:hidden space-y-4 mb-4">
+        @foreach($timeSlots as $slotIdx => $slot)
+            @php
+                $slotTime = \Carbon\Carbon::createFromFormat('H:i', $slot);
+                $formattedTime = $slotTime->format('g:i A');
+            @endphp
+            <div class="bg-white rounded-xl shadow-md border border-gray-200 p-4">
+                <!-- Time Header -->
+                <div class="flex items-center justify-between mb-3 pb-3 border-b border-gray-200">
+                    <h3 class="text-lg font-bold text-blue-700">{{ $formattedTime }}</h3>
+                </div>
+                
+                <!-- Courts for this time slot -->
+                <div class="space-y-2">
+                    @foreach($courts as $court)
+                        @php
+                            $booking = $bookings->first(function($b) use ($court, $slot) {
+                                $slotTime = $slot . ':00';
+                                return $b->court_id == $court->id && $b->start_time == $slotTime;
+                            });
+                            $isMine = $booking && $booking->user_id == auth()->id();
+                            $isBooked = $booking && !$isMine;
+                            $hasMyBookingInCourt = $booking && $booking->user_id == auth()->id();
+                        @endphp
+                        <div class="flex items-center justify-between gap-2">
+                            <span class="text-sm font-medium text-gray-700 flex-1">{{ $court->name }}</span>
+                            <div class="flex-1">
+                                @if($hasMyBookingInCourt && $booking)
+                                    @php
+                                        $startTime = \Carbon\Carbon::createFromFormat('H:i:s', $booking->start_time);
+                                        $endTime = \Carbon\Carbon::createFromFormat('H:i:s', $booking->end_time);
+                                        $duration = $startTime->diffInHours($endTime);
+                                        $isStart = $booking->start_time == $slot . ':00';
+                                    @endphp
+                                    <button class="my-booking-btn w-full py-2.5 px-3 font-semibold rounded-lg border-2 border-blue-300 bg-blue-100 text-blue-700 text-sm" data-booking-id="{{ $booking->id }}">
+                                        <div class="flex items-center justify-center gap-1.5">
+                                            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                            </svg>
+                                            <span>My Booking</span>
+                                        </div>
+                                    </button>
+                                @elseif($booking)
+                                    @php
+                                        $startTime = \Carbon\Carbon::createFromFormat('H:i:s', $booking->start_time);
+                                        $endTime = \Carbon\Carbon::createFromFormat('H:i:s', $booking->end_time);
+                                        $duration = $startTime->diffInHours($endTime);
+                                    @endphp
+                                    <div class="w-full py-2.5 px-3 font-semibold rounded-lg border-2 border-red-300 bg-red-100 text-red-700 text-sm text-center cursor-not-allowed">
+                                        <div class="flex items-center justify-center gap-1.5">
+                                            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                                            </svg>
+                                            <span>Booked</span>
+                                        </div>
+                                    </div>
+                                @else
+                                    <button class="select-slot-btn w-full py-2.5 px-3 font-semibold rounded-lg border-2 border-green-200 bg-green-50 text-green-800 hover:bg-green-100 hover:border-green-300 transition-all text-sm" 
+                                            data-court="{{ $court->id }}" data-time="{{ $slot }}"
+                                            title="Select {{ $court->name }} at {{ $formattedTime }}"
+                                            aria-label="Select {{ $court->name }} at {{ $formattedTime }}">
+                                        <div class="flex items-center justify-center gap-1.5">
+                                            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                                            </svg>
+                                            <span>Select</span>
+                                        </div>
+                                    </button>
+                                @endif
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+        @endforeach
+    </div>
+
+    <!-- Desktop Table View (hidden on mobile) -->
+    <div class="hidden md:block bg-white rounded-3xl shadow-xl border border-gray-100 overflow-hidden">
         <div class="overflow-x-auto">
             <table class="min-w-full">
                 <thead class="sticky top-0 z-20">
@@ -267,12 +347,44 @@
     </div>
 
     <!-- Multi-Slot Selection Panel -->
-    <div id="multi-slot-panel" class="fixed bottom-0 left-0 right-0 transform translate-y-full transition-transform duration-300 z-[99999]" style="display: none;">
-        <div class="max-w-6xl mx-auto px-4 py-3">
+    <div id="multi-slot-panel" class="fixed bottom-0 left-0 right-0 transform translate-y-full transition-transform duration-300 z-[99999] pb-safe" style="display: none;">
+        <div class="max-w-6xl mx-auto px-2 md:px-4 py-2 md:py-3">
             <div class="max-w-4xl mx-auto">
                 <!-- Clean rounded container like date navigation -->
-                <div class="bg-white rounded-lg shadow-lg border border-gray-200 p-4">
-                    <div class="flex items-center justify-between gap-4">
+                <div class="bg-white rounded-lg md:rounded-xl shadow-lg border border-gray-200 p-3 md:p-4">
+                    <!-- Mobile Layout (stacked) -->
+                    <div class="flex flex-col md:hidden gap-3">
+                        <!-- Selected Slots -->
+                        <div class="flex items-start gap-2">
+                            <div class="w-6 h-6 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                                <svg class="w-3 h-3 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                                </svg>
+                            </div>
+                            <div id="selected-slots" class="flex flex-wrap gap-1.5 flex-1 min-w-0">
+                                <!-- Selected slots will be displayed here -->
+                            </div>
+                        </div>
+                        
+                        <!-- Summary and Actions -->
+                        <div class="flex items-center justify-between gap-2">
+                            <div class="text-xs text-gray-700 bg-gray-50 px-2 py-1.5 rounded-lg">
+                                <span id="total-slots-mobile" class="text-blue-600 font-bold">0</span> slots • 
+                                <span id="total-price-mobile" class="text-green-600 font-bold">RM 0</span>
+                            </div>
+                            <div class="flex gap-2">
+                                <button id="clear-selection-mobile" class="px-2 py-1.5 text-red-600 hover:text-red-800 font-medium border border-red-200 rounded-lg hover:bg-red-50 text-xs">
+                                    Clear
+                                </button>
+                                <button id="confirm-multi-booking-mobile" class="px-4 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold disabled:opacity-50 disabled:cursor-not-allowed text-xs shadow-sm" disabled>
+                                    Confirm
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Desktop Layout (horizontal) -->
+                    <div class="hidden md:flex items-center justify-between gap-4">
                         <!-- Left: Title and Selected Slots -->
                         <div class="flex items-center gap-3 flex-1 min-w-0">
                             <div class="flex items-center gap-2 flex-shrink-0">
@@ -285,7 +397,7 @@
                             </div>
                             
                             <!-- Selected Slots Display -->
-                            <div id="selected-slots" class="flex flex-wrap gap-2 flex-1 min-w-0">
+                            <div id="selected-slots-desktop" class="flex flex-wrap gap-2 flex-1 min-w-0">
                                 <!-- Selected slots will be displayed here -->
                             </div>
                         </div>
@@ -316,9 +428,9 @@
     </div>
 
     <!-- Enhanced Booking Modal -->
-    <div id="booking-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 hidden transition-all duration-300">
-        <div class="bg-white rounded-3xl shadow-2xl p-8 max-w-md w-full mx-4 relative border border-gray-100 animate-fade-in">
-            <button id="close-modal" class="absolute top-4 right-4 text-gray-400 hover:text-gray-700 text-2xl font-bold" title="Close modal" aria-label="Close booking modal">&times;</button>
+    <div id="booking-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 hidden transition-all duration-300 p-2 md:p-4">
+        <div class="bg-white rounded-xl md:rounded-3xl shadow-2xl p-4 md:p-8 max-w-md w-full mx-2 md:mx-4 relative border border-gray-100 animate-fade-in max-h-[90vh] overflow-y-auto">
+            <button id="close-modal" class="absolute top-2 md:top-4 right-2 md:right-4 text-gray-400 hover:text-gray-700 text-xl md:text-2xl font-bold" title="Close modal" aria-label="Close booking modal">&times;</button>
             <div id="modal-content">
                 <!-- Filled by JS -->
             </div>
@@ -326,9 +438,9 @@
     </div>
 
     <!-- Enhanced Booking Details Modal -->
-    <div id="booking-details-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 hidden">
-        <div class="bg-white rounded-3xl shadow-2xl p-8 max-w-md w-full mx-4 relative border border-gray-100">
-            <button id="close-details-modal" class="absolute top-4 right-4 text-gray-400 hover:text-gray-700 text-2xl font-bold" title="Close modal" aria-label="Close details modal">&times;</button>
+    <div id="booking-details-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 hidden p-2 md:p-4">
+        <div class="bg-white rounded-xl md:rounded-3xl shadow-2xl p-4 md:p-8 max-w-md w-full mx-2 md:mx-4 relative border border-gray-100 max-h-[90vh] overflow-y-auto">
+            <button id="close-details-modal" class="absolute top-2 md:top-4 right-2 md:right-4 text-gray-400 hover:text-gray-700 text-xl md:text-2xl font-bold" title="Close modal" aria-label="Close details modal">&times;</button>
             <div id="details-modal-content">
                 <!-- Filled by JS -->
             </div>
@@ -336,11 +448,11 @@
     </div>
 
     <!-- Enhanced My Bookings Modal -->
-    <div id="my-bookings-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 hidden transition-all duration-300">
-        <div class="bg-white rounded-3xl shadow-2xl p-8 max-w-4xl w-full mx-4 relative border border-gray-100 animate-fade-in">
-            <button id="close-my-bookings-modal" class="absolute top-4 right-4 text-gray-400 hover:text-gray-700 text-2xl font-bold" title="Close modal" aria-label="Close my bookings modal">&times;</button>
-            <h2 class="text-3xl font-bold mb-6 text-blue-700 flex items-center gap-3">
-                <svg class="w-8 h-8 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+    <div id="my-bookings-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 hidden transition-all duration-300 p-2 md:p-4">
+        <div class="bg-white rounded-xl md:rounded-3xl shadow-2xl p-4 md:p-8 max-w-4xl w-full mx-2 md:mx-4 relative border border-gray-100 animate-fade-in max-h-[90vh] overflow-y-auto">
+            <button id="close-my-bookings-modal" class="absolute top-2 md:top-4 right-2 md:right-4 text-gray-400 hover:text-gray-700 text-xl md:text-2xl font-bold" title="Close modal" aria-label="Close my bookings modal">&times;</button>
+            <h2 class="text-xl md:text-3xl font-bold mb-4 md:mb-6 text-blue-700 flex items-center gap-2 md:gap-3">
+                <svg class="w-6 h-6 md:w-8 md:h-8 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-6a2 2 0 012-2h2a2 2 0 012 2v6" />
                 </svg>
                 My Bookings
@@ -429,10 +541,14 @@
 
     function updateMultiSlotPanel() {
         const panel = document.getElementById('multi-slot-panel');
-        const selectedSlotsContainer = document.getElementById('selected-slots');
-        const totalSlots = document.getElementById('total-slots');
-        const totalPrice = document.getElementById('total-price');
-        const confirmButton = document.getElementById('confirm-multi-booking');
+        const selectedSlotsContainer = document.getElementById('selected-slots'); // Mobile
+        const selectedSlotsContainerDesktop = document.getElementById('selected-slots-desktop'); // Desktop
+        const totalSlots = document.getElementById('total-slots'); // Desktop
+        const totalPrice = document.getElementById('total-price'); // Desktop
+        const totalSlotsMobile = document.getElementById('total-slots-mobile'); // Mobile
+        const totalPriceMobile = document.getElementById('total-price-mobile'); // Mobile
+        const confirmButton = document.getElementById('confirm-multi-booking'); // Desktop
+        const confirmButtonMobile = document.getElementById('confirm-multi-booking-mobile'); // Mobile
 
         console.log('updateMultiSlotPanel called, selectedSlots.size:', selectedSlots.size);
         console.log('Panel element found:', !!panel);
@@ -444,34 +560,67 @@
             panel.style.display = 'block';
             isMultiSelectMode = true;
             
-            // Update selected slots display
-            selectedSlotsContainer.innerHTML = '';
-            selectedSlots.forEach((slot, slotId) => {
+            // Create slot element HTML
+            const createSlotElement = (isMobile) => {
                 const slotElement = document.createElement('div');
-                slotElement.className = 'flex items-center gap-2 bg-blue-50 text-blue-800 px-3 py-2 rounded-lg text-sm font-medium border border-blue-200 whitespace-nowrap shadow-sm';
-                slotElement.innerHTML = `
-                    <div class="w-2 h-2 bg-blue-500 rounded-full"></div>
-                    <span class="font-semibold">${formatTime(slot.time)}</span>
-                    <button onclick="removeSlot('${slotId}')" class="text-blue-600 hover:text-blue-800 hover:bg-blue-200 rounded-full p-1 transition-colors" title="Remove this slot">
-                        <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                    </button>
-                `;
-                selectedSlotsContainer.appendChild(slotElement);
-            });
+                const sizeClass = isMobile ? 'px-2 py-1.5 text-xs' : 'px-3 py-2 text-sm';
+                slotElement.className = `flex items-center gap-1.5 md:gap-2 bg-blue-50 text-blue-800 ${sizeClass} rounded-lg font-medium border border-blue-200 whitespace-nowrap shadow-sm`;
+                return slotElement;
+            };
             
-            // Update totals
-            totalSlots.textContent = selectedSlots.size;
-            totalPrice.textContent = `RM ${selectedSlots.size * pricePerHour}`;
-            confirmButton.disabled = false;
+            // Update mobile selected slots display
+            if (selectedSlotsContainer) {
+                selectedSlotsContainer.innerHTML = '';
+                selectedSlots.forEach((slot, slotId) => {
+                    const slotElement = createSlotElement(true);
+                    slotElement.innerHTML = `
+                        <div class="w-1.5 h-1.5 md:w-2 md:h-2 bg-blue-500 rounded-full"></div>
+                        <span class="font-semibold">${formatTime(slot.time)}</span>
+                        <button onclick="removeSlot('${slotId}')" class="text-blue-600 hover:text-blue-800 hover:bg-blue-200 rounded-full p-0.5 transition-colors" title="Remove this slot">
+                            <svg class="w-2.5 h-2.5 md:w-3 md:h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    `;
+                    selectedSlotsContainer.appendChild(slotElement);
+                });
+            }
+            
+            // Update desktop selected slots display
+            if (selectedSlotsContainerDesktop) {
+                selectedSlotsContainerDesktop.innerHTML = '';
+                selectedSlots.forEach((slot, slotId) => {
+                    const slotElement = createSlotElement(false);
+                    slotElement.innerHTML = `
+                        <div class="w-2 h-2 bg-blue-500 rounded-full"></div>
+                        <span class="font-semibold">${formatTime(slot.time)}</span>
+                        <button onclick="removeSlot('${slotId}')" class="text-blue-600 hover:text-blue-800 hover:bg-blue-200 rounded-full p-1 transition-colors" title="Remove this slot">
+                            <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    `;
+                    selectedSlotsContainerDesktop.appendChild(slotElement);
+                });
+            }
+            
+            // Update totals - Desktop
+            if (totalSlots) totalSlots.textContent = selectedSlots.size;
+            if (totalPrice) totalPrice.textContent = `RM ${selectedSlots.size * pricePerHour}`;
+            if (confirmButton) confirmButton.disabled = false;
+            
+            // Update totals - Mobile
+            if (totalSlotsMobile) totalSlotsMobile.textContent = selectedSlots.size;
+            if (totalPriceMobile) totalPriceMobile.textContent = `RM ${selectedSlots.size * pricePerHour}`;
+            if (confirmButtonMobile) confirmButtonMobile.disabled = false;
         } else {
             // Hide panel
             console.log('Hiding panel...');
             panel.classList.add('translate-y-full');
             panel.style.display = 'none';
             isMultiSelectMode = false;
-            confirmButton.disabled = true;
+            if (confirmButton) confirmButton.disabled = true;
+            if (confirmButtonMobile) confirmButtonMobile.disabled = true;
         }
     }
 
@@ -480,7 +629,7 @@
         const slot = selectedSlots.get(slotId);
         if (slot) {
             console.log('Removing slot:', slot);
-            updateSlotButton(slot.courtId, slot.time, false);
+            updateSlotButton(slot.court_id, slot.time, false);
             selectedSlots.delete(slotId);
             updateMultiSlotPanel();
             console.log('Slot removed, remaining slots:', selectedSlots.size);
@@ -493,7 +642,7 @@
         console.log('clearAllSelections called, selectedSlots.size:', selectedSlots.size);
         selectedSlots.forEach((slot, slotId) => {
             console.log('Clearing slot:', slotId, slot);
-            updateSlotButton(slot.courtId, slot.time, false);
+            updateSlotButton(slot.court_id, slot.time, false);
         });
         selectedSlots.clear();
         console.log('selectedSlots cleared, new size:', selectedSlots.size);
@@ -539,35 +688,35 @@
 
         modalContent.innerHTML = `
             <div class="text-center">
-                <div class="w-20 h-20 bg-gradient-to-br from-blue-500 to-green-500 rounded-full flex items-center justify-center mx-auto mb-6">
-                    <svg class="w-10 h-10 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <div class="w-16 h-16 md:w-20 md:h-20 bg-gradient-to-br from-blue-500 to-green-500 rounded-full flex items-center justify-center mx-auto mb-4 md:mb-6">
+                    <svg class="w-8 h-8 md:w-10 md:h-10 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                     </svg>
                 </div>
-                <h2 class="text-2xl font-bold mb-4 text-gray-800">Confirm Multi-Slot Booking</h2>
-                <div class="bg-gray-50 rounded-xl p-6 mb-6">
-                    <div class="text-left mb-4">
-                        <span class="text-gray-600 text-sm">Date</span>
-                        <p class="font-semibold text-gray-800">${bookingData.date}</p>
+                <h2 class="text-xl md:text-2xl font-bold mb-3 md:mb-4 text-gray-800">Confirm Multi-Slot Booking</h2>
+                <div class="bg-gray-50 rounded-xl p-4 md:p-6 mb-4 md:mb-6">
+                    <div class="text-left mb-3 md:mb-4">
+                        <span class="text-gray-600 text-xs md:text-sm">Date</span>
+                        <p class="font-semibold text-gray-800 text-sm md:text-base">${bookingData.date}</p>
                     </div>
-                    <div class="text-left mb-4">
-                        <span class="text-gray-600 text-sm">Selected Slots</span>
+                    <div class="text-left mb-3 md:mb-4">
+                        <span class="text-gray-600 text-xs md:text-sm">Selected Slots</span>
                         <div class="mt-2">
                             ${slotsHtml}
                         </div>
                     </div>
-                    <div class="mt-4 pt-4 border-t border-gray-200">
+                    <div class="mt-3 md:mt-4 pt-3 md:pt-4 border-t border-gray-200">
                         <div class="flex justify-between items-center">
-                            <span class="text-lg font-semibold text-gray-800">Total Price</span>
-                            <span class="text-2xl font-bold text-blue-600">RM ${bookingData.total_price}</span>
+                            <span class="text-base md:text-lg font-semibold text-gray-800">Total Price</span>
+                            <span class="text-xl md:text-2xl font-bold text-blue-600">RM ${bookingData.total_price}</span>
                         </div>
                     </div>
                 </div>
-                <div class="flex gap-3">
-                    <button id="cancel-multi-booking" class="flex-1 px-4 py-3 text-gray-600 hover:text-gray-800 font-medium">
+                <div class="flex flex-col sm:flex-row gap-2 md:gap-3">
+                    <button id="cancel-multi-booking" class="flex-1 px-4 py-2.5 md:py-3 text-gray-600 hover:text-gray-800 font-medium text-sm md:text-base">
                         Cancel
                     </button>
-                    <button id="submit-multi-booking" class="flex-1 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold">
+                    <button id="submit-multi-booking" class="flex-1 px-4 py-2.5 md:py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold text-sm md:text-base">
                         Confirm & Pay
                     </button>
                 </div>
@@ -705,39 +854,39 @@
         
         modalContent.innerHTML = `
             <div class="text-center">
-                <div class="w-20 h-20 bg-gradient-to-br from-blue-500 to-green-500 rounded-full flex items-center justify-center mx-auto mb-6">
-                    <svg class="w-10 h-10 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <div class="w-16 h-16 md:w-20 md:h-20 bg-gradient-to-br from-blue-500 to-green-500 rounded-full flex items-center justify-center mx-auto mb-4 md:mb-6">
+                    <svg class="w-8 h-8 md:w-10 md:h-10 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                     </svg>
                 </div>
-                <h2 class="text-2xl font-bold mb-4 text-gray-800">Confirm Your Booking</h2>
-                <div class="bg-gray-50 rounded-xl p-6 mb-6">
-                    <div class="grid grid-cols-2 gap-4 text-left">
+                <h2 class="text-xl md:text-2xl font-bold mb-3 md:mb-4 text-gray-800">Confirm Your Booking</h2>
+                <div class="bg-gray-50 rounded-xl p-4 md:p-6 mb-4 md:mb-6">
+                    <div class="grid grid-cols-2 gap-3 md:gap-4 text-left">
                         <div>
-                            <span class="text-gray-600 text-sm">Court</span>
-                            <p class="font-semibold text-gray-800">${courtName}</p>
+                            <span class="text-gray-600 text-xs md:text-sm">Court</span>
+                            <p class="font-semibold text-gray-800 text-sm md:text-base">${courtName}</p>
                         </div>
                         <div>
-                            <span class="text-gray-600 text-sm">Date</span>
-                            <p class="font-semibold text-gray-800">${date}</p>
+                            <span class="text-gray-600 text-xs md:text-sm">Date</span>
+                            <p class="font-semibold text-gray-800 text-sm md:text-base">${date}</p>
                         </div>
                         <div>
-                            <span class="text-gray-600 text-sm">Time</span>
-                            <p class="font-semibold text-gray-800">${startTime} - ${endTime}</p>
+                            <span class="text-gray-600 text-xs md:text-sm">Time</span>
+                            <p class="font-semibold text-gray-800 text-sm md:text-base">${startTime} - ${endTime}</p>
                         </div>
                         <div>
-                            <span class="text-gray-600 text-sm">Duration</span>
-                            <p class="font-semibold text-gray-800">1 hour</p>
+                            <span class="text-gray-600 text-xs md:text-sm">Duration</span>
+                            <p class="font-semibold text-gray-800 text-sm md:text-base">1 hour</p>
                         </div>
                     </div>
-                    <div class="mt-4 pt-4 border-t border-gray-200">
+                    <div class="mt-3 md:mt-4 pt-3 md:pt-4 border-t border-gray-200">
                         <div class="flex justify-between items-center">
-                            <span class="text-lg font-semibold text-gray-800">Total Price</span>
-                            <span class="text-2xl font-bold text-blue-600">RM ${price}</span>
+                            <span class="text-base md:text-lg font-semibold text-gray-800">Total Price</span>
+                            <span class="text-xl md:text-2xl font-bold text-blue-600">RM ${price}</span>
                         </div>
                     </div>
                 </div>
-                <button id="single-booking-submit" type="button" class="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-4 rounded-xl font-bold hover:from-blue-700 hover:to-blue-800 transition-all transform hover:scale-105 text-lg shadow-lg">
+                <button id="single-booking-submit" type="button" class="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-3 md:py-4 rounded-xl font-bold hover:from-blue-700 hover:to-blue-800 transition-all transform hover:scale-105 text-base md:text-lg shadow-lg">
                     Confirm Booking
                 </button>
             </div>
@@ -1079,18 +1228,26 @@
     function setupMultiSlotEventListeners() {
         console.log('Setting up multi-slot event listeners...');
         const clearButton = document.getElementById('clear-selection');
+        const clearButtonMobile = document.getElementById('clear-selection-mobile');
         const cancelButton = document.getElementById('cancel-selection');
         const confirmButton = document.getElementById('confirm-multi-booking');
+        const confirmButtonMobile = document.getElementById('confirm-multi-booking-mobile');
         
         console.log('Buttons found:', {
             clearButton: !!clearButton,
+            clearButtonMobile: !!clearButtonMobile,
             cancelButton: !!cancelButton,
-            confirmButton: !!confirmButton
+            confirmButton: !!confirmButton,
+            confirmButtonMobile: !!confirmButtonMobile
         });
         
         if (clearButton) {
             clearButton.onclick = clearAllSelections;
             console.log('Clear button event listener set');
+        }
+        if (clearButtonMobile) {
+            clearButtonMobile.onclick = clearAllSelections;
+            console.log('Clear button mobile event listener set');
         }
         if (cancelButton) {
             cancelButton.onclick = clearAllSelections;
@@ -1099,6 +1256,10 @@
         if (confirmButton) {
             confirmButton.onclick = confirmMultiBooking;
             console.log('Confirm button event listener set');
+        }
+        if (confirmButtonMobile) {
+            confirmButtonMobile.onclick = confirmMultiBooking;
+            console.log('Confirm button mobile event listener set');
         }
     }
     
@@ -1121,5 +1282,24 @@
     to { opacity: 1; transform: translateY(0) scale(1); }
 }
 .animate-fade-in { animation: fade-in 0.3s cubic-bezier(0.4, 0, 0.2, 1) both; }
+
+/* Mobile-friendly improvements */
+@media (max-width: 768px) {
+    /* Ensure proper spacing for mobile */
+    .pb-safe {
+        padding-bottom: env(safe-area-inset-bottom, 0.5rem);
+    }
+    
+    /* Better touch targets on mobile */
+    button, .select-slot-btn, .my-booking-btn {
+        min-height: 44px;
+        -webkit-tap-highlight-color: rgba(0, 0, 0, 0.1);
+    }
+    
+    /* Prevent horizontal scroll on mobile */
+    body {
+        overflow-x: hidden;
+    }
+}
 </style>
 @endsection 
