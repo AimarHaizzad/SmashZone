@@ -8,7 +8,8 @@ use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
 use InvalidArgumentException;
 use Symfony\Component\HttpClient\HttpClient;
-use Symfony\Component\Mailer\Transport;
+use Symfony\Component\Mailer\Bridge\Sendinblue\Transport\SendinblueTransportFactory;
+use Symfony\Component\Mailer\Transport\Dsn;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -45,13 +46,18 @@ class AppServiceProvider extends ServiceProvider
             $endpoint = $config['endpoint'] ?? env('BREVO_API_ENDPOINT', 'default');
             $endpoint = $endpoint ?: 'default';
 
-            $dsn = sprintf(
-                'sendinblue+api://%s@%s',
-                rawurlencode($apiKey),
-                $endpoint
+            $factory = new SendinblueTransportFactory(
+                $this->app['events'],
+                HttpClient::create(),
+                $this->app->bound('log') ? $this->app['log'] : null
             );
 
-            return Transport::fromDsn($dsn, null, HttpClient::create());
+            return $factory->create(new Dsn(
+                'sendinblue+api',
+                $endpoint,
+                $apiKey,
+                null
+            ));
         });
     }
 }
