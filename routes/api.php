@@ -10,6 +10,11 @@ use App\Http\Controllers\Api\WebUrlController;
 use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\BookingNotificationController;
+use App\Http\Controllers\Api\ProductsController;
+use App\Http\Controllers\Api\BookingsController;
+use App\Http\Controllers\Api\PaymentsController;
+use App\Http\Controllers\Api\ProfileController;
+use App\Http\Controllers\Api\CourtsController;
 
 /*
 |--------------------------------------------------------------------------
@@ -31,22 +36,27 @@ Route::prefix('auth')->group(function () {
 
 // Protected API Routes (require authentication)
 Route::middleware('auth:sanctum')->group(function () {
-    // Dashboard - NEW!
+    // Dashboard
     Route::get('/dashboard', [DashboardController::class, 'getDashboardData']);
     
+    // Mobile App Data Import Endpoints (from guide)
+    Route::get('/products', [ProductsController::class, 'getProducts']);
+    Route::get('/bookings', [BookingsController::class, 'getBookings']);
+    Route::get('/payments', [PaymentsController::class, 'getPayments']);
+    Route::get('/profile', [ProfileController::class, 'getProfile']);
+    Route::get('/courts', [CourtsController::class, 'getCourts']);
+    
+    // Existing API Routes (for backward compatibility)
     // Courts
-    Route::get('/courts', [CourtController::class, 'index']);
     Route::get('/courts/{court}', [CourtController::class, 'show']);
     
     // Bookings
-    Route::get('/bookings', [BookingController::class, 'index']);
     Route::post('/bookings', [BookingController::class, 'store']);
     Route::get('/bookings/{booking}', [BookingController::class, 'show']);
     Route::put('/bookings/{booking}', [BookingController::class, 'update']);
     Route::delete('/bookings/{booking}', [BookingController::class, 'destroy']);
     
     // Payments
-    Route::get('/payments', [PaymentController::class, 'index']);
     Route::get('/payments/{payment}', [PaymentController::class, 'show']);
     Route::post('/payments/{payment}/process', [PaymentController::class, 'processPayment']);
     
