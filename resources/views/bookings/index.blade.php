@@ -137,7 +137,7 @@
                                     </div>
                                 @else
                                     <button class="select-slot-btn w-full py-2.5 px-3 font-semibold rounded-lg border-2 border-green-200 bg-green-50 text-green-800 hover:bg-green-100 hover:border-green-300 transition-all text-sm" 
-                                            data-court="{{ $court->id }}" data-time="{{ $slot }}"
+                                            data-court="{{ $court->id }}" data-time="{{ $slot }}" data-variant="mobile"
                                             title="Select {{ $court->name }} at {{ $formattedTime }}"
                                             aria-label="Select {{ $court->name }} at {{ $formattedTime }}">
                                         <div class="flex items-center justify-center gap-1.5">
@@ -326,7 +326,7 @@
                                     </div>
                                 @else
                                     <button class="select-slot-btn w-full py-3 px-4 font-semibold rounded-xl border-2 border-green-200 bg-green-50 text-green-800 hover:bg-green-100 hover:border-green-300 transition-all transform hover:scale-105 shadow-sm" 
-                                            data-court="{{ $court->id }}" data-time="{{ $slot }}"
+                                            data-court="{{ $court->id }}" data-time="{{ $slot }}" data-variant="desktop"
                                             title="Select {{ $court->name }} at {{ \Carbon\Carbon::createFromFormat('H:i', $slot)->format('g:i A') }}"
                                             aria-label="Select {{ $court->name }} at {{ \Carbon\Carbon::createFromFormat('H:i', $slot)->format('g:i A') }}">
                                         <div class="flex items-center justify-center gap-2">
@@ -472,6 +472,7 @@
     let selectedSlots = new Map(); // Map of slotId -> {courtId, time, courtName}
     let isMultiSelectMode = false;
     const pricePerHour = 20;
+    const myBookingsUrl = "{{ route('bookings.my') }}";
 
     function setToday() {
         const today = new Date().toISOString().split('T')[0];
@@ -513,30 +514,59 @@
     }
 
     function updateSlotButton(courtId, time, isSelected) {
-        const button = document.querySelector(`button[data-court="${courtId}"][data-time="${time}"]`);
-        if (!button) return;
+        const buttons = document.querySelectorAll(`button[data-court="${courtId}"][data-time="${time}"]`);
+        if (!buttons.length) return;
 
-        if (isSelected) {
-            button.className = 'select-slot-btn w-full py-3 px-4 font-semibold rounded-xl border-2 border-blue-500 bg-blue-100 text-blue-800 hover:bg-blue-200 transition-all transform hover:scale-105 shadow-sm';
-            button.innerHTML = `
-                <div class="flex items-center justify-center gap-2">
-                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                    </svg>
-                    Selected
-                </div>
-            `;
-        } else {
-            button.className = 'select-slot-btn w-full py-3 px-4 font-semibold rounded-xl border-2 border-green-200 bg-green-50 text-green-800 hover:bg-green-100 hover:border-green-300 transition-all transform hover:scale-105 shadow-sm';
-            button.innerHTML = `
-                <div class="flex items-center justify-center gap-2">
-                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                    </svg>
-                    Select
-                </div>
-            `;
-        }
+        buttons.forEach(button => {
+            const variant = button.dataset.variant === 'mobile' ? 'mobile' : 'desktop';
+
+            if (variant === 'mobile') {
+                if (isSelected) {
+                    button.className = 'select-slot-btn w-full py-2.5 px-3 font-semibold rounded-lg border-2 border-blue-500 bg-blue-100 text-blue-800 hover:bg-blue-200 transition-all text-sm';
+                    button.innerHTML = `
+                        <div class="flex items-center justify-center gap-1.5">
+                            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                            </svg>
+                            Selected
+                        </div>
+                    `;
+                } else {
+                    button.className = 'select-slot-btn w-full py-2.5 px-3 font-semibold rounded-lg border-2 border-green-200 bg-green-50 text-green-800 hover:bg-green-100 hover:border-green-300 transition-all text-sm';
+                    button.innerHTML = `
+                        <div class="flex items-center justify-center gap-1.5">
+                            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                            </svg>
+                            Select
+                        </div>
+                    `;
+                }
+                return;
+            }
+
+            if (isSelected) {
+                button.className = 'select-slot-btn w-full py-3 px-4 font-semibold rounded-xl border-2 border-blue-500 bg-blue-100 text-blue-800 hover:bg-blue-200 transition-all transform hover:scale-105 shadow-sm';
+                button.innerHTML = `
+                    <div class="flex items-center justify-center gap-2">
+                        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                        </svg>
+                        Selected
+                    </div>
+                `;
+            } else {
+                button.className = 'select-slot-btn w-full py-3 px-4 font-semibold rounded-xl border-2 border-green-200 bg-green-50 text-green-800 hover:bg-green-100 hover:border-green-300 transition-all transform hover:scale-105 shadow-sm';
+                button.innerHTML = `
+                    <div class="flex items-center justify-center gap-2">
+                        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                        </svg>
+                        Select
+                    </div>
+                `;
+            }
+        });
     }
 
     function updateMultiSlotPanel() {
@@ -780,36 +810,30 @@
             clearAllSelections();
             document.getElementById('booking-modal').classList.add('hidden');
             
-            if (data.success) {
-                // Show success message
-                if (data.bookings_created === data.total_slots) {
-                    alert('All bookings confirmed successfully! The page will refresh to show your bookings.');
-                } else {
-                    const errorText = data.errors && data.errors.length > 0 ? data.errors.join('\n') : 'No specific errors reported';
-                    alert(`${data.bookings_created} booking(s) confirmed successfully!\n\nSome slots were unavailable:\n${errorText}\n\nThe page will refresh to show your bookings.`);
-                }
-                
-                // Reload page to show updated bookings
-                setTimeout(() => location.reload(), 500);
-            } else {
-                // Even if success is false, some bookings might have been created
-                if (data.bookings_created > 0) {
-                    const errorText = data.errors && data.errors.length > 0 ? data.errors.join('\n') : 'No specific errors reported';
-                    alert(`${data.bookings_created} booking(s) confirmed successfully!\n\nSome slots were unavailable:\n${errorText}\n\nThe page will refresh to show your bookings.`);
-                    setTimeout(() => location.reload(), 500);
-                } else {
-                    // No bookings were created at all
-                    let errorMsg = data.message || 'Failed to create booking';
-                    if (data.errors && data.errors.length > 0) {
-                        errorMsg += '\n\nUnavailable slots:\n' + data.errors.join('\n');
-                    }
-                    alert('Error: ' + errorMsg);
-                    // Re-enable the button
-                    if (submitButton) {
-                        submitButton.disabled = false;
-                        submitButton.textContent = 'Confirm & Pay';
-                    }
-                }
+            const errorText = data.errors && data.errors.length > 0 ? data.errors.join('\n') : 'No specific errors reported';
+
+            if (data.success && data.bookings_created === data.total_slots) {
+                alert('All bookings confirmed successfully! Redirecting you to your bookings to complete payment.');
+                window.location.href = myBookingsUrl;
+                return;
+            }
+
+            if (data.bookings_created > 0) {
+                alert(`${data.bookings_created} booking(s) confirmed successfully!\n\nSome slots were unavailable:\n${errorText}\n\nYou will be redirected to your bookings to continue with payment.`);
+                window.location.href = myBookingsUrl;
+                return;
+            }
+
+            // No bookings were created at all
+            let errorMsg = data.message || 'Failed to create booking';
+            if (data.errors && data.errors.length > 0) {
+                errorMsg += '\n\nUnavailable slots:\n' + data.errors.join('\n');
+            }
+            alert('Error: ' + errorMsg);
+            // Re-enable the button
+            if (submitButton) {
+                submitButton.disabled = false;
+                submitButton.textContent = 'Confirm & Pay';
             }
         })
         .catch(error => {

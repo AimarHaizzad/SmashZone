@@ -135,10 +135,7 @@
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V7a2 2 0 00-2-2H6a2 2 0 00-2 2v6m16 0v6a2 2 0 01-2 2H6a2 2 0 01-2-2v-6m16 0H4" />
                                             </svg>
                                         </div>
-                                        <div>
-                                            <div class="font-semibold text-gray-900">{{ $booking->court->name }}</div>
-                                            <div class="text-sm text-gray-500">Court {{ $booking->court->id }}</div>
-                                        </div>
+                                        <div class="font-semibold text-gray-900">{{ $booking->court->name }}</div>
                                     </div>
                                 </td>
                                 <td class="px-6 py-4">
