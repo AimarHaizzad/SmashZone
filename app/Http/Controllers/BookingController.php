@@ -28,18 +28,18 @@ class BookingController extends Controller
         $user = Auth::user();
         $selectedDate = $request->query('date', now()->toDateString());
         if ($user->isOwner()) {
-            $courts = $user->courts;
+            $courts = $user->courts()->with('pricingRules')->get();
             $bookings = Booking::whereIn('court_id', $courts->pluck('id'))
                 ->where('date', $selectedDate)
                 ->where('status', '!=', 'cancelled')
                 ->get();
         } elseif ($user->isStaff()) {
-            $courts = Court::all(); // Optionally restrict to courts assigned to staff
+            $courts = Court::with('pricingRules')->get(); // Optionally restrict to courts assigned to staff
             $bookings = Booking::where('date', $selectedDate)
                 ->where('status', '!=', 'cancelled')
                 ->get();
         } else {
-            $courts = Court::all();
+            $courts = Court::with('pricingRules')->get();
             $bookings = Booking::where('date', $selectedDate)
                 ->where('status', '!=', 'cancelled')
                 ->get();
@@ -102,11 +102,12 @@ class BookingController extends Controller
             return back()->withErrors(['overlap' => 'This court is already booked for the selected time.'])->withInput();
         }
 
-        // Example price calculation: RM20 per hour
-        $start = strtotime($validated['start_time']);
-        $end = strtotime($validated['end_time']);
-        $hours = ($end - $start) / 3600;
-        $total_price = 20 * $hours;
+        $court = Court::with('pricingRules')->findOrFail($validated['court_id']);
+        $total_price = $court->calculatePriceForRange(
+            $validated['date'],
+            $validated['start_time'],
+            $validated['end_time']
+        );
 
         $booking = Booking::create([
             'user_id' => Auth::id(),
@@ -211,11 +212,12 @@ class BookingController extends Controller
             return back()->withErrors(['overlap' => 'This court is already booked for the selected time.'])->withInput();
         }
 
-        // Example price calculation: RM20 per hour
-        $start = strtotime($validated['start_time']);
-        $end = strtotime($validated['end_time']);
-        $hours = ($end - $start) / 3600;
-        $total_price = 20 * $hours;
+        $court = Court::with('pricingRules')->findOrFail($validated['court_id']);
+        $total_price = $court->calculatePriceForRange(
+            $validated['date'],
+            $validated['start_time'],
+            $validated['end_time']
+        );
 
         $booking->update([
             'court_id' => $validated['court_id'],
@@ -476,7 +478,7 @@ class BookingController extends Controller
 
         $validated = $request->validate([
             'date' => 'required|date|after_or_equal:today',
-            'total_price' => 'required|numeric|min:0',
+            'total_price' => 'nullable|numeric|min:0',
         ]);
 
         // Validate slots manually
@@ -507,13 +509,74 @@ class BookingController extends Controller
         $bookings = [];
         $errors = [];
 
-        // Process each slot
+        // Group slots by court and merge consecutive times
+        $slotsByCourt = [];
         foreach ($validated['slots'] as $slot) {
-            $startTime = $slot['time'];
-            $endTime = date('H:i:s', strtotime($startTime . ' +1 hour'));
+            $slotsByCourt[$slot['court_id']][] = $slot['time'];
+        }
+
+        $groupedSlots = [];
+        foreach ($slotsByCourt as $courtId => $times) {
+            $uniqueTimes = array_values(array_unique($times));
+            sort($uniqueTimes);
+
+            $groupStart = null;
+            $previousTime = null;
+            $slotCount = 0;
+
+            foreach ($uniqueTimes as $time) {
+                if ($groupStart === null) {
+                    $groupStart = $time;
+                    $previousTime = $time;
+                    $slotCount = 1;
+                    continue;
+                }
+
+                $expectedNext = date('H:i', strtotime($previousTime . ' +1 hour'));
+                if ($time === $expectedNext) {
+                    $slotCount++;
+                    $previousTime = $time;
+                } else {
+                    $groupedSlots[] = [
+                        'court_id' => $courtId,
+                        'start_time' => $groupStart . ':00',
+                        'end_time' => date('H:i:s', strtotime($previousTime . ' +1 hour')),
+                        'hours' => $slotCount,
+                    ];
+
+                    $groupStart = $time;
+                    $previousTime = $time;
+                    $slotCount = 1;
+                }
+            }
+
+            if ($groupStart !== null) {
+                $groupedSlots[] = [
+                    'court_id' => $courtId,
+                    'start_time' => $groupStart . ':00',
+                    'end_time' => date('H:i:s', strtotime($previousTime . ' +1 hour')),
+                    'hours' => $slotCount,
+                ];
+            }
+        }
+
+        $courtMap = Court::with('pricingRules')
+            ->whereIn('id', collect($groupedSlots)->pluck('court_id')->unique())
+            ->get()
+            ->keyBy('id');
+
+        // Process each grouped slot block
+        foreach ($groupedSlots as $slotGroup) {
+            $startTime = $slotGroup['start_time'];
+            $endTime = $slotGroup['end_time'];
+            $court = $courtMap->get($slotGroup['court_id']);
+            if (!$court) {
+                $errors[] = "Court {$slotGroup['court_id']} is no longer available.";
+                continue;
+            }
 
             // Check for overlapping bookings with more precise logic
-            $overlap = Booking::where('court_id', $slot['court_id'])
+            $overlap = Booking::where('court_id', $slotGroup['court_id'])
                 ->where('date', $validated['date'])
                 ->where('status', '!=', 'cancelled') // Don't consider cancelled bookings
                 ->where(function($query) use ($startTime, $endTime) {
@@ -526,27 +589,31 @@ class BookingController extends Controller
                 })->first();
 
             if ($overlap) {
-                $courtName = \App\Models\Court::find($slot['court_id'])->name ?? "Court {$slot['court_id']}";
-                $errors[] = "{$courtName} at " . date('g:i A', strtotime($startTime)) . " is already booked (existing: " . date('g:i A', strtotime($overlap->start_time)) . " - " . date('g:i A', strtotime($overlap->end_time)) . ")";
+                $courtName = $court->name ?? "Court {$slotGroup['court_id']}";
+                $errors[] = "{$courtName} from " . date('g:i A', strtotime($startTime)) . " to " . date('g:i A', strtotime($endTime)) . " is already booked (existing: " . date('g:i A', strtotime($overlap->start_time)) . " - " . date('g:i A', strtotime($overlap->end_time)) . ")";
                 continue;
             }
+
+            $startForPrice = substr($startTime, 0, 5);
+            $endForPrice = substr($endTime, 0, 5);
+            $calculatedPrice = $court->calculatePriceForRange($validated['date'], $startForPrice, $endForPrice);
 
             // Create booking
             $booking = Booking::create([
                 'user_id' => Auth::id(),
-                'court_id' => $slot['court_id'],
+                'court_id' => $slotGroup['court_id'],
                 'date' => $validated['date'],
                 'start_time' => $startTime,
                 'end_time' => $endTime,
                 'status' => 'pending',
-                'total_price' => 20, // RM20 per hour
+                'total_price' => $calculatedPrice,
             ]);
 
             // Create payment record
             $booking->payment()->create([
                 'user_id' => Auth::id(),
                 'booking_id' => $booking->id,
-                'amount' => 20,
+                'amount' => $calculatedPrice,
                 'status' => 'pending',
                 'payment_date' => null,
             ]);

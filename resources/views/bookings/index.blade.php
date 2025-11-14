@@ -136,8 +136,12 @@
                                         </div>
                                     </div>
                                 @else
+                                    @php
+                                        $slotRate = $court->hourlyRateForSlot($selectedDate, $slot);
+                                    @endphp
                                     <button class="select-slot-btn w-full py-2.5 px-3 font-semibold rounded-lg border-2 border-green-200 bg-green-50 text-green-800 hover:bg-green-100 hover:border-green-300 transition-all text-sm" 
                                             data-court="{{ $court->id }}" data-time="{{ $slot }}" data-variant="mobile"
+                                            data-price="{{ $slotRate }}" data-price-label="RM {{ number_format($slotRate, 2) }}"
                                             title="Select {{ $court->name }} at {{ $formattedTime }}"
                                             aria-label="Select {{ $court->name }} at {{ $formattedTime }}">
                                         <div class="flex items-center justify-center gap-1.5">
@@ -145,6 +149,7 @@
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                                             </svg>
                                             <span>Select</span>
+                                            <span class="text-xs text-blue-600 font-semibold">{{ 'RM ' . number_format($slotRate, 2) }}/hr</span>
                                         </div>
                                     </button>
                                 @endif
@@ -325,8 +330,12 @@
                                         </div>
                                     </div>
                                 @else
+                                    @php
+                                        $slotRate = $court->hourlyRateForSlot($selectedDate, $slot);
+                                    @endphp
                                     <button class="select-slot-btn w-full py-3 px-4 font-semibold rounded-xl border-2 border-green-200 bg-green-50 text-green-800 hover:bg-green-100 hover:border-green-300 transition-all transform hover:scale-105 shadow-sm" 
                                             data-court="{{ $court->id }}" data-time="{{ $slot }}" data-variant="desktop"
+                                            data-price="{{ $slotRate }}" data-price-label="RM {{ number_format($slotRate, 2) }}"
                                             title="Select {{ $court->name }} at {{ \Carbon\Carbon::createFromFormat('H:i', $slot)->format('g:i A') }}"
                                             aria-label="Select {{ $court->name }} at {{ \Carbon\Carbon::createFromFormat('H:i', $slot)->format('g:i A') }}">
                                         <div class="flex items-center justify-center gap-2">
@@ -334,6 +343,7 @@
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                                             </svg>
                                             Select
+                                            <span class="text-xs text-blue-600 font-semibold">{{ 'RM ' . number_format($slotRate, 2) }}/hr</span>
                                         </div>
                                     </button>
                                 @endif
@@ -471,8 +481,20 @@
     // Multi-slot selection state
     let selectedSlots = new Map(); // Map of slotId -> {courtId, time, courtName}
     let isMultiSelectMode = false;
-    const pricePerHour = 20;
     const myBookingsUrl = "{{ route('bookings.my') }}";
+
+    function formatCurrency(amount = 0) {
+        const value = Number(amount || 0);
+        return `RM ${value.toFixed(2)}`;
+    }
+
+    function calculateSelectedTotal() {
+        let total = 0;
+        selectedSlots.forEach(slot => {
+            total += Number(slot.price || 0);
+        });
+        return total;
+    }
 
     function setToday() {
         const today = new Date().toISOString().split('T')[0];
@@ -504,19 +526,26 @@
 
         const slotId = `${courtId}-${time}`;
         console.log('toggleSlotSelection called:', { courtId, time, courtName, slotId });
+        const button = document.querySelector(`button[data-court="${courtId}"][data-time="${time}"]`);
+        if (!button) {
+            console.warn('No button found for slot', slotId);
+            return;
+        }
+        const slotPrice = parseFloat(button.dataset.price || '0');
+        const priceLabel = button.dataset.priceLabel || formatCurrency(slotPrice);
         
         if (selectedSlots.has(slotId)) {
-            // Remove from selection
             console.log('Removing slot from selection');
             selectedSlots.delete(slotId);
             updateSlotButton(courtId, time, false);
         } else {
-            // Add to selection
             console.log('Adding slot to selection');
             selectedSlots.set(slotId, {
                 court_id: courtId,
                 time: time,
-                courtName: courtName
+                courtName: courtName,
+                price: slotPrice,
+                priceLabel: priceLabel
             });
             updateSlotButton(courtId, time, true);
         }
@@ -531,6 +560,7 @@
 
         buttons.forEach(button => {
             const variant = button.dataset.variant === 'mobile' ? 'mobile' : 'desktop';
+            const priceLabelText = button.dataset.priceLabel ? `<span class="slot-price text-xs text-blue-600 font-semibold">${button.dataset.priceLabel}/hr</span>` : '';
 
             if (variant === 'mobile') {
                 if (isSelected) {
@@ -551,6 +581,7 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                             </svg>
                             Select
+                            ${priceLabelText}
                         </div>
                     `;
                 }
@@ -575,6 +606,7 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                         </svg>
                         Select
+                        ${priceLabelText}
                     </div>
                 `;
             }
@@ -596,6 +628,7 @@
         console.log('Panel element found:', !!panel);
 
         if (selectedSlots.size > 0) {
+            const totalPriceValue = calculateSelectedTotal();
             // Show panel
             console.log('Showing panel...');
             panel.classList.remove('translate-y-full');
@@ -618,6 +651,7 @@
                     slotElement.innerHTML = `
                         <div class="w-1.5 h-1.5 md:w-2 md:h-2 bg-blue-500 rounded-full"></div>
                         <span class="font-semibold">${formatTime(slot.time)}</span>
+                        <span class="text-xs text-blue-600 font-semibold">${slot.priceLabel || formatCurrency(slot.price)}/hr</span>
                         <button onclick="removeSlot('${slotId}')" class="text-blue-600 hover:text-blue-800 hover:bg-blue-200 rounded-full p-0.5 transition-colors" title="Remove this slot">
                             <svg class="w-2.5 h-2.5 md:w-3 md:h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -636,6 +670,7 @@
                     slotElement.innerHTML = `
                         <div class="w-2 h-2 bg-blue-500 rounded-full"></div>
                         <span class="font-semibold">${formatTime(slot.time)}</span>
+                        <span class="text-xs text-blue-600 font-semibold">${slot.priceLabel || formatCurrency(slot.price)}/hr</span>
                         <button onclick="removeSlot('${slotId}')" class="text-blue-600 hover:text-blue-800 hover:bg-blue-200 rounded-full p-1 transition-colors" title="Remove this slot">
                             <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -648,12 +683,12 @@
             
             // Update totals - Desktop
             if (totalSlots) totalSlots.textContent = selectedSlots.size;
-            if (totalPrice) totalPrice.textContent = `RM ${selectedSlots.size * pricePerHour}`;
+            if (totalPrice) totalPrice.textContent = formatCurrency(totalPriceValue);
             if (confirmButton) confirmButton.disabled = false;
             
             // Update totals - Mobile
             if (totalSlotsMobile) totalSlotsMobile.textContent = selectedSlots.size;
-            if (totalPriceMobile) totalPriceMobile.textContent = `RM ${selectedSlots.size * pricePerHour}`;
+            if (totalPriceMobile) totalPriceMobile.textContent = formatCurrency(totalPriceValue);
             if (confirmButtonMobile) confirmButtonMobile.disabled = false;
         } else {
             // Hide panel
@@ -663,6 +698,10 @@
             isMultiSelectMode = false;
             if (confirmButton) confirmButton.disabled = true;
             if (confirmButtonMobile) confirmButtonMobile.disabled = true;
+            if (totalSlots) totalSlots.textContent = '0';
+            if (totalPrice) totalPrice.textContent = formatCurrency(0);
+            if (totalSlotsMobile) totalSlotsMobile.textContent = '0';
+            if (totalPriceMobile) totalPriceMobile.textContent = formatCurrency(0);
         }
     }
 
@@ -705,12 +744,13 @@
 
         const date = document.getElementById('date-input').value;
         const slots = Array.from(selectedSlots.values());
+        const totalPrice = calculateSelectedTotal();
         
         // Create booking data
         const bookingData = {
             date: date,
             slots: slots,
-            total_price: slots.length * pricePerHour
+            total_price: totalPrice
         };
 
         // Show confirmation modal
@@ -724,7 +764,10 @@
         const slotsHtml = bookingData.slots.map(slot => 
             `<div class="flex justify-between items-center py-2 border-b border-gray-100 last:border-b-0">
                 <span class="font-medium">${slot.courtName}</span>
-                <span class="text-gray-600">${formatTime(slot.time)}</span>
+                <div class="text-right">
+                    <span class="block text-gray-600">${formatTime(slot.time)}</span>
+                    <span class="block text-blue-600 font-semibold text-sm">${slot.priceLabel || formatCurrency(slot.price)}</span>
+                </div>
             </div>`
         ).join('');
 
@@ -750,7 +793,7 @@
                     <div class="mt-3 md:mt-4 pt-3 md:pt-4 border-t border-gray-200">
                         <div class="flex justify-between items-center">
                             <span class="text-base md:text-lg font-semibold text-gray-800">Total Price</span>
-                            <span class="text-xl md:text-2xl font-bold text-blue-600">RM ${bookingData.total_price}</span>
+                            <span class="text-xl md:text-2xl font-bold text-blue-600">${formatCurrency(bookingData.total_price)}</span>
                         </div>
                     </div>
                 </div>

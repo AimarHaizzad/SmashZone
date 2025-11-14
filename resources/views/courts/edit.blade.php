@@ -28,6 +28,21 @@
             <p class="text-gray-600 mt-2">Update the details for {{ $court->name }}</p>
         </div>
         
+        @php
+            $defaultPricing = [
+                ['label' => 'Day Rate (9 AM - 7 PM)', 'start_time' => '09:00', 'end_time' => '19:00', 'price_per_hour' => 20],
+                ['label' => 'Night Rate (7 PM - 12 AM)', 'start_time' => '19:00', 'end_time' => '23:59', 'price_per_hour' => 25],
+            ];
+            $existingPricing = $court->pricingRules->map(function ($rule) {
+                return [
+                    'label' => $rule->label,
+                    'start_time' => \Carbon\Carbon::createFromFormat('H:i:s', $rule->start_time)->format('H:i'),
+                    'end_time' => \Carbon\Carbon::createFromFormat('H:i:s', $rule->end_time)->format('H:i'),
+                    'price_per_hour' => $rule->price_per_hour,
+                ];
+            })->toArray();
+            $pricingRules = old('pricing_rules', !empty($existingPricing) ? $existingPricing : $defaultPricing);
+        @endphp
         <form action="{{ route('courts.update', $court) }}" method="POST" enctype="multipart/form-data" class="p-8 space-y-8">
             @csrf
             @method('PUT')
@@ -85,6 +100,57 @@
                             <option value="back" {{ old('location', $court->location ?? '') == 'back' ? 'selected' : '' }}>Back - Rear area</option>
                         </select>
                     </div>
+                </div>
+            </div>
+
+            <!-- Pricing Rules Section -->
+            <div class="bg-gradient-to-r from-yellow-50 to-orange-50 rounded-2xl p-6 border border-yellow-100">
+                <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
+                    <svg class="w-5 h-5 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 1.343-3 3s1.343 3 3 3 3-1.343 3-3-1.343-3-3-3zm0 0V4m0 7v7" />
+                    </svg>
+                    Pricing Rules
+                </h3>
+                <p class="text-sm text-gray-600 mb-4">Adjust the hourly rates for different time ranges. These settings determine how much customers pay.</p>
+
+                <div id="pricing-rules-container" class="space-y-4">
+                    @foreach($pricingRules as $index => $rule)
+                        <div class="pricing-rule bg-white rounded-xl border border-yellow-100 p-4 shadow-sm">
+                            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                                <div>
+                                    <label class="text-sm font-semibold text-gray-700">Label</label>
+                                    <input data-field="label" type="text" name="pricing_rules[{{ $index }}][label]" value="{{ $rule['label'] ?? '' }}" class="w-full border-2 border-gray-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-yellow-300 focus:border-yellow-500" placeholder="Day Rate">
+                                </div>
+                                <div>
+                                    <label class="text-sm font-semibold text-gray-700">Start Time *</label>
+                                    <input data-field="start_time" type="time" name="pricing_rules[{{ $index }}][start_time]" value="{{ $rule['start_time'] ?? '' }}" class="w-full border-2 border-gray-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-yellow-300 focus:border-yellow-500" required>
+                                </div>
+                                <div>
+                                    <label class="text-sm font-semibold text-gray-700">End Time *</label>
+                                    <input data-field="end_time" type="time" name="pricing_rules[{{ $index }}][end_time]" value="{{ $rule['end_time'] ?? '' }}" class="w-full border-2 border-gray-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-yellow-300 focus:border-yellow-500" required>
+                                </div>
+                                <div>
+                                    <label class="text-sm font-semibold text-gray-700">Price / Hour (RM) *</label>
+                                    <input data-field="price_per_hour" type="number" step="0.01" min="0" name="pricing_rules[{{ $index }}][price_per_hour]" value="{{ $rule['price_per_hour'] ?? 0 }}" class="w-full border-2 border-gray-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-yellow-300 focus:border-yellow-500" required>
+                                </div>
+                            </div>
+                            <div class="flex justify-end mt-3">
+                                <button type="button" class="remove-pricing text-red-600 text-sm font-semibold hover:text-red-800 {{ $loop->count <= 1 ? 'hidden' : '' }}">Remove</button>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+
+                <div class="mt-4 flex justify-between items-center">
+                    <button type="button" id="add-pricing-rule" class="inline-flex items-center gap-2 px-4 py-2 bg-yellow-100 text-yellow-800 rounded-lg font-semibold hover:bg-yellow-200">
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                        </svg>
+                        Add Time Range
+                    </button>
+                    @error('pricing_rules')
+                        <span class="text-sm text-red-600 font-semibold">{{ $message }}</span>
+                    @enderror
                 </div>
             </div>
             
@@ -211,6 +277,32 @@
     </div>
 </div>
 
+<template id="pricing-rule-template">
+    <div class="pricing-rule bg-white rounded-xl border border-yellow-100 p-4 shadow-sm">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div>
+                <label class="text-sm font-semibold text-gray-700">Label</label>
+                <input data-field="label" type="text" class="w-full border-2 border-gray-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-yellow-300 focus:border-yellow-500" placeholder="Custom Rate">
+            </div>
+            <div>
+                <label class="text-sm font-semibold text-gray-700">Start Time *</label>
+                <input data-field="start_time" type="time" class="w-full border-2 border-gray-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-yellow-300 focus:border-yellow-500" required>
+            </div>
+            <div>
+                <label class="text-sm font-semibold text-gray-700">End Time *</label>
+                <input data-field="end_time" type="time" class="w-full border-2 border-gray-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-yellow-300 focus:border-yellow-500" required>
+            </div>
+            <div>
+                <label class="text-sm font-semibold text-gray-700">Price / Hour (RM) *</label>
+                <input data-field="price_per_hour" type="number" step="0.01" min="0" class="w-full border-2 border-gray-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-yellow-300 focus:border-yellow-500" required>
+            </div>
+        </div>
+        <div class="flex justify-end mt-3">
+            <button type="button" class="remove-pricing text-red-600 text-sm font-semibold hover:text-red-800">Remove</button>
+        </div>
+    </div>
+</template>
+
 <script>
 function previewImage(input) {
     const file = input.files[0];
@@ -262,5 +354,35 @@ uploadArea.addEventListener('drop', (e) => {
         previewImage(imageInput);
     }
 });
+
+function refreshPricingFieldNames() {
+    const rows = document.querySelectorAll('#pricing-rules-container .pricing-rule');
+    rows.forEach((row, index) => {
+        row.querySelectorAll('input').forEach((input) => {
+            const field = input.dataset.field;
+            if (!field) {
+                return;
+            }
+            input.name = `pricing_rules[${index}][${field}]`;
+        });
+        const removeBtn = row.querySelector('.remove-pricing');
+        if (removeBtn) {
+            removeBtn.classList.toggle('hidden', rows.length === 1);
+            removeBtn.onclick = function () {
+                if (rows.length === 1) return;
+                row.remove();
+                refreshPricingFieldNames();
+            };
+        }
+    });
+}
+
+document.getElementById('add-pricing-rule').addEventListener('click', () => {
+    const template = document.getElementById('pricing-rule-template').content.cloneNode(true);
+    document.getElementById('pricing-rules-container').appendChild(template);
+    refreshPricingFieldNames();
+});
+
+refreshPricingFieldNames();
 </script>
 @endsection 

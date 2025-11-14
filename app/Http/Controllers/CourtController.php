@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\Court;
 use Illuminate\Support\Facades\Storage;
 use App\Services\WebNotificationService;
+use Illuminate\Support\Facades\Validator;
 
 class CourtController extends Controller
 {
@@ -55,7 +56,9 @@ class CourtController extends Controller
         }
 
         $validated['owner_id'] = auth()->id();
+        $pricingRules = $this->validatedPricingRules($request);
         $court = Court::create($validated);
+        $this->syncPricingRules($court, $pricingRules);
 
         // Send web notifications
         try {
@@ -93,6 +96,7 @@ class CourtController extends Controller
             abort(403);
         }
         
+        $court->load('pricingRules');
         return view('courts.edit', compact('court'));
     }
 
@@ -124,7 +128,9 @@ class CourtController extends Controller
             $validated['image'] = $request->file('image')->store('courts', 'public');
         }
 
+        $pricingRules = $this->validatedPricingRules($request);
         $court->update($validated);
+        $this->syncPricingRules($court, $pricingRules);
 
         // Send web notifications
         try {
@@ -191,5 +197,54 @@ class CourtController extends Controller
         });
 
         return response()->json($data);
+    }
+
+    protected function validatedPricingRules(Request $request): array
+    {
+        $rawRules = array_values(array_filter($request->input('pricing_rules', []), function ($rule) {
+            return is_array($rule) && (isset($rule['start_time']) || isset($rule['price_per_hour']));
+        }));
+
+        $validator = Validator::make(
+            ['pricing_rules' => $rawRules],
+            [
+                'pricing_rules' => 'required|array|min:1',
+                'pricing_rules.*.label' => 'nullable|string|max:255',
+                'pricing_rules.*.start_time' => 'required|date_format:H:i',
+                'pricing_rules.*.end_time' => 'required|date_format:H:i',
+                'pricing_rules.*.price_per_hour' => 'required|numeric|min:0',
+            ]
+        );
+
+        $validator->after(function ($validator) use ($rawRules) {
+            foreach ($rawRules as $index => $rule) {
+                if (($rule['start_time'] ?? '') === ($rule['end_time'] ?? '')) {
+                    $validator->errors()->add("pricing_rules.{$index}.end_time", 'End time must be different from start time.');
+                }
+            }
+        });
+
+        $validated = $validator->validate();
+
+        return collect($validated['pricing_rules'])
+            ->map(function ($rule) {
+                $start = strlen($rule['start_time']) === 5 ? "{$rule['start_time']}:00" : $rule['start_time'];
+                $end = strlen($rule['end_time']) === 5 ? "{$rule['end_time']}:00" : $rule['end_time'];
+
+                return [
+                    'label' => $rule['label'] ?? null,
+                    'start_time' => $start,
+                    'end_time' => $end,
+                    'day_of_week' => $rule['day_of_week'] ?? null,
+                    'price_per_hour' => $rule['price_per_hour'],
+                ];
+            })
+            ->toArray();
+    }
+
+    protected function syncPricingRules(Court $court, array $pricingRules): void
+    {
+        $court->pricingRules()->delete();
+        $court->pricingRules()->createMany($pricingRules);
     }
 }
