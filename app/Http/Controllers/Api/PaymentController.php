@@ -19,7 +19,7 @@ class PaymentController extends Controller
         $user = Auth::user();
         
         $payments = Payment::where('user_id', $user->id)
-            ->with(['booking.court'])
+            ->with(['bookings.court'])
             ->orderBy('created_at', 'desc')
             ->get();
         
@@ -42,7 +42,7 @@ class PaymentController extends Controller
             ], 403);
         }
 
-        $payment->load(['booking.court']);
+        $payment->load(['bookings.court']);
         
         return response()->json([
             'success' => true,
@@ -84,15 +84,31 @@ class PaymentController extends Controller
             // Set Stripe API key
             Stripe::setApiKey($stripeSecret);
 
-            // Create Stripe checkout session
+            $payment->loadMissing('bookings.court');
+            $primaryBooking = $payment->bookings->sortBy([
+                ['date', 'asc'],
+                ['start_time', 'asc'],
+            ])->first();
+
+            $bookingDescription = $payment->bookings->map(function ($booking) {
+                $date = \Carbon\Carbon::parse($booking->date)->format('M d, Y');
+                $start = \Carbon\Carbon::createFromFormat('H:i:s', $booking->start_time)->format('g:i A');
+                $end = \Carbon\Carbon::createFromFormat('H:i:s', $booking->end_time)->format('g:i A');
+                return ($booking->court->name ?? 'Court ' . $booking->court_id) . ' (' . $date . ' ' . $start . ' - ' . $end . ')';
+            })->implode(', ');
+
+            $productName = $payment->bookings->count() > 1
+                ? 'Court Bookings Bundle'
+                : 'Court Booking - ' . ($primaryBooking->court->name ?? 'Unknown Court');
+
             $session = Session::create([
                 'payment_method_types' => ['card', 'fpx'],
                 'line_items' => [[
                     'price_data' => [
                         'currency' => 'myr',
                         'product_data' => [
-                            'name' => 'Court Booking - ' . ($payment->booking->court->name ?? 'Unknown Court'),
-                            'description' => 'Booking for ' . $payment->booking->date . ' from ' . $payment->booking->start_time . ' to ' . $payment->booking->end_time,
+                            'name' => $productName,
+                            'description' => $bookingDescription,
                         ],
                         'unit_amount' => (int)($payment->amount * 100), // Convert to cents
                     ],
@@ -103,7 +119,8 @@ class PaymentController extends Controller
                 'cancel_url' => config('app.url') . '/api/payments/' . $payment->id . '/cancel',
                 'metadata' => [
                     'payment_id' => $payment->id,
-                    'booking_id' => $payment->booking_id,
+                    'booking_id' => $primaryBooking?->id,
+                    'booking_ids' => $payment->bookings->pluck('id')->implode(','),
                     'user_id' => $payment->user_id,
                 ],
             ]);

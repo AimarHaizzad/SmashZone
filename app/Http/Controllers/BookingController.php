@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Booking;
 use App\Models\Court;
+use App\Models\Payment;
 use Illuminate\Support\Facades\Auth;
 use App\Notifications\BookingConfirmation;
 use App\Notifications\BookingCancellation;
@@ -119,14 +120,15 @@ class BookingController extends Controller
             'total_price' => $total_price,
         ]);
 
-        // Create payment record
-        $booking->payment()->create([
+        $payment = Payment::create([
             'user_id' => Auth::id(),
-            'booking_id' => $booking->id,
             'amount' => $total_price,
             'status' => 'pending',
             'payment_date' => null,
         ]);
+
+        $booking->update(['payment_id' => $payment->id]);
+        $payment->update(['booking_id' => $booking->id]);
 
         // Send booking confirmation email
         try {
@@ -228,6 +230,14 @@ class BookingController extends Controller
             'total_price' => $total_price,
         ]);
 
+        if ($booking->payment) {
+            $newTotal = $booking->payment->bookings()->sum('total_price');
+            $booking->payment->update([
+                'amount' => $newTotal,
+                'booking_id' => $booking->payment->bookings()->orderBy('date')->orderBy('start_time')->value('id'),
+            ]);
+        }
+
         return redirect()->route('bookings.index')->with('success', 'Booking updated successfully.');
     }
 
@@ -290,8 +300,22 @@ class BookingController extends Controller
             ]);
         }
 
+        $payment = $booking->payment;
+
         // Delete the booking
         $booking->delete();
+
+        if ($payment) {
+            $remainingTotal = $payment->bookings()->sum('total_price');
+            if ($remainingTotal <= 0) {
+                $payment->delete();
+            } else {
+                $payment->update([
+                    'amount' => $remainingTotal,
+                    'booking_id' => $payment->bookings()->orderBy('date')->orderBy('start_time')->value('id'),
+                ]);
+            }
+        }
 
         $message = 'Booking cancelled successfully.';
         if ($refund) {
@@ -329,7 +353,7 @@ class BookingController extends Controller
 
     public function userBookings(Request $request)
     {
-        $bookings = \App\Models\Booking::with(['court', 'payment'])
+        $bookings = \App\Models\Booking::with(['court', 'payment.bookings'])
             ->where('user_id', auth()->id())
             ->orderByDesc('date')
             ->orderBy('start_time')
@@ -347,13 +371,18 @@ class BookingController extends Controller
             abort(403);
         }
 
-        $bookings = Booking::with(['court', 'payment'])
+        $bookings = Booking::with(['court', 'payment.bookings.court'])
             ->where('user_id', $user->id)
             ->orderByDesc('date')
             ->orderBy('start_time')
             ->get();
 
-        return view('bookings.my', compact('bookings'));
+        $uniquePayments = $bookings->pluck('payment')->filter()->unique('id');
+        $pendingPaymentsCount = $uniquePayments->where('status', 'pending')->count();
+        $paidPaymentsCount = $uniquePayments->where('status', 'paid')->count();
+        $totalSpent = $uniquePayments->where('status', 'paid')->sum('amount');
+
+        return view('bookings.my', compact('bookings', 'pendingPaymentsCount', 'paidPaymentsCount', 'totalSpent'));
     }
 
     /**
@@ -565,6 +594,8 @@ class BookingController extends Controller
             ->get()
             ->keyBy('id');
 
+        $totalAmount = 0;
+
         // Process each grouped slot block
         foreach ($groupedSlots as $slotGroup) {
             $startTime = $slotGroup['start_time'];
@@ -609,16 +640,8 @@ class BookingController extends Controller
                 'total_price' => $calculatedPrice,
             ]);
 
-            // Create payment record
-            $booking->payment()->create([
-                'user_id' => Auth::id(),
-                'booking_id' => $booking->id,
-                'amount' => $calculatedPrice,
-                'status' => 'pending',
-                'payment_date' => null,
-            ]);
-
             $bookings[] = $booking;
+            $totalAmount += $calculatedPrice;
 
             // Send booking confirmation email
             try {
@@ -641,6 +664,21 @@ class BookingController extends Controller
             }
         }
 
+        if (count($bookings) > 0 && $totalAmount > 0) {
+            $payment = Payment::create([
+                'user_id' => Auth::id(),
+                'amount' => $totalAmount,
+                'status' => 'pending',
+                'payment_date' => null,
+            ]);
+
+            foreach ($bookings as $booking) {
+                $booking->update(['payment_id' => $payment->id]);
+            }
+
+            $payment->update(['booking_id' => $bookings[0]->id]);
+        }
+
         if (!empty($errors)) {
             $message = count($bookings) > 0 
                 ? count($bookings) . ' booking(s) created successfully, but ' . count($errors) . ' slot(s) could not be booked'
@@ -652,24 +690,54 @@ class BookingController extends Controller
                 'user_id' => Auth::id()
             ]);
                 
+            if (count($bookings) === 0) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $message,
+                    'errors' => $errors,
+                    'bookings_created' => 0,
+                    'total_slots' => count($validated['slots'])
+                ]);
+            }
+        }
+
+        if (count($bookings) === 0) {
             return response()->json([
-                'success' => count($bookings) > 0, // Partial success if some bookings were created
-                'message' => $message,
+                'success' => false,
+                'message' => 'No bookings could be created - all selected slots are unavailable',
                 'errors' => $errors,
-                'bookings_created' => count($bookings),
-                'total_slots' => count($validated['slots'])
             ]);
         }
 
+        $payment = Payment::create([
+            'user_id' => Auth::id(),
+            'amount' => $totalAmount,
+            'status' => 'pending',
+            'payment_date' => null,
+        ]);
+
+        foreach ($bookings as $booking) {
+            $booking->update(['payment_id' => $payment->id]);
+        }
+
+        $primaryBookingId = $payment->bookings()->orderBy('date')->orderBy('start_time')->value('id');
+        $payment->update(['booking_id' => $primaryBookingId]);
+
         \Log::info('Multi-slot booking completed successfully', [
             'bookings_created' => count($bookings),
-            'user_id' => Auth::id()
+            'user_id' => Auth::id(),
+            'payment_id' => $payment->id,
+            'errors' => $errors,
         ]);
 
         return response()->json([
-            'success' => true,
-            'message' => 'All ' . count($bookings) . ' booking(s) created successfully',
-            'bookings_created' => count($bookings)
+            'success' => count($bookings) > 0,
+            'message' => empty($errors)
+                ? 'All ' . count($bookings) . ' booking(s) created successfully'
+                : count($bookings) . ' booking(s) created successfully, but ' . count($errors) . ' slot(s) could not be booked',
+            'bookings_created' => count($bookings),
+            'errors' => $errors,
+            'payment_id' => $payment->id,
         ]);
     }
 }

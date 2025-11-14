@@ -17,6 +17,7 @@ class Booking extends Model
         'end_time',
         'status',
         'total_price',
+        'payment_id',
     ];
 
     public function user()
@@ -31,8 +32,9 @@ class Booking extends Model
 
     public function payment()
     {
-        return $this->hasOne(Payment::class);
+        return $this->belongsTo(Payment::class);
     }
+
 
     public function refunds()
     {

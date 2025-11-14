@@ -97,53 +97,58 @@
                         Booking Details
                     </h3>
                     
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div class="flex items-center gap-3 p-3 bg-white rounded-xl">
-                            <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
-                                <svg class="w-5 h-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                                </svg>
+                    @foreach($payment->bookings as $bookingItem)
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                            <div class="flex items-center gap-3 p-3 bg-white rounded-xl">
+                                <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                                    <svg class="w-5 h-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                                    </svg>
+                                </div>
+                                <div>
+                                    <p class="text-sm text-gray-600">Court</p>
+                                    <p class="font-semibold text-gray-900">{{ $bookingItem->court->name ?? 'Court ' . $bookingItem->court_id }}</p>
+                                </div>
                             </div>
-                            <div>
-                                <p class="text-sm text-gray-600">Court</p>
-                                <p class="font-semibold text-gray-900">{{ $payment->booking->court->name }}</p>
+
+                            <div class="flex items-center gap-3 p-3 bg-white rounded-xl">
+                                <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                                    <svg class="w-5 h-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                    </svg>
+                                </div>
+                                <div>
+                                    <p class="text-sm text-gray-600">Date</p>
+                                    <p class="font-semibold text-gray-900">{{ \Carbon\Carbon::parse($bookingItem->date)->format('M d, Y') }}</p>
+                                </div>
+                            </div>
+
+                            <div class="flex items-center gap-3 p-3 bg-white rounded-xl md:col-span-2">
+                                <div class="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
+                                    <svg class="w-5 h-5 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                </div>
+                                <div>
+                                    <p class="text-sm text-gray-600">Time</p>
+                                    <p class="font-semibold text-gray-900">
+                                        {{ \Carbon\Carbon::createFromFormat('H:i:s', $bookingItem->start_time)->format('g:i A') }} -
+                                        {{ \Carbon\Carbon::createFromFormat('H:i:s', $bookingItem->end_time)->format('g:i A') }}
+                                    </p>
+                                </div>
                             </div>
                         </div>
+                    @endforeach
 
-                        <div class="flex items-center gap-3 p-3 bg-white rounded-xl">
-                            <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                                <svg class="w-5 h-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                </svg>
-                            </div>
-                            <div>
-                                <p class="text-sm text-gray-600">Date</p>
-                                <p class="font-semibold text-gray-900">{{ $payment->booking->date }}</p>
-                            </div>
+                    <div class="flex items-center gap-3 p-3 bg-white rounded-xl">
+                        <div class="w-10 h-10 bg-yellow-100 rounded-full flex items-center justify-center">
+                            <svg class="w-5 h-5 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 1.343-3 3s1.343 3 3 3 3-1.343 3-3-1.343-3-3-3zm0 0V4m0 7v7" />
+                            </svg>
                         </div>
-
-                        <div class="flex items-center gap-3 p-3 bg-white rounded-xl">
-                            <div class="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
-                                <svg class="w-5 h-5 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                </svg>
-                            </div>
-                            <div>
-                                <p class="text-sm text-gray-600">Time</p>
-                                <p class="font-semibold text-gray-900">{{ $payment->booking->start_time }} - {{ $payment->booking->end_time }}</p>
-                            </div>
-                        </div>
-
-                        <div class="flex items-center gap-3 p-3 bg-white rounded-xl">
-                            <div class="w-10 h-10 bg-yellow-100 rounded-full flex items-center justify-center">
-                                <svg class="w-5 h-5 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 1.343-3 3s1.343 3 3 3 3-1.343 3-3-1.343-3-3-3zm0 0V4m0 7v7" />
-                                </svg>
-                            </div>
-                            <div>
-                                <p class="text-sm text-gray-600">Amount Paid</p>
-                                <p class="font-semibold text-gray-900">RM {{ number_format($payment->amount, 2) }}</p>
-                            </div>
+                        <div>
+                            <p class="text-sm text-gray-600">Total Amount Paid</p>
+                            <p class="font-semibold text-gray-900">RM {{ number_format($payment->amount, 2) }}</p>
                         </div>
                     </div>
                 </div>

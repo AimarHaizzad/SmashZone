@@ -496,6 +496,64 @@
         return total;
     }
 
+    function addHourToTime(timeString) {
+        const [hours, minutes] = timeString.split(':').map(Number);
+        const nextHour = (hours + 1) % 24;
+        return `${nextHour.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+    }
+
+    function summarizeSlotsByCourt(slots) {
+        const grouped = {};
+        slots.forEach(slot => {
+            if (!grouped[slot.court_id]) {
+                grouped[slot.court_id] = {
+                    courtName: slot.courtName,
+                    entries: []
+                };
+            }
+            grouped[slot.court_id].entries.push(slot);
+        });
+
+        const summaries = [];
+
+        Object.values(grouped).forEach(group => {
+            const entries = group.entries.slice().sort((a, b) => a.time.localeCompare(b.time));
+            let currentStart = entries[0].time;
+            let currentEnd = addHourToTime(entries[0].time);
+            let currentTotal = Number(entries[0].price || 0);
+            let previousTime = entries[0].time;
+
+            for (let i = 1; i < entries.length; i++) {
+                const slot = entries[i];
+                const expectedNext = addHourToTime(previousTime);
+                if (slot.time === expectedNext) {
+                    currentEnd = addHourToTime(slot.time);
+                    currentTotal += Number(slot.price || 0);
+                } else {
+                    summaries.push({
+                        courtName: group.courtName,
+                        start: currentStart,
+                        end: currentEnd,
+                        total: currentTotal
+                    });
+                    currentStart = slot.time;
+                    currentEnd = addHourToTime(slot.time);
+                    currentTotal = Number(slot.price || 0);
+                }
+                previousTime = slot.time;
+            }
+
+            summaries.push({
+                courtName: group.courtName,
+                start: currentStart,
+                end: currentEnd,
+                total: currentTotal
+            });
+        });
+
+        return summaries;
+    }
+
     function setToday() {
         const today = new Date().toISOString().split('T')[0];
         document.getElementById('date-input').value = today;
@@ -745,11 +803,13 @@
         const date = document.getElementById('date-input').value;
         const slots = Array.from(selectedSlots.values());
         const totalPrice = calculateSelectedTotal();
+        const summaries = summarizeSlotsByCourt(slots);
         
         // Create booking data
         const bookingData = {
             date: date,
             slots: slots,
+            summary: summaries,
             total_price: totalPrice
         };
 
@@ -761,12 +821,12 @@
         const modal = document.getElementById('booking-modal');
         const modalContent = document.getElementById('modal-content');
         
-        const slotsHtml = bookingData.slots.map(slot => 
+        const slotsHtml = (bookingData.summary || []).map(slot => 
             `<div class="flex justify-between items-center py-2 border-b border-gray-100 last:border-b-0">
                 <span class="font-medium">${slot.courtName}</span>
                 <div class="text-right">
-                    <span class="block text-gray-600">${formatTime(slot.time)}</span>
-                    <span class="block text-blue-600 font-semibold text-sm">${slot.priceLabel || formatCurrency(slot.price)}</span>
+                    <span class="block text-gray-600">${formatTime(slot.start)} - ${formatTime(slot.end)}</span>
+                    <span class="block text-blue-600 font-semibold text-sm">${formatCurrency(slot.total)}</span>
                 </div>
             </div>`
         ).join('');

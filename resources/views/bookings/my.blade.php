@@ -64,7 +64,7 @@
                 <div class="flex items-center justify-between">
                     <div>
                         <p class="text-sm font-medium text-gray-600">Pending Payment</p>
-                        <p class="text-2xl font-bold text-yellow-600">{{ $bookings->where('payment.status', 'pending')->count() }}</p>
+                        <p class="text-2xl font-bold text-yellow-600">{{ $pendingPaymentsCount }}</p>
                     </div>
                     <div class="w-12 h-12 bg-yellow-100 rounded-xl flex items-center justify-center">
                         <svg class="w-6 h-6 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -78,7 +78,7 @@
                 <div class="flex items-center justify-between">
                     <div>
                         <p class="text-sm font-medium text-gray-600">Paid</p>
-                        <p class="text-2xl font-bold text-green-600">{{ $bookings->where('payment.status', 'paid')->count() }}</p>
+                        <p class="text-2xl font-bold text-green-600">{{ $paidPaymentsCount }}</p>
                     </div>
                     <div class="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
                         <svg class="w-6 h-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -92,7 +92,7 @@
                 <div class="flex items-center justify-between">
                     <div>
                         <p class="text-sm font-medium text-gray-600">Total Spent</p>
-                        <p class="text-2xl font-bold text-blue-600">RM {{ number_format($bookings->sum('total_price'), 2) }}</p>
+                        <p class="text-2xl font-bold text-blue-600">RM {{ number_format($totalSpent, 2) }}</p>
                     </div>
                     <div class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
                         <svg class="w-6 h-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -126,17 +126,21 @@
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-100">
+                        @php $renderedPaymentButtons = []; @endphp
                         @foreach($bookings as $booking)
                             @php
                                 $startDateTime = \Carbon\Carbon::parse("{$booking->date} {$booking->start_time}");
                                 $cancelDeadline = $startDateTime->copy()->subHour();
                                 $canCancel = now()->lt($cancelDeadline);
-                                $paymentStatus = strtolower($booking->payment->status ?? 'pending');
+                                $payment = $booking->payment;
+                                $paymentStatus = strtolower($payment->status ?? 'pending');
                                 $paymentExpired = $paymentStatus === 'pending' && now()->greaterThanOrEqualTo($startDateTime);
                                 
                                 if ($paymentExpired) {
                                     $paymentStatus = 'failed';
                                 }
+                                $paymentId = $payment->id ?? null;
+                                $showPayButton = $payment && $paymentStatus === 'pending' && $paymentId && !in_array($paymentId, $renderedPaymentButtons);
                             @endphp
                             <tr class="hover:bg-gray-50 transition-colors">
                                 <td class="px-6 py-4">
@@ -195,13 +199,21 @@
                                             </svg>
                                             Details
                                         </button>
-                                        @if($booking->payment && $paymentStatus === 'pending')
-                                            <a href="{{ route('payments.pay', $booking->payment) }}" class="px-3 py-1.5 bg-green-50 text-green-700 rounded-lg font-medium hover:bg-green-100 transition-colors text-sm">
+                                        @if($showPayButton)
+                                            @php $renderedPaymentButtons[] = $paymentId; @endphp
+                                            <a href="{{ route('payments.pay', $payment) }}" class="px-3 py-1.5 bg-green-50 text-green-700 rounded-lg font-medium hover:bg-green-100 transition-colors text-sm">
+                                                <svg class="w-4 h-4 inline mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                                                </svg>
+                                                Pay {{ $payment->bookings->count() > 1 ? '(' . $payment->bookings->count() . ' slots)' : '' }}
+                                            </a>
+                                        @elseif($payment && $paymentStatus === 'pending')
+                                            <span class="px-3 py-1.5 bg-gray-50 text-gray-400 rounded-lg font-medium text-sm cursor-not-allowed" title="Included in another pending payment">
                                                 <svg class="w-4 h-4 inline mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
                                                 </svg>
                                                 Pay
-                                            </a>
+                                            </span>
                                         @endif
                                         @if($canCancel)
                                             <form action="{{ route('bookings.destroy', $booking) }}" method="POST" onsubmit="return confirm('Are you sure you want to cancel this booking?')" class="inline">

@@ -624,7 +624,7 @@ Route::get('test-stripe-config', function() {
 
 // Test route for payment data
 Route::get('test-payment/{id}', function($id) {
-    $payment = \App\Models\Payment::with(['user', 'booking.court'])->find($id);
+    $payment = \App\Models\Payment::with(['user', 'bookings.court'])->find($id);
     
     if (!$payment) {
         return response()->json(['error' => 'Payment not found'], 404);
@@ -637,7 +637,7 @@ Route::get('test-payment/{id}', function($id) {
 
 // Test route to show all payments for current user
 Route::get('my-payments', function() {
-    $payments = \App\Models\Payment::with(['booking.court'])
+    $payments = \App\Models\Payment::with(['bookings.court'])
         ->where('user_id', auth()->id())
         ->orderBy('created_at', 'desc')
         ->get();
@@ -646,12 +646,14 @@ Route::get('my-payments', function() {
         'user_id' => auth()->id(),
         'total_payments' => $payments->count(),
         'payments' => $payments->map(function($payment) {
+            $primaryBooking = $payment->bookings->first();
             return [
                 'id' => $payment->id,
                 'amount' => $payment->amount,
                 'status' => $payment->status,
-                'court_name' => $payment->booking->court->name ?? 'Unknown',
-                'booking_date' => $payment->booking->date ?? 'Unknown',
+                'court_name' => $primaryBooking->court->name ?? 'Unknown',
+                'booking_date' => $primaryBooking->date ?? 'Unknown',
+                'booking_count' => $payment->bookings->count(),
                 'created_at' => $payment->created_at->format('Y-m-d H:i:s'),
                 'payment_url' => route('payments.pay', $payment->id)
             ];

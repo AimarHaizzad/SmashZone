@@ -37,11 +37,7 @@ class PaymentConfirmation extends Notification implements ShouldQueue
      */
     public function toMail(object $notifiable): MailMessage
     {
-        $booking = $this->payment->booking;
-        $court = $booking->court;
-        $startTime = \Carbon\Carbon::parse($booking->start_time)->format('g:i A');
-        $endTime = \Carbon\Carbon::parse($booking->end_time)->format('g:i A');
-        $date = \Carbon\Carbon::parse($booking->date)->format('l, F j, Y');
+        $bookings = $this->payment->bookings()->with('court')->get();
 
         return (new MailMessage)
             ->subject('Payment Confirmation - SmashZone')
@@ -51,11 +47,17 @@ class PaymentConfirmation extends Notification implements ShouldQueue
             ->line('💳 **Payment ID:** #' . $this->payment->id)
             ->line('💰 **Amount Paid:** RM ' . number_format($this->payment->amount, 2))
             ->line('📅 **Payment Date:** ' . $this->payment->payment_date->format('l, F j, Y g:i A'))
-            ->line('🏸 **Court:** ' . $court->name)
-            ->line('📅 **Booking Date:** ' . $date)
-            ->line('⏰ **Time:** ' . $startTime . ' - ' . $endTime)
-            ->line('📋 **Booking ID:** #' . $booking->id)
-            ->action('View Booking Details', url('/bookings/' . $booking->id))
+            ->line('🏸 **Bookings:**')
+            ->line($bookings->isNotEmpty()
+                ? $bookings->map(function ($booking) {
+                    $date = \Carbon\Carbon::parse($booking->date)->format('M d, Y');
+                    $start = \Carbon\Carbon::createFromFormat('H:i:s', $booking->start_time)->format('g:i A');
+                    $end = \Carbon\Carbon::createFromFormat('H:i:s', $booking->end_time)->format('g:i A');
+                    return '- ' . ($booking->court->name ?? 'Court ' . $booking->court_id) . ' on ' . $date . ' (' . $start . ' - ' . $end . ')';
+                })->implode("\n")
+                : '- No booking details available'
+            )
+            ->action('View My Bookings', route('bookings.my'))
             ->line('Your booking is now confirmed and ready!')
             ->line('Please arrive 10 minutes before your scheduled time.')
             ->line('Thank you for choosing SmashZone!')
@@ -71,10 +73,10 @@ class PaymentConfirmation extends Notification implements ShouldQueue
     {
         return [
             'payment_id' => $this->payment->id,
-            'booking_id' => $this->payment->booking_id,
+            'booking_ids' => $this->payment->bookings()->pluck('id'),
             'amount' => $this->payment->amount,
             'payment_date' => $this->payment->payment_date,
-            'court_name' => $this->payment->booking->court->name,
+            'booking_count' => $this->payment->bookings()->count(),
         ];
     }
 }

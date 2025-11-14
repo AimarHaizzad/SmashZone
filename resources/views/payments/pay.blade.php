@@ -64,6 +64,12 @@
 
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 <!-- Booking Details -->
+                @php 
+                    $bookings = $payment->bookings;
+                    if ($bookings->isEmpty() && $payment->booking) {
+                        $bookings = collect([$payment->booking]);
+                    }
+                @endphp
                 <div class="bg-white rounded-2xl shadow-xl border border-gray-100 p-6 card-shadow">
                     <div class="flex items-center gap-3 mb-6">
                         <div class="w-10 h-10 bg-gradient-to-r from-green-500 to-blue-600 rounded-full flex items-center justify-center">
@@ -71,45 +77,33 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-6a2 2 0 012-2h2a2 2 0 012 2v6" />
                             </svg>
                         </div>
-                        <h3 class="text-xl font-bold text-gray-900">Booking Summary</h3>
+                        <h3 class="text-xl font-bold text-gray-900">
+                            Booking Summary {{ $bookings->count() ? '(' . $bookings->count() . ' slot' . ($bookings->count() > 1 ? 's' : '') . ')' : '' }}
+                        </h3>
                     </div>
 
                     <div class="space-y-4">
-                        <div class="flex justify-between items-center p-4 bg-gray-50 rounded-xl">
-                            <div>
-                                <p class="text-sm text-gray-600">Court</p>
-                                <p class="font-semibold text-gray-900">{{ $payment->booking->court->name }}</p>
+                        @forelse($bookings as $bookingItem)
+                            <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 p-4 bg-gray-50 rounded-xl border border-gray-100">
+                                <div>
+                                    <p class="text-sm text-gray-600">Court</p>
+                                    <p class="font-semibold text-gray-900">{{ $bookingItem->court->name ?? 'Court ' . $bookingItem->court_id }}</p>
+                                </div>
+                                <div>
+                                    <p class="text-sm text-gray-600">Date</p>
+                                    <p class="font-semibold text-gray-900">{{ \Carbon\Carbon::parse($bookingItem->date)->format('M d, Y') }}</p>
+                                </div>
+                                <div>
+                                    <p class="text-sm text-gray-600">Time</p>
+                                    <p class="font-semibold text-gray-900">
+                                        {{ \Carbon\Carbon::createFromFormat('H:i:s', $bookingItem->start_time)->format('g:i A') }} -
+                                        {{ \Carbon\Carbon::createFromFormat('H:i:s', $bookingItem->end_time)->format('g:i A') }}
+                                    </p>
+                                </div>
                             </div>
-                            <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
-                                <svg class="w-6 h-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                                </svg>
-                            </div>
-                        </div>
-
-                        <div class="flex justify-between items-center p-4 bg-gray-50 rounded-xl">
-                            <div>
-                                <p class="text-sm text-gray-600">Date</p>
-                                <p class="font-semibold text-gray-900">{{ $payment->booking->date }}</p>
-                            </div>
-                            <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                                <svg class="w-6 h-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                </svg>
-                            </div>
-                        </div>
-
-                        <div class="flex justify-between items-center p-4 bg-gray-50 rounded-xl">
-                            <div>
-                                <p class="text-sm text-gray-600">Time</p>
-                                <p class="font-semibold text-gray-900">{{ $payment->booking->start_time }} - {{ $payment->booking->end_time }}</p>
-                            </div>
-                            <div class="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
-                                <svg class="w-6 h-6 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                </svg>
-                            </div>
-                        </div>
+                        @empty
+                            <p class="text-sm text-gray-500">No booking details available.</p>
+                        @endforelse
 
                         <div class="flex justify-between items-center p-4 bg-gradient-to-r from-green-50 to-blue-50 rounded-xl border border-green-200">
                             <div>

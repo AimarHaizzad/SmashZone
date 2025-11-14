@@ -193,14 +193,21 @@
                                     </div>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
-                                    @if($payment->booking)
-                                        <div class="text-sm text-gray-900">
-                                            <div class="font-semibold">{{ $payment->booking->court->name ?? 'N/A' }}</div>
-                                            <div class="text-gray-500">{{ $payment->booking->date }}</div>
-                                            <div class="text-gray-500">{{ $payment->booking->start_time }} - {{ $payment->booking->end_time }}</div>
+                                    @if($payment->bookings->isNotEmpty())
+                                        <div class="space-y-3">
+                                            @foreach($payment->bookings as $bookingSummary)
+                                                <div class="text-sm text-gray-900 border border-gray-100 rounded-lg p-3 bg-gray-50">
+                                                    <div class="font-semibold">{{ $bookingSummary->court->name ?? 'Court ' . $bookingSummary->court_id }}</div>
+                                                    <div class="text-gray-500 text-xs">{{ \Carbon\Carbon::parse($bookingSummary->date)->format('M d, Y (l)') }}</div>
+                                                    <div class="text-gray-500 text-xs">
+                                                        {{ \Carbon\Carbon::createFromFormat('H:i:s', $bookingSummary->start_time)->format('g:i A') }} - 
+                                                        {{ \Carbon\Carbon::createFromFormat('H:i:s', $bookingSummary->end_time)->format('g:i A') }}
+                                                    </div>
+                                                </div>
+                                            @endforeach
                                         </div>
                                     @else
-                                        <span class="text-sm text-gray-500">Product Purchase</span>
+                                        <span class="text-sm text-gray-500">No linked bookings</span>
                                     @endif
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">

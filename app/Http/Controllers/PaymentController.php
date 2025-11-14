@@ -18,20 +18,24 @@ class PaymentController extends Controller
         // Get payments based on user role
         if ($user->isOwner()) {
             $courtIds = $user->courts->pluck('id');
-            $payments = \App\Models\Payment::whereHas('booking.court', function($q) use ($courtIds) {
-                $q->whereIn('id', $courtIds);
-            })->with(['user', 'booking.court'])->orderBy('payment_date', 'desc')->get();
+            $payments = Payment::where(function ($query) use ($courtIds) {
+                $query->whereHas('bookings.court', function($q) use ($courtIds) {
+                    $q->whereIn('id', $courtIds);
+                })->orWhereHas('booking.court', function($q) use ($courtIds) {
+                    $q->whereIn('id', $courtIds);
+                });
+            })->with(['user', 'bookings.court', 'booking.court'])->orderBy('payment_date', 'desc')->get();
         } elseif ($user->isStaff()) {
             // Staff can view all payments
-            $payments = \App\Models\Payment::with(['user', 'booking.court'])->orderBy('payment_date', 'desc')->get();
+            $payments = Payment::with(['user', 'bookings.court', 'booking.court'])->orderBy('payment_date', 'desc')->get();
         } else {
-            $payments = \App\Models\Payment::where('user_id', $user->id)->with(['user', 'booking.court'])->orderBy('payment_date', 'desc')->get();
+            $payments = Payment::where('user_id', $user->id)->with(['user', 'bookings.court', 'booking.court'])->orderBy('payment_date', 'desc')->get();
         }
         
         // Get refunds based on user role
         if ($user->isOwner()) {
             // For owners, show all refunds - they should see everything related to their business
-            $refunds = \App\Models\Refund::with(['user', 'booking.court', 'payment.booking.court'])
+            $refunds = \App\Models\Refund::with(['user', 'booking.court', 'payment.bookings.court'])
                 ->orderBy('created_at', 'desc')
                 ->get();
         } elseif ($user->isStaff()) {
@@ -55,6 +59,8 @@ class PaymentController extends Controller
         if ($payment->status === 'paid') {
             return redirect()->route('payments.success', $payment)->with('info', 'Payment already completed.');
         }
+
+        $payment->loadMissing('bookings.court', 'booking.court');
 
         return view('payments.pay', compact('payment'));
     }
@@ -83,6 +89,8 @@ class PaymentController extends Controller
             return redirect()->route('payments.success', $payment);
         }
 
+        $payment->loadMissing('bookings.court', 'booking.court');
+
         try {
             // Check if Stripe is configured
             $stripeSecret = config('services.stripe.secret');
@@ -96,9 +104,29 @@ class PaymentController extends Controller
             // Set Stripe API key
             Stripe::setApiKey($stripeSecret);
 
+            $bookingCollection = $payment->bookings;
+            if ($bookingCollection->isEmpty() && $payment->booking) {
+                $bookingCollection = collect([$payment->booking]);
+            }
+
+            $primaryBooking = $bookingCollection->sortBy([
+                ['date', 'asc'],
+                ['start_time', 'asc'],
+            ])->first();
+
+            $bookingDescription = $bookingCollection->map(function ($booking) {
+                $start = \Carbon\Carbon::createFromFormat('H:i:s', $booking->start_time)->format('g:i A');
+                $end = \Carbon\Carbon::createFromFormat('H:i:s', $booking->end_time)->format('g:i A');
+                return ($booking->court->name ?? 'Court ' . $booking->court_id) . ' (' . $booking->date . ' ' . $start . ' - ' . $end . ')';
+            })->implode(', ');
+
+            $productName = $bookingCollection->count() > 1
+                ? 'Court Bookings Bundle'
+                : 'Court Booking - ' . ($primaryBooking->court->name ?? 'Unknown Court');
+
             \Log::info('Creating Stripe session', [
                 'payment_amount' => $payment->amount,
-                'court_name' => $payment->booking->court->name ?? 'Unknown'
+                'payment_id' => $payment->id,
             ]);
 
             // Create Stripe checkout session
@@ -108,8 +136,8 @@ class PaymentController extends Controller
                     'price_data' => [
                         'currency' => 'myr',
                         'product_data' => [
-                            'name' => 'Court Booking - ' . ($payment->booking->court->name ?? 'Unknown Court'),
-                            'description' => 'Booking for ' . $payment->booking->date . ' from ' . $payment->booking->start_time . ' to ' . $payment->booking->end_time,
+                            'name' => $productName,
+                            'description' => $bookingDescription,
                         ],
                         'unit_amount' => (int)($payment->amount * 100), // Convert to cents
                     ],
@@ -120,7 +148,8 @@ class PaymentController extends Controller
                 'cancel_url' => route('payments.cancel', $payment),
                 'metadata' => [
                     'payment_id' => $payment->id,
-                    'booking_id' => $payment->booking_id,
+                    'booking_id' => $primaryBooking?->id,
+                    'booking_ids' => $bookingCollection->pluck('id')->implode(','),
                     'user_id' => $payment->user_id,
                 ],
             ]);
@@ -151,6 +180,8 @@ class PaymentController extends Controller
             abort(403, 'Unauthorized access to payment.');
         }
 
+        $payment->loadMissing('bookings.court', 'booking.court');
+
         $sessionId = $request->get('session_id');
 
         if ($sessionId) {
@@ -168,6 +199,8 @@ class PaymentController extends Controller
                         'payment_date' => now(),
                         'stripe_payment_intent_id' => $session->payment_intent,
                     ]);
+
+                    $this->markRelatedBookingsAsPaid($payment);
 
                     // Send payment confirmation email
                     try {
@@ -194,6 +227,8 @@ class PaymentController extends Controller
             abort(403, 'Unauthorized access to payment.');
         }
 
+        $payment->loadMissing('bookings.court', 'booking.court');
+
         return view('payments.cancel', compact('payment'));
     }
 
@@ -209,6 +244,8 @@ class PaymentController extends Controller
             'status' => 'paid',
             'payment_date' => now(),
         ]);
+
+        $this->markRelatedBookingsAsPaid($payment);
 
         // Send payment confirmation email
         try {
@@ -261,11 +298,24 @@ class PaymentController extends Controller
                     'payment_date' => now(),
                     'stripe_payment_intent_id' => $session['payment_intent'],
                 ]);
+
+                $this->markRelatedBookingsAsPaid($payment);
                 
                 \Log::info('Payment updated via webhook', ['payment_id' => $payment->id]);
             }
         }
 
         return response('Webhook handled', 200);
+    }
+
+    protected function markRelatedBookingsAsPaid(Payment $payment): void
+    {
+        if ($payment->relationLoaded('bookings')) {
+            $payment->bookings->each(function ($booking) {
+                $booking->update(['status' => 'confirmed']);
+            });
+        } else {
+            $payment->bookings()->update(['status' => 'confirmed']);
+        }
     }
 }
