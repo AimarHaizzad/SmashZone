@@ -4,9 +4,10 @@
     @endphp
     <!-- Left: Logo and Mobile Menu Button -->
     <div class="flex items-center gap-2 sm:gap-8">
-        <a href="{{ route('dashboard') }}" class="flex items-center gap-2 group">
-            <!-- SVG Badminton Logo -->
-            <span class="inline-block"><svg width="28" height="28" class="sm:w-9 sm:h-9" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="36" height="36" rx="8" fill="#e0f2fe"/><path d="M10 24l8-14 8 14M12 20h12" stroke="#2563eb" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="18" cy="28" r="2.5" fill="#22c55e"/></svg></span>
+        <a href="{{ route('dashboard') }}" class="flex items-center gap-3 group">
+            <span class="inline-flex items-center justify-center">
+                <img src="/images/image.png" alt="SmashZone Logo" class="w-10 h-10 sm:w-12 sm:h-12 rounded-xl object-cover shadow" loading="lazy">
+            </span>
             <span class="text-lg sm:text-2xl font-extrabold text-blue-700 tracking-wide group-hover:text-green-600 transition">SmashZone</span>
         </a>
         
