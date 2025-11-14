@@ -12,7 +12,7 @@
         <div class="bg-white p-8">
             <p class="mb-4 text-lg text-gray-700">{{ $court->description }}</p>
             <div class="mb-6 text-sm text-gray-500">Owned by: {{ $court->owner->name ?? 'N/A' }}</div>
-            <a href="{{ route('bookings.create', ['court_id' => $court->id]) }}" class="inline-block bg-green-600 text-white px-6 py-3 rounded-lg text-lg font-semibold shadow hover:bg-green-700 transition">Book This Court</a>
+            <a href="{{ route('bookings.index', ['court_id' => $court->id]) }}" class="inline-block bg-green-600 text-white px-6 py-3 rounded-lg text-lg font-semibold shadow hover:bg-green-700 transition">Book This Court</a>
             <a href="{{ route('courts.index') }}" class="ml-4 text-gray-600 hover:underline">Back to Courts</a>
         </div>
     </div>

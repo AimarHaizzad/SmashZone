@@ -57,12 +57,7 @@ class BookingController extends Controller
      */
     public function create()
     {
-        if (!Auth::user()->isCustomer()) {
-            abort(403);
-        }
-        $courts = Court::all();
-        $selectedCourtId = request('court_id');
-        return view('bookings.create', compact('courts', 'selectedCourtId'));
+        return redirect()->route('bookings.index', request()->only('court_id'));
     }
 
     /**

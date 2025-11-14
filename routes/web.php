@@ -499,7 +499,7 @@ Route::middleware(['auth', 'mobile.auth'])->group(function () {
     Route::get('staff/bookings', [StaffController::class, 'bookings'])->name('staff.bookings');
 
     // Bookings (for customers)
-    Route::resource('bookings', BookingController::class);
+    Route::resource('bookings', BookingController::class)->except(['create']);
     // Customer bookings list page
     Route::get('my/bookings', [BookingController::class, 'my'])->name('bookings.my');
     // Mark booking as completed

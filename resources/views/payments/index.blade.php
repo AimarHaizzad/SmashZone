@@ -248,23 +248,6 @@
                                         <span class="text-gray-500">-</span>
                                     @endif
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                    <div class="flex items-center gap-2">
-                                        <button class="text-blue-600 hover:text-blue-900 font-medium">
-                                            View Details
-                                        </button>
-                                        @if($payment->status === 'pending' && (auth()->user()->isOwner() || auth()->user()->isStaff()))
-                                            <form action="{{ route('payments.mark-paid', $payment) }}" method="POST" class="inline">
-                                                @csrf
-                                                @method('PATCH')
-                                                <button type="submit" class="text-green-600 hover:text-green-900 font-medium" 
-                                                        onclick="return confirm('Are you sure you want to mark this payment as paid?')">
-                                                    Mark Paid
-                                                </button>
-                                            </form>
-                                        @endif
-                                    </div>
-                                </td>
                             </tr>
                         @endforeach
                     </tbody>
