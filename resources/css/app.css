@@ -1,3 +1,137 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+:root {
+    --color-primary: #0F9D58;
+    --color-primary-dark: #0C7A43;
+    --color-primary-light: #C2F0DA;
+    --color-secondary: #0B6FAF;
+    --color-secondary-dark: #084E7F;
+    --color-secondary-light: #D4E8F8;
+    --color-accent: #FFD54A;
+    --color-accent-dark: #E0B938;
+    --color-background: #F6F9FB;
+    --color-text: #102027;
+    --color-cta: #FF6D00;
+    --color-cta-dark: #E05F00;
+}
+
+body {
+    background-color: var(--color-background);
+    color: var(--color-text);
+}
+
+a {
+    color: var(--color-secondary);
+}
+
+a:hover {
+    color: var(--color-primary);
+}
+
+@layer utilities {
+    .text-blue-700,
+    .text-blue-600,
+    .text-blue-500,
+    .text-indigo-600 {
+        color: var(--color-secondary) !important;
+    }
+
+    .text-green-600,
+    .text-green-500 {
+        color: var(--color-primary) !important;
+    }
+
+    .text-yellow-600,
+    .text-yellow-500 {
+        color: var(--color-accent-dark) !important;
+    }
+
+    .text-orange-500 {
+        color: var(--color-cta) !important;
+    }
+
+    .bg-blue-600,
+    .bg-blue-700,
+    .bg-blue-500,
+    .border-blue-600,
+    .border-blue-500,
+    .border-blue-700 {
+        background-color: var(--color-secondary) !important;
+        border-color: var(--color-secondary) !important;
+    }
+
+    .hover\:bg-blue-700:hover,
+    .hover\:bg-blue-600:hover {
+        background-color: var(--color-secondary-dark) !important;
+    }
+
+    .bg-green-600,
+    .bg-green-700,
+    .border-green-600,
+    .border-green-500 {
+        background-color: var(--color-primary) !important;
+        border-color: var(--color-primary) !important;
+    }
+
+    .hover\:bg-green-600:hover,
+    .hover\:bg-green-700:hover {
+        background-color: var(--color-primary-dark) !important;
+    }
+
+    .bg-blue-100 {
+        background-color: var(--color-secondary-light) !important;
+        color: var(--color-secondary) !important;
+    }
+
+    .bg-green-100 {
+        background-color: var(--color-primary-light) !important;
+        color: var(--color-primary) !important;
+    }
+
+    .bg-yellow-100 {
+        background-color: #FFF4CC !important;
+        color: var(--color-accent-dark) !important;
+    }
+
+    .text-blue-100 {
+        color: var(--color-secondary-light) !important;
+    }
+
+    .bg-gradient-to-r.from-blue-600,
+    .from-blue-600 {
+        --tw-gradient-from: var(--color-cta) !important;
+        --tw-gradient-to: rgb(255 109 0 / 0) !important;
+        --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+    }
+
+    .bg-gradient-to-r.from-green-600,
+    .from-green-600 {
+        --tw-gradient-from: var(--color-primary) !important;
+        --tw-gradient-to: rgb(15 157 88 / 0) !important;
+        --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+    }
+
+    .to-blue-700 {
+        --tw-gradient-to: var(--color-cta-dark) !important;
+    }
+
+    .to-green-700 {
+        --tw-gradient-to: var(--color-secondary) !important;
+    }
+
+    .bg-orange-500,
+    .bg-orange-600 {
+        background-color: var(--color-cta) !important;
+    }
+
+    .hover\:bg-orange-600:hover {
+        background-color: var(--color-cta-dark) !important;
+    }
+
+    .btn-cta {
+        @apply text-white font-semibold py-3 px-6 rounded-xl shadow-lg;
+        background: linear-gradient(90deg, var(--color-cta) 0%, var(--color-cta-dark) 100%);
+    }
+}

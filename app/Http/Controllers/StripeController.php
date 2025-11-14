@@ -72,6 +72,8 @@ class StripeController extends Controller
         $sessionId = $request->get('session_id');
         $paymentId = $request->get('payment_id');
         
+        $cart = session('cart', []);
+
         if ($sessionId && $paymentId) {
             try {
                 // Set Stripe API key
@@ -89,6 +91,17 @@ class StripeController extends Controller
                             'payment_date' => now(),
                             'stripe_payment_intent_id' => $session->payment_intent,
                         ]);
+
+                        // Reduce product quantities based on cart
+                        foreach ($cart as $productId => $quantityPurchased) {
+                            $product = Product::find($productId);
+                            if (!$product) {
+                                continue;
+                            }
+
+                            $newQuantity = max(0, $product->quantity - $quantityPurchased);
+                            $product->update(['quantity' => $newQuantity]);
+                        }
                     }
                 }
             } catch (\Exception $e) {
