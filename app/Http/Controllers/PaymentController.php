@@ -16,34 +16,12 @@ class PaymentController extends Controller
         $user = auth()->user();
         
         // Get payments based on user role
-        if ($user->isOwner()) {
-            $courtIds = $user->courts->pluck('id');
-            $payments = Payment::where(function ($query) use ($courtIds) {
-                $query->whereHas('bookings.court', function($q) use ($courtIds) {
-                    $q->whereIn('id', $courtIds);
-                })->orWhereHas('booking.court', function($q) use ($courtIds) {
-                    $q->whereIn('id', $courtIds);
-                });
-            })->with(['user', 'bookings.court', 'booking.court'])->orderBy('payment_date', 'desc')->get();
-        } elseif ($user->isStaff()) {
-            // Staff can view all payments
-            $payments = Payment::with(['user', 'bookings.court', 'booking.court'])->orderBy('payment_date', 'desc')->get();
-        } else {
-            $payments = Payment::where('user_id', $user->id)->with(['user', 'bookings.court', 'booking.court'])->orderBy('payment_date', 'desc')->get();
-        }
+        $payments = Payment::with(['user', 'bookings.court', 'booking.court'])->orderBy('payment_date', 'desc')->get();
         
         // Get refunds based on user role
-        if ($user->isOwner()) {
-            // For owners, show all refunds - they should see everything related to their business
-            $refunds = \App\Models\Refund::with(['user', 'booking.court', 'payment.bookings.court'])
-                ->orderBy('created_at', 'desc')
-                ->get();
-        } elseif ($user->isStaff()) {
-            // Staff can view all refunds
-            $refunds = \App\Models\Refund::with(['user', 'booking.court', 'payment'])->orderBy('created_at', 'desc')->get();
-        } else {
-            $refunds = \App\Models\Refund::where('user_id', $user->id)->with(['user', 'booking.court', 'payment'])->orderBy('created_at', 'desc')->get();
-        }
+        $refunds = \App\Models\Refund::with(['user', 'booking.court', 'payment.bookings.court'])
+            ->orderBy('created_at', 'desc')
+            ->get();
         
         return view('payments.index', compact('payments', 'refunds'));
     }
