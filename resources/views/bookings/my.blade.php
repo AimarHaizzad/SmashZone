@@ -131,6 +131,12 @@
                                 $startDateTime = \Carbon\Carbon::parse("{$booking->date} {$booking->start_time}");
                                 $cancelDeadline = $startDateTime->copy()->subHour();
                                 $canCancel = now()->lt($cancelDeadline);
+                                $paymentStatus = strtolower($booking->payment->status ?? 'pending');
+                                $paymentExpired = $paymentStatus === 'pending' && now()->greaterThanOrEqualTo($startDateTime);
+                                
+                                if ($paymentExpired) {
+                                    $paymentStatus = 'failed';
+                                }
                             @endphp
                             <tr class="hover:bg-gray-50 transition-colors">
                                 <td class="px-6 py-4">
@@ -156,7 +162,6 @@
                                 </td>
                                 <td class="px-6 py-4">
                                     @php
-                                        $paymentStatus = strtolower($booking->payment->status ?? 'pending');
                                         $statusConfig = match($paymentStatus) {
                                             'paid' => ['label' => 'Paid', 'classes' => 'bg-green-100 text-green-800', 'icon' => 'check'],
                                             'failed' => ['label' => 'Failed', 'classes' => 'bg-red-100 text-red-800', 'icon' => 'x'],
@@ -190,7 +195,7 @@
                                             </svg>
                                             Details
                                         </button>
-                                        @if($booking->payment && $booking->payment->status === 'pending')
+                                        @if($booking->payment && $paymentStatus === 'pending')
                                             <a href="{{ route('payments.pay', $booking->payment) }}" class="px-3 py-1.5 bg-green-50 text-green-700 rounded-lg font-medium hover:bg-green-100 transition-colors text-sm">
                                                 <svg class="w-4 h-4 inline mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />

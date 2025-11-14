@@ -489,7 +489,19 @@
     }
 
     // Multi-slot selection functions
+    function isPastSlot(dateString, timeString) {
+        const slotDateTime = new Date(`${dateString}T${timeString}:00`);
+        const now = new Date();
+        return slotDateTime <= now;
+    }
+
     function toggleSlotSelection(courtId, time, courtName) {
+        const selectedDate = document.getElementById('date-input').value;
+        if (isPastSlot(selectedDate, time)) {
+            alert('This time slot has already passed. Please choose a future time.');
+            return;
+        }
+
         const slotId = `${courtId}-${time}`;
         console.log('toggleSlotSelection called:', { courtId, time, courtName, slotId });
         
