@@ -10,6 +10,7 @@ use App\Notifications\BookingConfirmation;
 use App\Notifications\BookingCancellation;
 use App\Services\RefundService;
 use App\Services\WebNotificationService;
+use Carbon\Carbon;
 
 class BookingController extends Controller
 {
@@ -239,6 +240,17 @@ class BookingController extends Controller
         }
         if ($user->isOwner() && $booking->court->owner_id !== $user->id) {
             abort(403);
+        }
+
+        if ($user->isCustomer()) {
+            $bookingStart = Carbon::parse("{$booking->date} {$booking->start_time}");
+            $cancelDeadline = $bookingStart->copy()->subHour();
+
+            if (now()->greaterThanOrEqualTo($cancelDeadline)) {
+                return back()->withErrors([
+                    'cancel' => 'Cancellations must be made at least 1 hour before the start time.'
+                ]);
+            }
         }
 
         // Store booking info before deletion for notifications

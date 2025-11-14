@@ -127,6 +127,11 @@
                     </thead>
                     <tbody class="divide-y divide-gray-100">
                         @foreach($bookings as $booking)
+                            @php
+                                $startDateTime = \Carbon\Carbon::parse("{$booking->date} {$booking->start_time}");
+                                $cancelDeadline = $startDateTime->copy()->subHour();
+                                $canCancel = now()->lt($cancelDeadline);
+                            @endphp
                             <tr class="hover:bg-gray-50 transition-colors">
                                 <td class="px-6 py-4">
                                     <div class="flex items-center">
@@ -182,16 +187,25 @@
                                                 Pay
                                             </a>
                                         @endif
-                                        <form action="{{ route('bookings.destroy', $booking) }}" method="POST" onsubmit="return confirm('Are you sure you want to cancel this booking?')" class="inline">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit" class="px-3 py-1.5 bg-red-50 text-red-700 rounded-lg font-medium hover:bg-red-100 transition-colors text-sm">
+                                        @if($canCancel)
+                                            <form action="{{ route('bookings.destroy', $booking) }}" method="POST" onsubmit="return confirm('Are you sure you want to cancel this booking?')" class="inline">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" class="px-3 py-1.5 bg-red-50 text-red-700 rounded-lg font-medium hover:bg-red-100 transition-colors text-sm">
+                                                    <svg class="w-4 h-4 inline mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                                    </svg>
+                                                    Cancel
+                                                </button>
+                                            </form>
+                                        @else
+                                            <span class="px-3 py-1.5 bg-gray-100 text-gray-400 rounded-lg font-medium text-sm cursor-not-allowed" title="Cancellations must be made at least 1 hour before the start time">
                                                 <svg class="w-4 h-4 inline mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                                                 </svg>
                                                 Cancel
-                                            </button>
-                                        </form>
+                                            </span>
+                                        @endif
                                     </div>
                                 </td>
                             </tr>

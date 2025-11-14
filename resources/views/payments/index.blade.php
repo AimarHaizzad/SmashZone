@@ -15,9 +15,15 @@
     </div>
 </div>
 
+@php
+    $user = auth()->user();
+    $showRevenueCard = !$user->isCustomer();
+    $statsGridCols = $showRevenueCard ? 'lg:grid-cols-5' : 'lg:grid-cols-4';
+@endphp
+
 <div class="max-w-7xl mx-auto py-8 px-4">
     <!-- Financial Analytics -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
+    <div class="grid grid-cols-1 md:grid-cols-2 {{ $statsGridCols }} gap-6 mb-8">
         <div class="bg-white rounded-2xl shadow-lg p-6 border border-gray-100">
             <div class="flex items-center justify-between">
                 <div>
@@ -74,19 +80,21 @@
             </div>
         </div>
         
-        <div class="bg-white rounded-2xl shadow-lg p-6 border border-gray-100">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-sm text-gray-600">Net Revenue</p>
-                    <p class="text-2xl font-bold text-purple-600">RM {{ number_format($payments->where('status', 'paid')->sum('amount') - $refunds->where('status', 'completed')->sum('amount'), 2) }}</p>
-                </div>
-                <div class="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
-                    <svg class="w-6 h-6 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 1.343-3 3s1.343 3 3 3 3-1.343 3-3-1.343-3-3-3zm0 0V4m0 7v7" />
-                    </svg>
+        @if($showRevenueCard)
+            <div class="bg-white rounded-2xl shadow-lg p-6 border border-gray-100">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-gray-600">Net Revenue</p>
+                        <p class="text-2xl font-bold text-purple-600">RM {{ number_format($payments->where('status', 'paid')->sum('amount') - $refunds->where('status', 'completed')->sum('amount'), 2) }}</p>
+                    </div>
+                    <div class="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
+                        <svg class="w-6 h-6 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 1.343-3 3s1.343 3 3 3 3-1.343 3-3-1.343-3-3-3zm0 0V4m0 7v7" />
+                        </svg>
+                    </div>
                 </div>
             </div>
-        </div>
+        @endif
     </div>
 
     <!-- Tab Navigation -->
@@ -165,9 +173,6 @@
                             </th>
                             <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                                 Payment Date
-                            </th>
-                            <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                                Actions
                             </th>
                         </tr>
                     </thead>
