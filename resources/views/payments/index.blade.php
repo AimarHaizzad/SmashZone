@@ -207,15 +207,21 @@
                                     <div class="text-lg font-bold text-gray-900">RM {{ number_format($payment->amount, 2) }}</div>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
-                                    <span class="inline-flex px-3 py-1 text-xs font-semibold rounded-full
-                                        @if($payment->status === 'paid') bg-green-100 text-green-800
-                                        @elseif($payment->status === 'pending') bg-yellow-100 text-yellow-800
-                                        @else bg-red-100 text-red-800 @endif">
-                                        @if($payment->status === 'paid')
+                                    @php
+                                        $paymentStatus = strtolower($payment->status);
+                                        $statusConfig = match($paymentStatus) {
+                                            'paid' => ['label' => 'Paid', 'classes' => 'bg-green-100 text-green-800', 'icon' => 'check'],
+                                            'failed' => ['label' => 'Failed', 'classes' => 'bg-red-100 text-red-800', 'icon' => 'x'],
+                                            'cancelled' => ['label' => 'Cancelled', 'classes' => 'bg-gray-100 text-gray-600', 'icon' => 'x'],
+                                            default => ['label' => 'Pending', 'classes' => 'bg-yellow-100 text-yellow-800', 'icon' => 'clock'],
+                                        };
+                                    @endphp
+                                    <span class="inline-flex px-3 py-1 text-xs font-semibold rounded-full {{ $statusConfig['classes'] }}">
+                                        @if($statusConfig['icon'] === 'check')
                                             <svg class="w-3 h-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                                             </svg>
-                                        @elseif($payment->status === 'pending')
+                                        @elseif($statusConfig['icon'] === 'clock')
                                             <svg class="w-3 h-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                                             </svg>
@@ -224,7 +230,7 @@
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                                             </svg>
                                         @endif
-                                        {{ ucfirst($payment->status) }}
+                                        {{ $statusConfig['label'] }}
                                     </span>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
@@ -315,9 +321,6 @@
                                     <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                                         Refund Date
                                     </th>
-                                    <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                                        Actions
-                                    </th>
                                 </tr>
                             </thead>
                             <tbody class="bg-white divide-y divide-gray-200">
@@ -379,13 +382,6 @@
                                             @else
                                                 <span class="text-gray-500">-</span>
                                             @endif
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                            <div class="flex items-center gap-2">
-                                                <a href="{{ route('refunds.show', $refund) }}" class="text-blue-600 hover:text-blue-900 font-medium">
-                                                    View Details
-                                                </a>
-                                            </div>
                                         </td>
                                     </tr>
                                 @endforeach
