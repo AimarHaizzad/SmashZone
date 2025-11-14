@@ -160,21 +160,31 @@
 
                     <!-- Action Buttons -->
                     @if(!auth()->user() || (auth()->user() && auth()->user()->role !== 'owner'))
+                        <div class="mb-3 text-sm {{ $product->quantity > 0 ? 'text-gray-600' : 'text-red-600 font-semibold' }}">
+                            @if($product->quantity > 0)
+                                In stock: {{ $product->quantity }}
+                            @else
+                                Out of stock
+                            @endif
+                        </div>
                         <form action="{{ route('cart.add') }}" method="POST" class="space-y-3">
                             @csrf
                             <input type="hidden" name="product_id" value="{{ $product->id }}">
                             <div class="flex items-center gap-2">
                                 <label for="qty-{{ $product->id }}" class="text-sm font-medium text-gray-700">Quantity:</label>
                                 <input id="qty-{{ $product->id }}" name="quantity" type="number" min="1" value="1" 
-                                       class="w-20 border-2 border-gray-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-300 focus:border-blue-500 transition-colors">
+                                       max="{{ max(1, $product->quantity) }}"
+                                       {{ $product->quantity <= 0 ? 'disabled' : '' }}
+                                       class="w-20 border-2 border-gray-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-300 focus:border-blue-500 transition-colors {{ $product->quantity <= 0 ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : '' }}">
                             </div>
                             <button type="submit" 
-                                    class="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-3 rounded-xl font-semibold hover:from-blue-700 hover:to-blue-800 transition-all transform hover:scale-105 shadow-lg">
+                                    {{ $product->quantity <= 0 ? 'disabled' : '' }}
+                                    class="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-3 rounded-xl font-semibold hover:from-blue-700 hover:to-blue-800 transition-all transform hover:scale-105 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed">
                                 <div class="flex items-center justify-center gap-2">
                                     <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13l-1.35 2.7A2 2 0 007.52 19h8.96a2 2 0 001.87-2.3L17 13M7 13V6a1 1 0 011-1h5a1 1 0 011 1v7" />
                                     </svg>
-                                    Add to Cart
+                                    {{ $product->quantity > 0 ? 'Add to Cart' : 'Out of Stock' }}
                                 </div>
                             </button>
                         </form>
