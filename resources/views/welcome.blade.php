@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SmashZone - Professional Badminton Court Booking & Equipment</title>
     <meta name="description" content="Book premium badminton courts, shop professional equipment, and join the ultimate badminton community at SmashZone. Your one-stop destination for everything badminton.">
-    <script src="https://cdn.tailwindcss.com"></script>
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Inter', sans-serif; }
