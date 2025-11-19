@@ -95,9 +95,17 @@
                 <div class="space-y-2">
                     @foreach($courts as $court)
                         @php
-                            $booking = $bookings->first(function($b) use ($court, $slot) {
-                                $slotTime = $slot . ':00';
-                                return $b->court_id == $court->id && $b->start_time == $slotTime;
+                            // Check if this slot falls within any booking's time range
+                            $slotTime = $slot . ':00';
+                            $slotCarbon = \Carbon\Carbon::createFromFormat('H:i:s', $slotTime);
+                            
+                            $booking = $bookings->first(function($b) use ($court, $slotCarbon) {
+                                $startTime = \Carbon\Carbon::createFromFormat('H:i:s', $b->start_time);
+                                $endTime = \Carbon\Carbon::createFromFormat('H:i:s', $b->end_time);
+                                // Check if slot falls within booking range (start_time <= slot < end_time)
+                                return $b->court_id == $court->id && 
+                                       $slotCarbon->gte($startTime) && 
+                                       $slotCarbon->lt($endTime);
                             });
                             $isMine = $booking && $booking->user_id == auth()->id();
                             $isBooked = $booking && !$isMine;
@@ -111,7 +119,7 @@
                                         $startTime = \Carbon\Carbon::createFromFormat('H:i:s', $booking->start_time);
                                         $endTime = \Carbon\Carbon::createFromFormat('H:i:s', $booking->end_time);
                                         $duration = $startTime->diffInHours($endTime);
-                                        $isStart = $booking->start_time == $slot . ':00';
+                                        $isStart = $slotCarbon->format('H:i:s') == $startTime->format('H:i:s');
                                     @endphp
                                     <button class="my-booking-btn w-full py-2.5 px-3 font-semibold rounded-lg border-2 border-blue-300 bg-blue-100 text-blue-700 text-sm" data-booking-id="{{ $booking->id }}">
                                         <div class="flex items-center justify-center gap-1.5">
@@ -184,11 +192,17 @@
                             // Check if any court in this time slot is booked by current user or other users
                             $hasMyBooking = false;
                             $hasOtherBooking = false;
+                            $slotTime = $slot . ':00';
+                            $slotCarbon = \Carbon\Carbon::createFromFormat('H:i:s', $slotTime);
+                            
                             foreach($courts as $court) {
-                                $booking = $bookings->first(function($b) use ($court, $slot) {
-                                    // Convert slot to H:i:s format for comparison
-                                    $slotTime = $slot . ':00';
-                                    return $b->court_id == $court->id && $b->start_time == $slotTime;
+                                $booking = $bookings->first(function($b) use ($court, $slotCarbon) {
+                                    $startTime = \Carbon\Carbon::createFromFormat('H:i:s', $b->start_time);
+                                    $endTime = \Carbon\Carbon::createFromFormat('H:i:s', $b->end_time);
+                                    // Check if slot falls within booking range (start_time <= slot < end_time)
+                                    return $b->court_id == $court->id && 
+                                           $slotCarbon->gte($startTime) && 
+                                           $slotCarbon->lt($endTime);
                                 });
                                 if ($booking) {
                                     if ($booking->user_id == auth()->id()) {
@@ -206,60 +220,34 @@
                         </td>
                         @foreach($courts as $court)
                             @php
-                                $booking = $bookings->first(function($b) use ($court, $slot) {
-                                    // Convert slot to H:i:s format for comparison
-                                    $slotTime = $slot . ':00';
-                                    return $b->court_id == $court->id && $b->start_time == $slotTime;
+                                // Check if this slot falls within any booking's time range
+                                $slotTime = $slot . ':00';
+                                $slotCarbon = \Carbon\Carbon::createFromFormat('H:i:s', $slotTime);
+                                
+                                $booking = $bookings->first(function($b) use ($court, $slotCarbon) {
+                                    $startTime = \Carbon\Carbon::createFromFormat('H:i:s', $b->start_time);
+                                    $endTime = \Carbon\Carbon::createFromFormat('H:i:s', $b->end_time);
+                                    // Check if slot falls within booking range (start_time <= slot < end_time)
+                                    return $b->court_id == $court->id && 
+                                           $slotCarbon->gte($startTime) && 
+                                           $slotCarbon->lt($endTime);
                                 });
+                                
                                 $isMine = $booking && $booking->user_id == auth()->id();
                                 $isBooked = $booking && !$isMine;
-                                $isStart = $booking && $booking->start_time == $slot . ':00';
-                                $isEnd = $booking && $booking->end_time == $slot . ':00';
                                 
-                                // Check if user has a booking that starts at this exact time slot
-                                $hasMyBookingInCourt = $bookings->contains(function($b) use ($court, $slot) {
-                                    // Convert slot to H:i:s format for comparison
-                                    $slotTime = $slot . ':00';
-                                    return $b->court_id == $court->id && 
-                                           $b->user_id == auth()->id() && 
-                                           $b->start_time == $slotTime;
-                                });
-                                
-                                // Alternative check - maybe the time format is different
-                                if (!$hasMyBookingInCourt) {
-                                    $hasMyBookingInCourt = $bookings->contains(function($b) use ($court, $slot) {
-                                        $slotTime = \Carbon\Carbon::createFromFormat('H:i', $slot);
-                                        $startTime = \Carbon\Carbon::createFromFormat('H:i:s', $b->start_time);
-                                        
-                                        return $b->court_id == $court->id && 
-                                               $b->user_id == auth()->id() && 
-                                               $slotTime->format('H:i:s') == $startTime->format('H:i:s');
-                                    });
+                                // Check if this is the start or end of the booking
+                                $isStart = false;
+                                $isEnd = false;
+                                if ($booking) {
+                                    $startTime = \Carbon\Carbon::createFromFormat('H:i:s', $booking->start_time);
+                                    $endTime = \Carbon\Carbon::createFromFormat('H:i:s', $booking->end_time);
+                                    $isStart = $slotCarbon->format('H:i:s') == $startTime->format('H:i:s');
+                                    $isEnd = $slotCarbon->format('H:i:s') == $endTime->format('H:i:s');
                                 }
                                 
-
-                                
-                                // If we found a booking, use it
-                                if ($hasMyBookingInCourt) {
-                                    $booking = $bookings->first(function($b) use ($court, $slot) {
-                                        $slotTime = $slot . ':00';
-                                        return $b->court_id == $court->id && 
-                                               $b->user_id == auth()->id() && 
-                                               $b->start_time == $slotTime;
-                                    });
-                                    
-                                    // If the first check didn't find it, try the Carbon time check
-                                    if (!$booking) {
-                                        $booking = $bookings->first(function($b) use ($court, $slot) {
-                                            $slotTime = \Carbon\Carbon::createFromFormat('H:i', $slot);
-                                            $startTime = \Carbon\Carbon::createFromFormat('H:i:s', $b->start_time);
-                                            
-                                            return $b->court_id == $court->id && 
-                                                   $b->user_id == auth()->id() && 
-                                                   $slotTime->format('H:i:s') == $startTime->format('H:i:s');
-                                        });
-                                    }
-                                }
+                                // Check if user has a booking that covers this time slot
+                                $hasMyBookingInCourt = $booking && $booking->user_id == auth()->id();
                                 
                                 $borderClass = '';
                                 if ($isStart) {
@@ -279,8 +267,6 @@
                                         $startTime = \Carbon\Carbon::createFromFormat('H:i:s', $booking->start_time);
                                         $endTime = \Carbon\Carbon::createFromFormat('H:i:s', $booking->end_time);
                                         $duration = $startTime->diffInHours($endTime);
-                                        $isStart = $booking->start_time == $slot . ':00';
-                                        $isEnd = $booking->end_time == $slot . ':00';
                                     @endphp
                                     <button class="my-booking-btn w-full py-3 px-4 font-semibold rounded-xl border-2 border-blue-300 bg-blue-100 text-blue-700 hover:bg-blue-200 transition-all transform hover:scale-105 shadow-sm"
                                             data-booking-id="{{ $booking->id }}">
@@ -307,8 +293,6 @@
                                         $startTime = \Carbon\Carbon::createFromFormat('H:i:s', $booking->start_time);
                                         $endTime = \Carbon\Carbon::createFromFormat('H:i:s', $booking->end_time);
                                         $duration = $startTime->diffInHours($endTime);
-                                        $isStart = $booking->start_time == $slot . ':00';
-                                        $isEnd = $booking->end_time == $slot . ':00';
                                     @endphp
                                     <div class="other-booking-btn w-full py-3 px-4 font-semibold rounded-xl border-2 border-red-300 bg-red-100 text-red-700 cursor-not-allowed shadow-sm">
                                         <div class="flex flex-col items-center justify-center gap-1">
