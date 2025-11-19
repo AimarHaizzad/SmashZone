@@ -371,7 +371,7 @@
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                                 </svg>
                             </div>
-                            <div id="selected-slots" class="flex flex-wrap gap-1.5 flex-1 min-w-0">
+                            <div id="selected-slots" class="flex gap-1.5 flex-1 min-w-0 overflow-x-auto pb-1" style="scrollbar-width: thin; -ms-overflow-style: -ms-autohiding-scrollbar;">
                                 <!-- Selected slots will be displayed here -->
                             </div>
                         </div>
@@ -403,11 +403,11 @@
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                                     </svg>
                                 </div>
-                                <span class="text-sm font-semibold text-gray-800">Selected Time Slots:</span>
+                                <span class="text-sm font-semibold text-gray-800 whitespace-nowrap">Selected Time Slots:</span>
                             </div>
                             
                             <!-- Selected Slots Display -->
-                            <div id="selected-slots-desktop" class="flex flex-wrap gap-2 flex-1 min-w-0">
+                            <div id="selected-slots-desktop" class="flex gap-2 flex-1 min-w-0 overflow-x-auto pb-1" style="scrollbar-width: thin; -ms-overflow-style: -ms-autohiding-scrollbar;">
                                 <!-- Selected slots will be displayed here -->
                             </div>
                         </div>
@@ -697,7 +697,7 @@
             const createSlotElement = (isMobile) => {
                 const slotElement = document.createElement('div');
                 const sizeClass = isMobile ? 'px-2 py-1.5 text-xs' : 'px-3 py-2 text-sm';
-                slotElement.className = `flex items-center gap-1.5 md:gap-2 bg-blue-50 text-blue-800 ${sizeClass} rounded-lg font-medium border border-blue-200 whitespace-nowrap shadow-sm`;
+                slotElement.className = `flex items-center gap-1.5 md:gap-2 bg-blue-50 text-blue-800 ${sizeClass} rounded-lg font-medium border border-blue-200 whitespace-nowrap shadow-sm flex-shrink-0`;
                 return slotElement;
             };
             
@@ -1438,6 +1438,29 @@
     /* Prevent horizontal scroll on mobile */
     body {
         overflow-x: hidden;
+    }
+    
+    /* Custom scrollbar for selected slots */
+    #selected-slots::-webkit-scrollbar,
+    #selected-slots-desktop::-webkit-scrollbar {
+        height: 6px;
+    }
+    
+    #selected-slots::-webkit-scrollbar-track,
+    #selected-slots-desktop::-webkit-scrollbar-track {
+        background: #f1f5f9;
+        border-radius: 3px;
+    }
+    
+    #selected-slots::-webkit-scrollbar-thumb,
+    #selected-slots-desktop::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 3px;
+    }
+    
+    #selected-slots::-webkit-scrollbar-thumb:hover,
+    #selected-slots-desktop::-webkit-scrollbar-thumb:hover {
+        background: #94a3b8;
     }
 }
 </style>
