@@ -383,11 +383,11 @@
                                 <span id="total-price-mobile" class="text-green-600 font-bold">RM 0</span>
                             </div>
                             <div class="flex gap-2">
-                                <button id="clear-selection-mobile" class="px-2 py-1.5 text-red-600 hover:text-red-800 font-medium border border-red-200 rounded-lg hover:bg-red-50 text-xs">
-                                    Clear
-                                </button>
                                 <button id="confirm-multi-booking-mobile" class="px-4 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold disabled:opacity-50 disabled:cursor-not-allowed text-xs shadow-sm" disabled>
                                     Confirm
+                                </button>
+                                <button id="clear-selection-mobile" class="px-2 py-1.5 text-red-600 hover:text-red-800 font-medium border border-red-200 rounded-lg hover:bg-red-50 text-xs">
+                                    Clear
                                 </button>
                             </div>
                         </div>
@@ -419,16 +419,16 @@
                                 <span id="total-price" class="text-green-600 font-bold">RM 0</span>
                             </div>
                             
+                            <button id="confirm-multi-booking" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold disabled:opacity-50 disabled:cursor-not-allowed text-sm shadow-sm" disabled>
+                                Confirm Booking
+                            </button>
+                            
                             <button id="clear-selection" class="px-3 py-2 text-red-600 hover:text-red-800 font-medium border border-red-200 rounded-lg hover:bg-red-50 text-sm">
                                 Clear
                             </button>
                             
                             <button id="cancel-selection" class="px-4 py-2 text-gray-600 hover:text-gray-800 font-medium border border-gray-300 rounded-lg hover:bg-gray-50 text-sm">
                                 Cancel
-                            </button>
-                            
-                            <button id="confirm-multi-booking" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold disabled:opacity-50 disabled:cursor-not-allowed text-sm shadow-sm" disabled>
-                                Confirm Booking
                             </button>
                         </div>
                     </div>
