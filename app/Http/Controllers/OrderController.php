@@ -14,6 +14,12 @@ class OrderController extends Controller
      */
     public function index()
     {
+        // If owner or staff, show all orders management page
+        if (auth()->user()->isOwner() || auth()->user()->isStaff()) {
+            return $this->manage();
+        }
+
+        // Regular users see their own orders
         $orders = Order::where('user_id', auth()->id())
             ->with(['items.product', 'shipping'])
             ->orderBy('created_at', 'desc')
@@ -23,16 +29,76 @@ class OrderController extends Controller
     }
 
     /**
+     * Manage all orders (for owners/staff)
+     */
+    public function manage(Request $request)
+    {
+        if (!auth()->user()->isOwner() && !auth()->user()->isStaff()) {
+            abort(403, 'Unauthorized. Only owners and staff can manage orders.');
+        }
+
+        $query = Order::with(['items.product', 'shipping', 'user']);
+
+        // Filter by status
+        if ($request->has('status') && $request->status) {
+            $query->where('status', $request->status);
+        }
+
+        // Filter by shipping status
+        if ($request->has('shipping_status') && $request->shipping_status) {
+            $query->whereHas('shipping', function($q) use ($request) {
+                $q->where('status', $request->shipping_status);
+            });
+        }
+
+        // Filter by delivery method
+        if ($request->has('delivery_method') && $request->delivery_method) {
+            $query->where('delivery_method', $request->delivery_method);
+        }
+
+        // Search by order number or customer name
+        if ($request->has('search') && $request->search) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('order_number', 'like', "%{$search}%")
+                  ->orWhereHas('user', function($userQuery) use ($search) {
+                      $userQuery->where('name', 'like', "%{$search}%")
+                                ->orWhere('email', 'like', "%{$search}%");
+                  });
+            });
+        }
+
+        $orders = $query->orderBy('created_at', 'desc')->paginate(20);
+
+        // Statistics
+        $stats = [
+            'total' => Order::count(),
+            'pending' => Order::where('status', 'pending')->count(),
+            'processing' => Order::where('status', 'processing')->count(),
+            'shipped' => Order::where('status', 'shipped')->count(),
+            'delivered' => Order::where('status', 'delivered')->count(),
+            'cancelled' => Order::where('status', 'cancelled')->count(),
+        ];
+
+        return view('orders.manage', compact('orders', 'stats'));
+    }
+
+    /**
      * Show order details
      */
     public function show(Order $order)
     {
-        // Ensure user owns this order
-        if ($order->user_id !== auth()->id() && !auth()->user()->isOwner()) {
+        // Ensure user owns this order or is owner/staff
+        if ($order->user_id !== auth()->id() && !auth()->user()->isOwner() && !auth()->user()->isStaff()) {
             abort(403, 'Unauthorized access.');
         }
 
         $order->load(['items.product', 'shipping', 'user', 'payment']);
+
+        // Use different view for owners/staff
+        if (auth()->user()->isOwner() || auth()->user()->isStaff()) {
+            return view('orders.manage-show', compact('order'));
+        }
 
         return view('orders.show', compact('order'));
     }
