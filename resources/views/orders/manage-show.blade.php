@@ -53,6 +53,89 @@
                 </form>
             </div>
 
+            <!-- Return Request Management -->
+            @if($order->status === 'return_requested' && $order->return_requested_at)
+                <div class="bg-orange-50 border-2 border-orange-200 rounded-xl shadow-lg p-6">
+                    <h2 class="text-xl font-bold text-orange-900 mb-4 flex items-center gap-2">
+                        <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                        </svg>
+                        Return Request Pending Approval
+                    </h2>
+                    
+                    <div class="mb-4 p-4 bg-white rounded-lg border border-orange-200">
+                        <div class="mb-3">
+                            <span class="text-sm font-semibold text-gray-700">Return Requested:</span>
+                            <span class="text-sm text-gray-600 ml-2">{{ $order->return_requested_at->format('M d, Y h:i A') }}</span>
+                        </div>
+                        @if($order->return_reason)
+                            <div>
+                                <span class="text-sm font-semibold text-gray-700">Reason:</span>
+                                <p class="text-sm text-gray-600 mt-1">{{ $order->return_reason }}</p>
+                            </div>
+                        @endif
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <!-- Approve Return -->
+                        <form action="{{ route('orders.approve-return', $order) }}" method="POST" onsubmit="return confirm('Are you sure you want to approve this return? This will cancel the order and process a refund.')">
+                            @csrf
+                            <button type="submit" class="w-full px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-semibold flex items-center justify-center gap-2">
+                                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                Approve Return & Refund
+                            </button>
+                        </form>
+
+                        <!-- Reject Return -->
+                        <button type="button" onclick="showRejectModal()" class="w-full px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-semibold flex items-center justify-center gap-2">
+                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                            Reject Return
+                        </button>
+                    </div>
+
+                    <!-- Reject Modal -->
+                    <div id="reject-modal" class="hidden fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center">
+                        <div class="bg-white rounded-xl shadow-xl p-6 max-w-md w-full mx-4">
+                            <h3 class="text-xl font-bold text-gray-900 mb-4">Reject Return Request</h3>
+                            <form action="{{ route('orders.reject-return', $order) }}" method="POST">
+                                @csrf
+                                <div class="mb-4">
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Rejection Reason *</label>
+                                    <textarea name="rejection_reason" rows="4" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500" placeholder="Please provide a reason for rejecting this return request..."></textarea>
+                                </div>
+                                <div class="flex gap-3">
+                                    <button type="button" onclick="hideRejectModal()" class="flex-1 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors font-semibold">
+                                        Cancel
+                                    </button>
+                                    <button type="submit" class="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-semibold">
+                                        Reject Return
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <script>
+                        function showRejectModal() {
+                            document.getElementById('reject-modal').classList.remove('hidden');
+                        }
+                        function hideRejectModal() {
+                            document.getElementById('reject-modal').classList.add('hidden');
+                        }
+                        // Close modal when clicking outside
+                        document.getElementById('reject-modal').addEventListener('click', function(e) {
+                            if (e.target === this) {
+                                hideRejectModal();
+                            }
+                        });
+                    </script>
+                </div>
+            @endif
+
             <!-- Shipping Management -->
             <div class="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
                 <h2 class="text-xl font-bold text-gray-900 mb-4">Shipping Management</h2>

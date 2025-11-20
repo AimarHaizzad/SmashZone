@@ -617,8 +617,10 @@ Route::middleware(['auth'])->group(function () {
     Route::get('orders/track', [App\Http\Controllers\OrderController::class, 'track'])->name('orders.track');
     Route::post('orders/{order}/update-shipping', [App\Http\Controllers\OrderController::class, 'updateShippingStatus'])->name('orders.update-shipping');
     Route::post('orders/{order}/update-status', [App\Http\Controllers\OrderController::class, 'updateStatus'])->name('orders.update-status');
-    Route::post('orders/{order}/mark-received', [App\Http\Controllers\OrderController::class, 'markAsReceived'])->name('orders.mark-received');
-    Route::post('orders/{order}/request-return', [App\Http\Controllers\OrderController::class, 'requestReturn'])->name('orders.request-return');
+            Route::post('orders/{order}/mark-received', [App\Http\Controllers\OrderController::class, 'markAsReceived'])->name('orders.mark-received');
+            Route::post('orders/{order}/request-return', [App\Http\Controllers\OrderController::class, 'requestReturn'])->name('orders.request-return');
+            Route::post('orders/{order}/approve-return', [App\Http\Controllers\OrderController::class, 'approveReturn'])->name('orders.approve-return');
+            Route::post('orders/{order}/reject-return', [App\Http\Controllers\OrderController::class, 'rejectReturn'])->name('orders.reject-return');
 });
 
 // Test route for Stripe configuration

@@ -9,6 +9,7 @@ class Refund extends Model
     protected $fillable = [
         'payment_id',
         'booking_id',
+        'order_id',
         'user_id',
         'amount',
         'status',
@@ -30,6 +31,11 @@ class Refund extends Model
     public function booking()
     {
         return $this->belongsTo(Booking::class);
+    }
+
+    public function order()
+    {
+        return $this->belongsTo(Order::class);
     }
 
     public function user()

@@ -77,6 +77,7 @@ class OrderController extends Controller
             'processing' => Order::where('status', 'processing')->count(),
             'shipped' => Order::where('status', 'shipped')->count(),
             'delivered' => Order::where('status', 'delivered')->count(),
+            'return_requested' => Order::where('status', 'return_requested')->count(),
             'cancelled' => Order::where('status', 'cancelled')->count(),
         ];
 
@@ -268,6 +269,93 @@ class OrderController extends Controller
         }
 
         return redirect()->back()->with('success', 'Return request submitted successfully. We will process your request shortly.');
+    }
+
+    /**
+     * Approve return request and process refund (for owners/staff)
+     */
+    public function approveReturn(Order $order)
+    {
+        if (!auth()->user()->isOwner() && !auth()->user()->isStaff()) {
+            abort(403, 'Unauthorized. Only owners and staff can approve returns.');
+        }
+
+        // Check if return was requested
+        if ($order->status !== 'return_requested' || !$order->return_requested_at) {
+            return redirect()->back()->with('error', 'This order does not have a pending return request.');
+        }
+
+        // Check if already processed
+        if ($order->status === 'cancelled') {
+            return redirect()->back()->with('info', 'This return has already been processed.');
+        }
+
+        // Process refund if payment exists
+        $refund = null;
+        if ($order->payment && $order->payment->status === 'paid') {
+            try {
+                $refundService = new \App\Services\RefundService();
+                $refund = $refundService->processOrderRefund($order, 'Return approved by ' . (auth()->user()->isOwner() ? 'owner' : 'staff'));
+            } catch (\Exception $e) {
+                \Log::error('Failed to process refund for order return', [
+                    'order_id' => $order->id,
+                    'error' => $e->getMessage()
+                ]);
+                return redirect()->back()->with('error', 'Failed to process refund: ' . $e->getMessage());
+            }
+        }
+
+        // Update order status to cancelled
+        $order->update([
+            'status' => 'cancelled'
+        ]);
+
+        // Update shipping status
+        if ($order->shipping) {
+            $order->shipping->update(['status' => 'returned']);
+        }
+
+        $message = 'Return request approved and order cancelled successfully.';
+        if ($refund) {
+            $message .= ' A refund of RM ' . number_format($refund->amount, 2) . ' has been processed.';
+        } elseif (!$order->payment) {
+            $message .= ' No payment found for this order.';
+        }
+
+        return redirect()->back()->with('success', $message);
+    }
+
+    /**
+     * Reject return request (for owners/staff)
+     */
+    public function rejectReturn(Request $request, Order $order)
+    {
+        if (!auth()->user()->isOwner() && !auth()->user()->isStaff()) {
+            abort(403, 'Unauthorized. Only owners and staff can reject returns.');
+        }
+
+        // Check if return was requested
+        if ($order->status !== 'return_requested' || !$order->return_requested_at) {
+            return redirect()->back()->with('error', 'This order does not have a pending return request.');
+        }
+
+        $request->validate([
+            'rejection_reason' => 'required|string|max:1000',
+        ]);
+
+        // Revert order status back to delivered
+        $order->update([
+            'status' => 'delivered',
+            'return_requested_at' => null,
+            'return_reason' => null,
+        ]);
+
+        // Revert shipping status
+        if ($order->shipping) {
+            $order->shipping->update(['status' => 'delivered']);
+        }
+
+        return redirect()->back()->with('success', 'Return request rejected. Order status reverted to delivered.');
     }
 }
 

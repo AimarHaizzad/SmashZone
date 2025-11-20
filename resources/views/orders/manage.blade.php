@@ -9,7 +9,7 @@
     </div>
 
     <!-- Statistics Cards -->
-    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
+    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-4 mb-6">
         <div class="bg-white rounded-xl shadow-lg border border-gray-200 p-4">
             <div class="text-sm text-gray-600 mb-1">Total Orders</div>
             <div class="text-2xl font-bold text-gray-900">{{ $stats['total'] }}</div>
@@ -29,6 +29,10 @@
         <div class="bg-green-50 rounded-xl shadow-lg border border-green-200 p-4">
             <div class="text-sm text-green-700 mb-1">Delivered</div>
             <div class="text-2xl font-bold text-green-800">{{ $stats['delivered'] }}</div>
+        </div>
+        <div class="bg-orange-50 rounded-xl shadow-lg border border-orange-200 p-4">
+            <div class="text-sm text-orange-700 mb-1">Return Requested</div>
+            <div class="text-2xl font-bold text-orange-800">{{ $stats['return_requested'] ?? 0 }}</div>
         </div>
         <div class="bg-red-50 rounded-xl shadow-lg border border-red-200 p-4">
             <div class="text-sm text-red-700 mb-1">Cancelled</div>

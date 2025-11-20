@@ -337,9 +337,10 @@ class BookingController extends Controller
                     $payment->delete();
                 } else {
                     // Keep payment record for refund tracking
+                    // Don't change status - keep as 'paid' since refund is tracked separately
                     $payment->update([
                         'amount' => 0,
-                        'status' => 'refunded'
+                        // Status remains 'paid' - refunds are tracked in refunds table
                     ]);
                 }
             } else {

@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Booking;
+use App\Models\Order;
 use App\Models\Payment;
 use App\Models\Refund;
 use Stripe\Stripe;
@@ -202,5 +203,63 @@ class RefundService
             ->first();
 
         return !$existingRefund;
+    }
+
+    /**
+     * Process a refund for an order return
+     */
+    public function processOrderRefund(Order $order, $reason = null)
+    {
+        // Check if there's a paid payment for this order
+        $payment = $order->payment;
+        
+        if (!$payment || $payment->status !== 'paid') {
+            Log::info('No paid payment found for order', [
+                'order_id' => $order->id,
+                'payment_status' => $payment ? $payment->status : 'no_payment'
+            ]);
+            return null;
+        }
+
+        // Check if refund already exists for this order
+        $existingRefund = Refund::where('order_id', $order->id)
+            ->where('status', '!=', 'failed')
+            ->first();
+            
+        if ($existingRefund) {
+            Log::info('Refund already exists for order', [
+                'order_id' => $order->id,
+                'refund_id' => $existingRefund->id
+            ]);
+            return $existingRefund;
+        }
+
+        // Use order's total amount for refund
+        $refundAmount = $order->total_amount;
+
+        // Create refund record
+        $refund = Refund::create([
+            'payment_id' => $payment->id,
+            'order_id' => $order->id,
+            'user_id' => $order->user_id,
+            'amount' => $refundAmount,
+            'status' => 'pending',
+            'reason' => $reason ?? 'Order return approved',
+        ]);
+
+        // Process the refund
+        try {
+            $this->processStripeRefund($refund);
+        } catch (\Exception $e) {
+            Log::error('Failed to process order refund', [
+                'refund_id' => $refund->id,
+                'error' => $e->getMessage()
+            ]);
+            
+            $refund->update(['status' => 'failed']);
+            throw $e;
+        }
+
+        return $refund;
     }
 }
