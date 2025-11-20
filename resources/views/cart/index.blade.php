@@ -64,16 +64,16 @@
                             @php $total = 0; @endphp
                             @foreach($products as $product)
                                 @php $qty = $cart[$product->id]; $subtotal = $qty * $product->price; $total += $subtotal; @endphp
-                                <div class="flex items-center gap-4 p-4 bg-gray-50 rounded-2xl hover:bg-gray-100 transition-colors">
+                                <div class="flex items-center gap-3 sm:gap-4 p-4 sm:p-6 bg-gray-50 rounded-2xl hover:bg-gray-100 transition-colors">
                                     <!-- Product Image -->
                                     <div class="flex-shrink-0">
                                         @if($product->image)
                                             <img src="{{ $product->image_url ?? asset('storage/' . $product->image) }}" 
                                                  alt="{{ $product->name }}" 
-                                                 class="h-20 w-20 object-cover rounded-xl border-2 border-gray-200">
+                                                 class="h-16 w-16 sm:h-20 sm:w-20 md:h-24 md:w-24 object-cover rounded-xl border-2 border-gray-200">
                                         @else
-                                            <div class="h-20 w-20 bg-gradient-to-br from-gray-200 to-gray-300 rounded-xl flex items-center justify-center">
-                                                <svg class="w-8 h-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <div class="h-16 w-16 sm:h-20 sm:w-20 md:h-24 md:w-24 bg-gradient-to-br from-gray-200 to-gray-300 rounded-xl flex items-center justify-center">
+                                                <svg class="w-6 h-6 sm:w-8 sm:h-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                                                 </svg>
                                             </div>
@@ -82,32 +82,32 @@
                                     
                                     <!-- Product Details -->
                                     <div class="flex-1 min-w-0">
-                                        <h3 class="text-lg font-bold text-gray-900 mb-1">{{ $product->name }}</h3>
-                                        <p class="text-sm text-gray-500 mb-2">{{ $product->brand ?? 'Brand' }}</p>
-                                        <div class="flex items-center gap-2">
-                                            <span class="text-2xl font-bold text-green-600">RM {{ number_format($product->price, 2) }}</span>
+                                        <h3 class="text-sm sm:text-base md:text-lg font-bold text-gray-900 mb-1 truncate">{{ $product->name }}</h3>
+                                        <p class="text-xs sm:text-sm text-gray-500 mb-1 sm:mb-2">{{ $product->brand ?? 'Brand' }}</p>
+                                        <div class="flex items-center gap-2 flex-wrap">
+                                            <span class="text-base sm:text-lg md:text-2xl font-bold text-green-600">RM {{ number_format($product->price, 2) }}</span>
                                             @if($product->old_price)
-                                                <span class="text-lg text-gray-400 line-through">RM {{ number_format($product->old_price, 2) }}</span>
+                                                <span class="text-sm sm:text-base md:text-lg text-gray-400 line-through">RM {{ number_format($product->old_price, 2) }}</span>
                                             @endif
                                         </div>
                                     </div>
                                     
                                     <!-- Quantity Controls -->
-                                    <div class="flex items-center gap-3">
+                                    <div class="flex items-center gap-2 sm:gap-3">
                                         <div class="flex items-center border-2 border-gray-200 rounded-xl overflow-hidden">
                                             <button type="button" onclick="updateQuantity({{ $product->id }}, -1)" 
-                                                    class="px-3 py-2 bg-gray-100 hover:bg-gray-200 transition-colors">
-                                                <svg class="w-4 h-4 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    class="px-2 sm:px-3 py-2 bg-gray-100 hover:bg-gray-200 transition-colors">
+                                                <svg class="w-3 h-3 sm:w-4 sm:h-4 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4" />
                                                 </svg>
                                             </button>
                                             <input type="number" name="quantities[{{ $product->id }}]" 
                                                    id="qty-{{ $product->id }}"
                                                    value="{{ $qty }}" min="1" 
-                                                   class="w-16 text-center border-0 focus:ring-0 text-lg font-semibold">
+                                                   class="w-10 sm:w-14 md:w-16 text-center border-0 focus:ring-0 text-sm sm:text-base md:text-lg font-semibold">
                                             <button type="button" onclick="updateQuantity({{ $product->id }}, 1)" 
-                                                    class="px-3 py-2 bg-gray-100 hover:bg-gray-200 transition-colors">
-                                                <svg class="w-4 h-4 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    class="px-2 sm:px-3 py-2 bg-gray-100 hover:bg-gray-200 transition-colors">
+                                                <svg class="w-3 h-3 sm:w-4 sm:h-4 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                                                 </svg>
                                             </button>
@@ -115,17 +115,22 @@
                                     </div>
                                     
                                     <!-- Subtotal -->
-                                    <div class="text-right">
-                                        <div class="text-lg font-bold text-gray-900">RM {{ number_format($subtotal, 2) }}</div>
-                                        <div class="text-sm text-gray-500">{{ $qty }} × RM {{ number_format($product->price, 2) }}</div>
+                                    <div class="text-right hidden sm:block">
+                                        <div class="text-base sm:text-lg md:text-xl font-bold text-gray-900">RM {{ number_format($subtotal, 2) }}</div>
+                                        <div class="text-xs sm:text-sm text-gray-500">{{ $qty }} × RM {{ number_format($product->price, 2) }}</div>
+                                    </div>
+                                    
+                                    <!-- Mobile Subtotal (shown only on mobile) -->
+                                    <div class="text-right sm:hidden">
+                                        <div class="text-base font-bold text-gray-900">RM {{ number_format($subtotal, 2) }}</div>
                                     </div>
                                     
                                     <!-- Remove Button -->
                                     <div class="flex-shrink-0">
                                         <button type="button" 
                                                 onclick="removeItem({{ $product->id }})"
-                                                class="p-2 text-red-500 hover:bg-red-50 rounded-full transition-colors">
-                                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                class="p-1.5 sm:p-2 text-red-500 hover:bg-red-50 rounded-full transition-colors">
+                                            <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                                             </svg>
                                         </button>
