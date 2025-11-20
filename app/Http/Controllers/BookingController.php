@@ -251,11 +251,27 @@ class BookingController extends Controller
 
         if ($user->isCustomer()) {
             $bookingStart = Carbon::parse("{$booking->date} {$booking->start_time}");
+            $bookingEnd = Carbon::parse("{$booking->date} {$booking->end_time}");
             $cancelDeadline = $bookingStart->copy()->subHour();
 
+            // Check if booking time has already passed
+            if (now()->greaterThan($bookingEnd)) {
+                return back()->withErrors([
+                    'cancel' => 'Cannot cancel - booking time has already passed.'
+                ]);
+            }
+
+            // Check if within cancellation deadline (1 hour before start)
             if (now()->greaterThanOrEqualTo($cancelDeadline)) {
                 return back()->withErrors([
                     'cancel' => 'Cancellations must be made at least 1 hour before the start time.'
+                ]);
+            }
+
+            // Check if booking is already cancelled or completed
+            if ($booking->status === 'cancelled' || $booking->status === 'completed') {
+                return back()->withErrors([
+                    'cancel' => 'Cannot cancel - booking is already ' . $booking->status . '.'
                 ]);
             }
         }

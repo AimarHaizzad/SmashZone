@@ -16,6 +16,16 @@
 </div>
 
 <div class="max-w-7xl mx-auto py-8 px-4">
+    @if($errors->has('cancel'))
+        <div class="bg-red-50 border border-red-200 rounded-xl p-4 mb-6">
+            <div class="flex items-center gap-2">
+                <svg class="w-5 h-5 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <p class="text-red-800 font-medium">{{ $errors->first('cancel') }}</p>
+            </div>
+        </div>
+    @endif
 
     @if($bookings->isEmpty())
         <div class="bg-white rounded-3xl shadow-xl border border-gray-100 p-12 text-center">
@@ -130,8 +140,10 @@
                         @foreach($bookings as $booking)
                             @php
                                 $startDateTime = \Carbon\Carbon::parse("{$booking->date} {$booking->start_time}");
+                                $endDateTime = \Carbon\Carbon::parse("{$booking->date} {$booking->end_time}");
                                 $cancelDeadline = $startDateTime->copy()->subHour();
-                                $canCancel = now()->lt($cancelDeadline);
+                                $isPastBooking = now()->gt($endDateTime); // Check if booking time has completely passed
+                                $canCancel = !$isPastBooking && now()->lt($cancelDeadline) && $booking->status !== 'cancelled' && $booking->status !== 'completed';
                                 $payment = $booking->payment;
                                 $paymentStatus = strtolower($payment->status ?? 'pending');
                                 $paymentExpired = $paymentStatus === 'pending' && now()->greaterThanOrEqualTo($startDateTime);
@@ -227,7 +239,12 @@
                                                 </button>
                                             </form>
                                         @else
-                                            <span class="px-3 py-1.5 bg-gray-100 text-gray-400 rounded-lg font-medium text-sm cursor-not-allowed" title="Cancellations must be made at least 1 hour before the start time">
+                                            @php
+                                                $cancelMessage = $isPastBooking 
+                                                    ? 'Cannot cancel - booking time has already passed' 
+                                                    : 'Cancellations must be made at least 1 hour before the start time';
+                                            @endphp
+                                            <span class="px-3 py-1.5 bg-gray-100 text-gray-400 rounded-lg font-medium text-sm cursor-not-allowed" title="{{ $cancelMessage }}">
                                                 <svg class="w-4 h-4 inline mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                                                 </svg>
