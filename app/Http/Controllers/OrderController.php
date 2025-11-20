@@ -12,11 +12,11 @@ class OrderController extends Controller
     /**
      * Display user's orders
      */
-    public function index()
+    public function index(Request $request)
     {
         // If owner or staff, show all orders management page
         if (auth()->user()->isOwner() || auth()->user()->isStaff()) {
-            return $this->manage();
+            return $this->manage($request);
         }
 
         // Regular users see their own orders
