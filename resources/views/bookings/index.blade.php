@@ -77,110 +77,18 @@
 
 
 
-    <!-- Mobile-Friendly Booking Grid -->
-    <!-- Mobile Card View (visible on small screens) -->
-    <div class="block md:hidden space-y-4 mb-4">
-        @foreach($timeSlots as $slotIdx => $slot)
-            @php
-                $slotTime = \Carbon\Carbon::createFromFormat('H:i', $slot);
-                $formattedTime = $slotTime->format('g:i A');
-            @endphp
-            <div class="bg-white rounded-xl shadow-md border border-gray-200 p-4">
-                <!-- Time Header -->
-                <div class="flex items-center justify-between mb-3 pb-3 border-b border-gray-200">
-                    <h3 class="text-lg font-bold text-blue-700">{{ $formattedTime }}</h3>
-                </div>
-                
-                <!-- Courts for this time slot -->
-                <div class="space-y-2">
-                    @foreach($courts as $court)
-                        @php
-                            // Check if this slot falls within any booking's time range
-                            $slotTime = $slot . ':00';
-                            $slotCarbon = \Carbon\Carbon::createFromFormat('H:i:s', $slotTime);
-                            
-                            $booking = $bookings->first(function($b) use ($court, $slotCarbon) {
-                                $startTime = \Carbon\Carbon::createFromFormat('H:i:s', $b->start_time);
-                                $endTime = \Carbon\Carbon::createFromFormat('H:i:s', $b->end_time);
-                                // Check if slot falls within booking range (start_time <= slot < end_time)
-                                return $b->court_id == $court->id && 
-                                       $slotCarbon->gte($startTime) && 
-                                       $slotCarbon->lt($endTime);
-                            });
-                            $isMine = $booking && $booking->user_id == auth()->id();
-                            $isBooked = $booking && !$isMine;
-                            $hasMyBookingInCourt = $booking && $booking->user_id == auth()->id();
-                        @endphp
-                        <div class="flex items-center justify-between gap-2">
-                            <span class="text-sm font-medium text-gray-700 flex-1">{{ $court->name }}</span>
-                            <div class="flex-1">
-                                @if($hasMyBookingInCourt && $booking)
-                                    @php
-                                        $startTime = \Carbon\Carbon::createFromFormat('H:i:s', $booking->start_time);
-                                        $endTime = \Carbon\Carbon::createFromFormat('H:i:s', $booking->end_time);
-                                        $duration = $startTime->diffInHours($endTime);
-                                        $isStart = $slotCarbon->format('H:i:s') == $startTime->format('H:i:s');
-                                    @endphp
-                                    <button class="my-booking-btn w-full py-2.5 px-3 font-semibold rounded-lg border-2 border-blue-300 bg-blue-100 text-blue-700 text-sm" data-booking-id="{{ $booking->id }}">
-                                        <div class="flex items-center justify-center gap-1.5">
-                                            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                                            </svg>
-                                            <span>My Booking</span>
-                                        </div>
-                                    </button>
-                                @elseif($booking)
-                                    @php
-                                        $startTime = \Carbon\Carbon::createFromFormat('H:i:s', $booking->start_time);
-                                        $endTime = \Carbon\Carbon::createFromFormat('H:i:s', $booking->end_time);
-                                        $duration = $startTime->diffInHours($endTime);
-                                    @endphp
-                                    <div class="w-full py-2.5 px-3 font-semibold rounded-lg border-2 border-red-300 bg-red-100 text-red-700 text-sm text-center cursor-not-allowed">
-                                        <div class="flex items-center justify-center gap-1.5">
-                                            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
-                                            </svg>
-                                            <span>Booked</span>
-                                        </div>
-                                    </div>
-                                @else
-                                    @php
-                                        $slotRate = $court->hourlyRateForSlot($selectedDate, $slot);
-                                    @endphp
-                                    <button class="select-slot-btn w-full py-2.5 px-3 font-semibold rounded-lg border-2 border-green-200 bg-green-50 text-green-800 hover:bg-green-100 hover:border-green-300 transition-all text-sm" 
-                                            data-court="{{ $court->id }}" data-time="{{ $slot }}" data-variant="mobile"
-                                            data-price="{{ $slotRate }}" data-price-label="RM {{ number_format($slotRate, 2) }}"
-                                            title="Select {{ $court->name }} at {{ $formattedTime }}"
-                                            aria-label="Select {{ $court->name }} at {{ $formattedTime }}">
-                                        <div class="flex items-center justify-center gap-1.5">
-                                            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                                            </svg>
-                                            <span>Select</span>
-                                            <span class="text-xs text-blue-600 font-semibold">{{ 'RM ' . number_format($slotRate, 2) }}/hr</span>
-                                        </div>
-                                    </button>
-                                @endif
-                            </div>
-                        </div>
-                    @endforeach
-                </div>
-            </div>
-        @endforeach
-    </div>
-
-    <!-- Desktop Table View (hidden on mobile) -->
-    <div class="hidden md:block bg-white rounded-3xl shadow-xl border border-gray-100 overflow-hidden">
+    <!-- Responsive Table View (works on both mobile and desktop) -->
+    <div class="bg-white rounded-xl md:rounded-3xl shadow-xl border border-gray-100 overflow-hidden">
         <div class="overflow-x-auto">
             <table class="min-w-full">
                 <thead class="sticky top-0 z-20">
                     <tr class="bg-gradient-to-r from-blue-50 to-green-50">
-                        <th class="px-6 py-4 border-b border-gray-200 text-center text-blue-700 text-lg font-bold w-32 bg-white"></th>
+                        <th class="px-2 sm:px-4 md:px-6 py-2 sm:py-3 md:py-4 border-b border-gray-200 text-center text-blue-700 text-xs sm:text-sm md:text-lg font-bold w-20 sm:w-28 md:w-32 bg-white"></th>
                         @foreach($courts as $court)
-                            <th class="px-6 py-4 border-b border-gray-200 text-center text-blue-700 text-lg font-bold whitespace-nowrap shadow-sm" data-court-id="{{ $court->id }}">
+                            <th class="px-2 sm:px-4 md:px-6 py-2 sm:py-3 md:py-4 border-b border-gray-200 text-center text-blue-700 text-xs sm:text-sm md:text-lg font-bold whitespace-nowrap shadow-sm min-w-[100px] sm:min-w-[120px]" data-court-id="{{ $court->id }}">
                                 <div class="flex flex-col items-center">
-                                    <span class="font-bold">{{ $court->name }}</span>
-                                    <span class="text-sm font-normal text-gray-600">Court {{ $loop->iteration }}</span>
+                                    <span class="font-bold text-xs sm:text-sm md:text-base">{{ $court->name }}</span>
+                                    <span class="text-xs sm:text-sm font-normal text-gray-600 hidden sm:inline">Court {{ $loop->iteration }}</span>
                                 </div>
                             </th>
                         @endforeach
@@ -215,7 +123,7 @@
                             $rowClass = $hasMyBooking ? 'bg-blue-50 hover:bg-blue-100' : ($hasOtherBooking ? 'bg-red-50 hover:bg-red-100' : 'hover:bg-gray-50');
                         @endphp
                     <tr class="{{ $rowClass }} transition-colors">
-                        <td class="px-4 py-4 border-b border-gray-100 text-right font-bold {{ $hasMyBooking ? 'text-blue-700 bg-blue-100' : ($hasOtherBooking ? 'text-red-700 bg-red-100' : 'text-blue-700 bg-blue-50') }} sticky left-0 z-10 text-lg">
+                        <td class="px-2 sm:px-3 md:px-4 py-2 sm:py-3 md:py-4 border-b border-gray-100 text-right font-bold {{ $hasMyBooking ? 'text-blue-700 bg-blue-100' : ($hasOtherBooking ? 'text-red-700 bg-red-100' : 'text-blue-700 bg-blue-50') }} sticky left-0 z-10 text-xs sm:text-sm md:text-lg">
                             {{ \Carbon\Carbon::createFromFormat('H:i', $slot)->format('g:i A') }}
                         </td>
                         @foreach($courts as $court)
@@ -251,38 +159,35 @@
                                 
                                 $borderClass = '';
                                 if ($isStart) {
-                                    $borderClass .= $isMine ? ' border-l-4 border-blue-500' : ' border-l-4 border-red-500';
+                                    $borderClass .= $isMine ? ' border-l-2 sm:border-l-4 border-blue-500' : ' border-l-2 sm:border-l-4 border-red-500';
                                 }
                                 if ($isEnd) {
-                                    $borderClass .= $isMine ? ' border-r-4 border-blue-500' : ' border-r-4 border-red-500';
+                                    $borderClass .= $isMine ? ' border-r-2 sm:border-r-4 border-blue-500' : ' border-r-2 sm:border-r-4 border-red-500';
                                 }
                                 $bgClass = '';
                                 if ($booking) {
                                     $bgClass = $isMine ? ' bg-blue-100 text-blue-700 border-blue-300' : ' bg-red-100 text-red-700 border-red-300';
                                 }
                             @endphp
-                            <td class="px-3 py-4 border-b border-gray-100 text-center{{ $borderClass }}{{ $bgClass }}" data-court="{{ $court->id }}" data-time="{{ $slot }}">
+                            <td class="px-1 sm:px-2 md:px-3 py-1.5 sm:py-2.5 md:py-4 border-b border-gray-100 text-center{{ $borderClass }}{{ $bgClass }}" data-court="{{ $court->id }}" data-time="{{ $slot }}">
                                 @if($hasMyBookingInCourt && $booking)
                                     @php
                                         $startTime = \Carbon\Carbon::createFromFormat('H:i:s', $booking->start_time);
                                         $endTime = \Carbon\Carbon::createFromFormat('H:i:s', $booking->end_time);
                                         $duration = $startTime->diffInHours($endTime);
                                     @endphp
-                                    <button class="my-booking-btn w-full py-3 px-4 font-semibold rounded-xl border-2 border-blue-300 bg-blue-100 text-blue-700 hover:bg-blue-200 transition-all transform hover:scale-105 shadow-sm"
+                                    <button class="my-booking-btn w-full py-1.5 sm:py-2 md:py-3 px-2 sm:px-3 md:px-4 font-semibold rounded-lg sm:rounded-xl border-2 border-blue-300 bg-blue-100 text-blue-700 hover:bg-blue-200 transition-all transform hover:scale-105 shadow-sm text-xs sm:text-sm"
                                             data-booking-id="{{ $booking->id }}">
-                                        <div class="flex flex-col items-center justify-center gap-1">
-                                            <div class="flex items-center gap-2">
-                                                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <div class="flex flex-col items-center justify-center gap-0.5 sm:gap-1">
+                                            <div class="flex items-center gap-1 sm:gap-2">
+                                                <svg class="h-3 w-3 sm:h-4 sm:w-4 md:h-5 md:w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                                                 </svg>
-                                                @if($isStart)
-                                                    My Booking
-                                                @else
-                                                    {{ $duration }}h Booking
-                                                @endif
+                                                <span class="hidden sm:inline">@if($isStart)My Booking@else{{ $duration }}h Booking@endif</span>
+                                                <span class="sm:hidden">@if($isStart)Mine@else{{ $duration }}h@endif</span>
                                             </div>
                                             @if($isStart)
-                                                <div class="text-xs text-blue-600">
+                                                <div class="text-[10px] sm:text-xs text-blue-600 hidden sm:block">
                                                     {{ $startTime->format('g:i A') }} - {{ $endTime->format('g:i A') }}
                                                 </div>
                                             @endif
@@ -294,20 +199,17 @@
                                         $endTime = \Carbon\Carbon::createFromFormat('H:i:s', $booking->end_time);
                                         $duration = $startTime->diffInHours($endTime);
                                     @endphp
-                                    <div class="other-booking-btn w-full py-3 px-4 font-semibold rounded-xl border-2 border-red-300 bg-red-100 text-red-700 cursor-not-allowed shadow-sm">
-                                        <div class="flex flex-col items-center justify-center gap-1">
-                                            <div class="flex items-center gap-2">
-                                                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <div class="other-booking-btn w-full py-1.5 sm:py-2 md:py-3 px-2 sm:px-3 md:px-4 font-semibold rounded-lg sm:rounded-xl border-2 border-red-300 bg-red-100 text-red-700 cursor-not-allowed shadow-sm text-xs sm:text-sm">
+                                        <div class="flex flex-col items-center justify-center gap-0.5 sm:gap-1">
+                                            <div class="flex items-center gap-1 sm:gap-2">
+                                                <svg class="h-3 w-3 sm:h-4 sm:w-4 md:h-5 md:w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
                                                 </svg>
-                                                @if($isStart)
-                                                    Booked
-                                                @else
-                                                    {{ $duration }}h Booked
-                                                @endif
+                                                <span class="hidden sm:inline">@if($isStart)Booked@else{{ $duration }}h Booked@endif</span>
+                                                <span class="sm:hidden">@if($isStart)Booked@else{{ $duration }}h@endif</span>
                                             </div>
                                             @if($isStart)
-                                                <div class="text-xs text-red-600">
+                                                <div class="text-[10px] sm:text-xs text-red-600 hidden sm:block">
                                                     {{ $startTime->format('g:i A') }} - {{ $endTime->format('g:i A') }}
                                                 </div>
                                             @endif
@@ -317,17 +219,17 @@
                                     @php
                                         $slotRate = $court->hourlyRateForSlot($selectedDate, $slot);
                                     @endphp
-                                    <button class="select-slot-btn w-full py-3 px-4 font-semibold rounded-xl border-2 border-green-200 bg-green-50 text-green-800 hover:bg-green-100 hover:border-green-300 transition-all transform hover:scale-105 shadow-sm" 
+                                    <button class="select-slot-btn w-full py-1.5 sm:py-2 md:py-3 px-2 sm:px-3 md:px-4 font-semibold rounded-lg sm:rounded-xl border-2 border-green-200 bg-green-50 text-green-800 hover:bg-green-100 hover:border-green-300 transition-all transform hover:scale-105 shadow-sm text-xs sm:text-sm" 
                                             data-court="{{ $court->id }}" data-time="{{ $slot }}" data-variant="desktop"
                                             data-price="{{ $slotRate }}" data-price-label="RM {{ number_format($slotRate, 2) }}"
                                             title="Select {{ $court->name }} at {{ \Carbon\Carbon::createFromFormat('H:i', $slot)->format('g:i A') }}"
                                             aria-label="Select {{ $court->name }} at {{ \Carbon\Carbon::createFromFormat('H:i', $slot)->format('g:i A') }}">
-                                        <div class="flex items-center justify-center gap-2">
-                                            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                                        <div class="flex items-center justify-center gap-1 sm:gap-2">
+                                            <svg class="h-3 w-3 sm:h-4 sm:w-4 md:h-5 md:w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                                             </svg>
-                                            Select
-                                            <span class="text-xs text-blue-600 font-semibold">{{ 'RM ' . number_format($slotRate, 2) }}/hr</span>
+                                            <span class="hidden sm:inline">Select</span>
+                                            <span class="text-[10px] sm:text-xs text-blue-600 font-semibold">{{ 'RM ' . number_format($slotRate, 2) }}/hr</span>
                                         </div>
                                     </button>
                                 @endif
