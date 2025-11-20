@@ -94,4 +94,20 @@ class CartController extends Controller
         session(['cart' => $cart]);
         return redirect()->back();
     }
+
+    public function checkout(Request $request)
+    {
+        $cart = session('cart', []);
+        if (empty($cart)) {
+            return redirect()->route('cart.index')->with('error', 'Your cart is empty.');
+        }
+
+        $products = Product::whereIn('id', array_keys($cart))->get();
+        $total = 0;
+        foreach ($products as $product) {
+            $total += $product->price * ($cart[$product->id] ?? 0);
+        }
+
+        return view('cart.checkout', compact('cart', 'products', 'total'));
+    }
 } 

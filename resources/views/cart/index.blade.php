@@ -188,18 +188,15 @@
                         </div>
                         
                         <!-- Checkout Button -->
-                        <form action="{{ route('cart.checkout') }}" method="POST" class="pt-4">
-                            @csrf
-                            <button type="submit" 
-                                    class="w-full bg-gradient-to-r from-green-600 to-green-700 text-white py-4 rounded-xl font-bold hover:from-green-700 hover:to-green-800 transition-all transform hover:scale-105 shadow-lg text-lg">
-                                <div class="flex items-center justify-center gap-2">
-                                    <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-                                    </svg>
-                                    Proceed to Checkout
-                                </div>
-                            </button>
-                        </form>
+                        <a href="{{ route('cart.checkout') }}" 
+                           class="block w-full bg-gradient-to-r from-green-600 to-green-700 text-white py-4 rounded-xl font-bold hover:from-green-700 hover:to-green-800 transition-all transform hover:scale-105 shadow-lg text-lg text-center">
+                            <div class="flex items-center justify-center gap-2">
+                                <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                                </svg>
+                                Proceed to Checkout
+                            </div>
+                        </a>
                         
                         <!-- Security Notice -->
                         <div class="text-center pt-4">

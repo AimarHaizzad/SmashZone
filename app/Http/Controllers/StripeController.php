@@ -7,6 +7,9 @@ use Stripe\Stripe;
 use Stripe\Checkout\Session as StripeSession;
 use App\Models\Product;
 use App\Models\Payment;
+use App\Models\Order;
+use App\Models\OrderItem;
+use App\Models\Shipping;
 
 class StripeController extends Controller
 {
@@ -16,6 +19,29 @@ class StripeController extends Controller
         if (empty($cart)) {
             return redirect()->route('cart.index')->with('error', 'Your cart is empty.');
         }
+
+        // Validate delivery information
+        $request->validate([
+            'delivery_method' => 'required|in:pickup,delivery',
+            'delivery_address' => 'required_if:delivery_method,delivery',
+            'delivery_city' => 'required_if:delivery_method,delivery',
+            'delivery_postcode' => 'required_if:delivery_method,delivery',
+            'delivery_state' => 'required_if:delivery_method,delivery',
+            'delivery_phone' => 'required_if:delivery_method,delivery',
+        ]);
+
+        // Store delivery information in session
+        session([
+            'delivery_info' => [
+                'method' => $request->delivery_method,
+                'address' => $request->delivery_address,
+                'city' => $request->delivery_city,
+                'postcode' => $request->delivery_postcode,
+                'state' => $request->delivery_state,
+                'phone' => $request->delivery_phone,
+                'notes' => $request->notes,
+            ]
+        ]);
         
         $products = Product::whereIn('id', array_keys($cart))->get();
         $lineItems = [];
@@ -92,16 +118,73 @@ class StripeController extends Controller
                             'stripe_payment_intent_id' => $session->payment_intent,
                         ]);
 
-                        // Reduce product quantities based on cart
+                        // Get delivery information from session
+                        $deliveryInfo = session('delivery_info', [
+                            'method' => 'pickup',
+                            'address' => null,
+                            'city' => null,
+                            'postcode' => null,
+                            'state' => null,
+                            'phone' => null,
+                            'notes' => null,
+                        ]);
+
+                        // Create order
+                        $order = Order::create([
+                            'order_number' => Order::generateOrderNumber(),
+                            'user_id' => auth()->id(),
+                            'payment_id' => $payment->id,
+                            'total_amount' => $payment->amount,
+                            'status' => 'confirmed',
+                            'delivery_method' => $deliveryInfo['method'],
+                            'delivery_address' => $deliveryInfo['address'],
+                            'delivery_city' => $deliveryInfo['city'],
+                            'delivery_postcode' => $deliveryInfo['postcode'],
+                            'delivery_state' => $deliveryInfo['state'],
+                            'delivery_phone' => $deliveryInfo['phone'],
+                            'notes' => $deliveryInfo['notes'],
+                        ]);
+
+                        // Create order items and reduce product quantities
                         foreach ($cart as $productId => $quantityPurchased) {
                             $product = Product::find($productId);
                             if (!$product) {
                                 continue;
                             }
 
+                            // Create order item
+                            OrderItem::create([
+                                'order_id' => $order->id,
+                                'product_id' => $product->id,
+                                'product_name' => $product->name,
+                                'product_price' => $product->price,
+                                'quantity' => $quantityPurchased,
+                                'subtotal' => $product->price * $quantityPurchased,
+                            ]);
+
+                            // Reduce product quantity
                             $newQuantity = max(0, $product->quantity - $quantityPurchased);
                             $product->update(['quantity' => $newQuantity]);
                         }
+
+                        // Create shipping record
+                        $carrier = $deliveryInfo['method'] === 'pickup' ? 'Self Pickup' : null;
+                        Shipping::create([
+                            'order_id' => $order->id,
+                            'status' => 'pending',
+                            'carrier' => $carrier,
+                            'estimated_delivery_date' => $deliveryInfo['method'] === 'delivery' 
+                                ? now()->addDays(3) 
+                                : null,
+                        ]);
+
+                        // Clear delivery info and cart from session
+                        session()->forget('delivery_info');
+                        session()->forget('cart');
+
+                        // Pass order to success view
+                        $order->load(['items.product', 'shipping']);
+                        return view('cart.success', compact('order'));
                     }
                 }
             } catch (\Exception $e) {
@@ -110,7 +193,7 @@ class StripeController extends Controller
             }
         }
         
-        // Clear cart after successful payment
+        // Clear cart after successful payment (fallback)
         session()->forget('cart');
         return view('cart.success');
     }

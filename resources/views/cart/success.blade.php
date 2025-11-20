@@ -41,6 +41,12 @@
                     </svg>
                     Order Confirmation
                 </h3>
+                @if(isset($order))
+                    <div class="mb-4 p-4 bg-white rounded-lg">
+                        <p class="text-sm text-gray-600 mb-1">Order Number</p>
+                        <p class="text-2xl font-bold text-gray-900">{{ $order->order_number }}</p>
+                    </div>
+                @endif
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                     <div>
                         <span class="font-semibold text-gray-700">Order Date:</span>
@@ -50,6 +56,16 @@
                         <span class="font-semibold text-gray-700">Order Time:</span>
                         <span class="text-gray-600 ml-2">{{ now()->format('g:i A') }}</span>
                     </div>
+                    @if(isset($order))
+                        <div>
+                            <span class="font-semibold text-gray-700">Total Amount:</span>
+                            <span class="text-gray-600 ml-2">{{ $order->formatted_total }}</span>
+                        </div>
+                        <div>
+                            <span class="font-semibold text-gray-700">Delivery Method:</span>
+                            <span class="text-gray-600 ml-2">{{ $order->delivery_method_label }}</span>
+                        </div>
+                    @endif
                     <div>
                         <span class="font-semibold text-gray-700">Payment Method:</span>
                         <span class="text-gray-600 ml-2">Stripe (Secure Payment)</span>
@@ -107,6 +123,15 @@
             
             <!-- Action Buttons -->
             <div class="flex flex-col sm:flex-row gap-4">
+                @if(isset($order))
+                    <a href="{{ route('orders.show', $order) }}" 
+                       class="flex-1 inline-flex items-center justify-center gap-2 px-8 py-4 bg-gradient-to-r from-purple-600 to-purple-700 text-white rounded-xl font-semibold hover:from-purple-700 hover:to-purple-800 transition-all transform hover:scale-105 shadow-lg">
+                        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        View Order Details
+                    </a>
+                @endif
                 <a href="{{ route('products.index') }}" 
                    class="flex-1 inline-flex items-center justify-center gap-2 px-8 py-4 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl font-semibold hover:from-blue-700 hover:to-blue-800 transition-all transform hover:scale-105 shadow-lg">
                     <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -114,12 +139,12 @@
                     </svg>
                     Continue Shopping
                 </a>
-                <a href="{{ route('dashboard') }}" 
+                <a href="{{ route('orders.index') }}" 
                    class="flex-1 inline-flex items-center justify-center gap-2 px-8 py-4 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-xl font-semibold hover:from-green-700 hover:to-green-800 transition-all transform hover:scale-105 shadow-lg">
                     <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                     </svg>
-                    Go to Dashboard
+                    My Orders
                 </a>
             </div>
         </div>

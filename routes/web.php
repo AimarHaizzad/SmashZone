@@ -605,9 +605,19 @@ Route::get('cart', [App\Http\Controllers\CartController::class, 'index'])->name(
 Route::post('cart/add', [App\Http\Controllers\CartController::class, 'add'])->name('cart.add');
 Route::post('cart/update', [App\Http\Controllers\CartController::class, 'update'])->name('cart.update');
 Route::post('cart/remove', [App\Http\Controllers\CartController::class, 'remove'])->name('cart.remove');
-Route::post('cart/checkout', [App\Http\Controllers\StripeController::class, 'checkout'])->name('cart.checkout');
+Route::get('cart/checkout', [App\Http\Controllers\CartController::class, 'checkout'])->name('cart.checkout');
+Route::post('stripe/checkout', [App\Http\Controllers\StripeController::class, 'checkout'])->name('stripe.checkout');
 Route::get('cart/success', [App\Http\Controllers\StripeController::class, 'success'])->name('stripe.success');
 Route::get('cart/cancel', [App\Http\Controllers\StripeController::class, 'cancel'])->name('stripe.cancel');
+
+// Order routes
+Route::middleware(['auth'])->group(function () {
+    Route::get('orders', [App\Http\Controllers\OrderController::class, 'index'])->name('orders.index');
+    Route::get('orders/{order}', [App\Http\Controllers\OrderController::class, 'show'])->name('orders.show');
+    Route::get('orders/track', [App\Http\Controllers\OrderController::class, 'track'])->name('orders.track');
+    Route::post('orders/{order}/update-shipping', [App\Http\Controllers\OrderController::class, 'updateShippingStatus'])->name('orders.update-shipping');
+    Route::post('orders/{order}/update-status', [App\Http\Controllers\OrderController::class, 'updateStatus'])->name('orders.update-status');
+});
 
 // Test route for Stripe configuration
 Route::get('test-stripe-config', function() {
