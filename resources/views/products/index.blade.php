@@ -100,9 +100,10 @@
                 <!-- Product Image -->
                 <div class="relative overflow-hidden">
                     @if($product->image)
-                        <img src="{{ asset('storage/' . $product->image) }}" 
+                        <img src="{{ $product->image_url ?? asset('storage/' . $product->image) }}" 
                              alt="{{ $product->name }}" 
-                             class="h-64 w-full object-cover group-hover:scale-110 transition-transform duration-300">
+                             class="h-64 w-full object-cover group-hover:scale-110 transition-transform duration-300"
+                             onerror="this.onerror=null; this.src='data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'400\' height=\'300\'%3E%3Crect fill=\'%23ddd\' width=\'400\' height=\'300\'/%3E%3Ctext fill=\'%23999\' font-family=\'sans-serif\' font-size=\'18\' dy=\'10.5\' font-weight=\'bold\' x=\'50%25\' y=\'50%25\' text-anchor=\'middle\'%3ENo Image%3C/text%3E%3C/svg%3E';">
                     @else
                         <div class="h-64 w-full flex items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200">
                             <div class="text-center">

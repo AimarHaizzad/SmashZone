@@ -326,7 +326,17 @@
                                 </div>
                                 `;
                             
-                            if (booking.payment && booking.payment.status === 'pending') {
+                            // Check if booking time has passed
+                            const bookingDateStr = booking.date; // Format: YYYY-MM-DD
+                            const endTimeStr = booking.end_time; // Format: HH:MM:SS or HH:MM
+                            const [year, month, day] = bookingDateStr.split('-');
+                            const [endHour, endMin, endSec] = endTimeStr.split(':');
+                            const bookingEndDateTime = new Date(parseInt(year), parseInt(month) - 1, parseInt(day), parseInt(endHour), parseInt(endMin), parseInt(endSec || 0));
+                            const now = new Date();
+                            const isPastBooking = now > bookingEndDateTime;
+                            
+                            // Only show payment button if payment is pending AND booking time hasn't passed
+                            if (booking.payment && booking.payment.status === 'pending' && !isPastBooking) {
                                 html += `
                                     <div class="mt-6 pt-6 border-t border-gray-200">
                                         <a href="/payments/${booking.payment.id}/pay" 
@@ -336,6 +346,19 @@
                                             </svg>
                                             Proceed to Payment
                                         </a>
+                                    </div>
+                                `;
+                            } else if (booking.payment && booking.payment.status === 'pending' && isPastBooking) {
+                                html += `
+                                    <div class="mt-6 pt-6 border-t border-gray-200">
+                                        <div class="bg-red-50 border border-red-200 rounded-xl p-4">
+                                            <div class="flex items-center gap-2">
+                                                <svg class="w-5 h-5 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                </svg>
+                                                <p class="text-red-800 font-medium text-sm">Payment is no longer available - booking time has passed</p>
+                                            </div>
+                                        </div>
                                     </div>
                                 `;
                             }

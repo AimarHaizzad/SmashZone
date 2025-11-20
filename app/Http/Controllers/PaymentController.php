@@ -16,12 +16,42 @@ class PaymentController extends Controller
         $user = auth()->user();
         
         // Get payments based on user role
-        $payments = Payment::with(['user', 'bookings.court', 'booking.court'])->orderBy('payment_date', 'desc')->get();
+        $paymentsQuery = Payment::with(['user', 'bookings.court', 'booking.court']);
+        
+        if ($user->isCustomer()) {
+            // Customers only see their own payments
+            $paymentsQuery->where('user_id', $user->id);
+        } elseif ($user->isOwner()) {
+            // Owners see payments for their courts
+            $paymentsQuery->where(function($query) use ($user) {
+                $query->whereHas('bookings.court', function($q) use ($user) {
+                    $q->where('owner_id', $user->id);
+                })->orWhereHas('booking.court', function($q) use ($user) {
+                    $q->where('owner_id', $user->id);
+                });
+            });
+        }
+        // Staff can see all payments (no filter needed)
+        
+        $payments = $paymentsQuery->orderBy('payment_date', 'desc')->orderBy('created_at', 'desc')->get();
         
         // Get refunds based on user role
-        $refunds = \App\Models\Refund::with(['user', 'booking.court', 'payment.bookings.court'])
-            ->orderBy('created_at', 'desc')
-            ->get();
+        $refundsQuery = \App\Models\Refund::with(['user', 'booking.court', 'payment.bookings.court']);
+        
+        if ($user->isCustomer()) {
+            // Customers only see their own refunds
+            $refundsQuery->where('user_id', $user->id);
+        } elseif ($user->isOwner()) {
+            // Owners see refunds for their courts
+            $refundsQuery->whereHas('booking.court', function($query) use ($user) {
+                $query->where('owner_id', $user->id);
+            })->orWhereHas('payment.bookings.court', function($query) use ($user) {
+                $query->where('owner_id', $user->id);
+            });
+        }
+        // Staff can see all refunds (no filter needed)
+        
+        $refunds = $refundsQuery->orderBy('created_at', 'desc')->get();
         
         return view('payments.index', compact('payments', 'refunds'));
     }

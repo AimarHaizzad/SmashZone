@@ -222,7 +222,7 @@
                                 Current Image
                             </h3>
                             <div class="flex items-center gap-4">
-                                <img src="{{ asset('storage/' . $product->image) }}" 
+                                <img src="{{ $product->image_url ?? asset('storage/' . $product->image) }}" 
                                      alt="{{ $product->name }}" 
                                      class="h-24 w-24 object-cover rounded-lg border-2 border-gray-200">
                                 <div class="flex-1">

@@ -46,7 +46,7 @@ class BookingController extends Controller
                 ->get();
         }
         $timeSlots = [];
-        for ($h = 8; $h <= 22; $h++) {
+        for ($h = 8; $h <= 23; $h++) {
             $timeSlots[] = sprintf('%02d:00', $h);
         }
         return view('bookings.index', compact('courts', 'timeSlots', 'bookings', 'selectedDate'));

@@ -68,7 +68,7 @@
                                     <!-- Product Image -->
                                     <div class="flex-shrink-0">
                                         @if($product->image)
-                                            <img src="{{ asset('storage/' . $product->image) }}" 
+                                            <img src="{{ $product->image_url ?? asset('storage/' . $product->image) }}" 
                                                  alt="{{ $product->name }}" 
                                                  class="h-20 w-20 object-cover rounded-xl border-2 border-gray-200">
                                         @else

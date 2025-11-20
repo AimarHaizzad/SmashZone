@@ -137,7 +137,7 @@ class NewsApiService
             [
                 'title' => 'BWF World Championships 2025 Updates',
                 'description' => 'The Badminton World Federation has announced the latest updates for the upcoming World Championships, including venue details and qualification criteria.',
-                'url' => 'https://bwfbadminton.com',
+                'url' => 'https://bwfbadminton.com/news-single/bwf-world-championships-2025',
                 'image' => $this->getDefaultImage(),
                 'source' => 'BWF Official',
                 'published_at' => '2 hours ago',
@@ -146,7 +146,7 @@ class NewsApiService
             [
                 'title' => 'All England Open 2025 Draw Released',
                 'description' => 'The draw for the prestigious All England Open Badminton Championships has been announced, featuring top players from around the world.',
-                'url' => 'https://bwfbadminton.com',
+                'url' => 'https://bwfbadminton.com/tournament/all-england-open-2025',
                 'image' => $this->getDefaultImage(),
                 'source' => 'All England Open',
                 'published_at' => '1 day ago',
@@ -155,7 +155,7 @@ class NewsApiService
             [
                 'title' => 'Malaysia Open 2025 Tournament Preview',
                 'description' => 'A comprehensive preview of the upcoming Malaysia Open Super 1000 tournament, including player profiles and match predictions.',
-                'url' => 'https://bwfbadminton.com',
+                'url' => 'https://bam.org.my/news/malaysia-open-2025-preview',
                 'image' => $this->getDefaultImage(),
                 'source' => 'Badminton Malaysia',
                 'published_at' => '3 days ago',
@@ -164,7 +164,7 @@ class NewsApiService
             [
                 'title' => 'Olympic Badminton Qualification Updates',
                 'description' => 'Latest updates on badminton qualification for the 2025 Olympics, including current rankings and upcoming qualifying tournaments.',
-                'url' => 'https://bwfbadminton.com',
+                'url' => 'https://olympics.com/en/news/badminton-qualification-2025',
                 'image' => $this->getDefaultImage(),
                 'source' => 'Olympic Committee',
                 'published_at' => '4 days ago',
@@ -173,7 +173,7 @@ class NewsApiService
             [
                 'title' => 'Badminton Racket Technology Advances',
                 'description' => 'New innovations in badminton racket technology are changing the game, with lighter materials and improved string technology.',
-                'url' => 'https://bwfbadminton.com',
+                'url' => 'https://bwfbadminton.com/news-single/racket-technology-advances',
                 'image' => $this->getDefaultImage(),
                 'source' => 'Badminton Gear Pro',
                 'published_at' => '5 days ago',
@@ -182,7 +182,7 @@ class NewsApiService
             [
                 'title' => 'Youth Badminton Development Programs',
                 'description' => 'International badminton federations are launching new programs to develop young talent and grow the sport globally.',
-                'url' => 'https://bwfbadminton.com',
+                'url' => 'https://bwfbadminton.com/news-single/youth-development-programs',
                 'image' => $this->getDefaultImage(),
                 'source' => 'BWF Development',
                 'published_at' => '6 days ago',
