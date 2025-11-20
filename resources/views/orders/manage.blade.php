@@ -56,8 +56,9 @@
                     <option value="confirmed" {{ request('status') == 'confirmed' ? 'selected' : '' }}>Confirmed</option>
                     <option value="processing" {{ request('status') == 'processing' ? 'selected' : '' }}>Processing</option>
                     <option value="shipped" {{ request('status') == 'shipped' ? 'selected' : '' }}>Shipped</option>
-                    <option value="delivered" {{ request('status') == 'delivered' ? 'selected' : '' }}>Delivered</option>
-                    <option value="cancelled" {{ request('status') == 'cancelled' ? 'selected' : '' }}>Cancelled</option>
+                            <option value="delivered" {{ request('status') == 'delivered' ? 'selected' : '' }}>Delivered</option>
+                            <option value="return_requested" {{ request('status') == 'return_requested' ? 'selected' : '' }}>Return Requested</option>
+                            <option value="cancelled" {{ request('status') == 'cancelled' ? 'selected' : '' }}>Cancelled</option>
                 </select>
             </div>
 

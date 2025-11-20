@@ -147,7 +147,7 @@
 
     <!-- Payment Information -->
     @if($order->payment)
-        <div class="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
+        <div class="bg-white rounded-xl shadow-lg border border-gray-200 p-6 mb-6">
             <h2 class="text-xl font-bold text-gray-900 mb-4">Payment Information</h2>
             <div class="space-y-2 text-sm">
                 <p><strong>Payment Status:</strong> 
@@ -163,6 +163,129 @@
             </div>
         </div>
     @endif
+
+    <!-- Order Actions (Only for customers when delivered) -->
+    @if($order->status === 'delivered' && $order->user_id === auth()->id() && !$order->received_at && !$order->return_requested_at)
+        <div class="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
+            <h2 class="text-xl font-bold text-gray-900 mb-4">Order Actions</h2>
+            <p class="text-gray-600 mb-4">Your order has been delivered. Please confirm receipt or request a return if needed.</p>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Mark as Received -->
+                <form action="{{ route('orders.mark-received', $order) }}" method="POST" onsubmit="return confirm('Are you sure you want to mark this order as received?');">
+                    @csrf
+                    <button type="submit" class="w-full px-6 py-4 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-xl font-bold hover:from-green-700 hover:to-green-800 transition-all transform hover:scale-105 shadow-lg">
+                        <div class="flex items-center justify-center gap-2">
+                            <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                            </svg>
+                            <span>Mark as Received</span>
+                        </div>
+                    </button>
+                </form>
+
+                <!-- Request Return -->
+                <button type="button" onclick="showReturnModal()" class="w-full px-6 py-4 bg-gradient-to-r from-orange-600 to-orange-700 text-white rounded-xl font-bold hover:from-orange-700 hover:to-orange-800 transition-all transform hover:scale-105 shadow-lg">
+                    <div class="flex items-center justify-center gap-2">
+                        <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                        </svg>
+                        <span>Request Return</span>
+                    </div>
+                </button>
+            </div>
+        </div>
+    @endif
+
+    <!-- Return Requested Message -->
+    @if($order->return_requested_at)
+        <div class="bg-orange-50 border border-orange-200 rounded-xl p-6 mb-6">
+            <div class="flex items-start gap-3">
+                <svg class="w-6 h-6 text-orange-600 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+                <div class="flex-1">
+                    <h3 class="text-lg font-bold text-orange-900 mb-2">Return Request Submitted</h3>
+                    <p class="text-orange-800 mb-2">Your return request was submitted on {{ $order->return_requested_at->format('M d, Y h:i A') }}.</p>
+                    @if($order->return_reason)
+                        <div class="mt-3 p-3 bg-white rounded-lg">
+                            <p class="text-sm font-semibold text-gray-700 mb-1">Return Reason:</p>
+                            <p class="text-sm text-gray-600">{{ $order->return_reason }}</p>
+                        </div>
+                    @endif
+                    <p class="text-sm text-orange-700 mt-3">We will process your return request and contact you shortly.</p>
+                </div>
+            </div>
+        </div>
+    @endif
+
+    <!-- Order Received Message -->
+    @if($order->received_at)
+        <div class="bg-green-50 border border-green-200 rounded-xl p-6 mb-6">
+            <div class="flex items-center gap-3">
+                <svg class="w-6 h-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <div>
+                    <h3 class="text-lg font-bold text-green-900">Order Received</h3>
+                    <p class="text-green-800">You confirmed receipt on {{ $order->received_at->format('M d, Y h:i A') }}. Thank you for your purchase!</p>
+                </div>
+            </div>
+        </div>
+    @endif
+
+    <!-- Return Request Modal -->
+    <div id="return-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 hidden p-4">
+        <div class="bg-white rounded-xl shadow-xl max-w-md w-full p-6">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-xl font-bold text-gray-900">Request Return</h3>
+                <button onclick="hideReturnModal()" class="text-gray-400 hover:text-gray-600">
+                    <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            <form action="{{ route('orders.request-return', $order) }}" method="POST">
+                @csrf
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Reason for Return <span class="text-red-500">*</span>
+                    </label>
+                    <textarea name="return_reason" rows="4" required
+                              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                              placeholder="Please provide a reason for returning this order..."></textarea>
+                    <p class="text-xs text-gray-500 mt-1">Please provide details about why you want to return this order.</p>
+                </div>
+                <div class="flex gap-3">
+                    <button type="button" onclick="hideReturnModal()" 
+                            class="flex-1 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors font-semibold">
+                        Cancel
+                    </button>
+                    <button type="submit" 
+                            class="flex-1 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors font-semibold">
+                        Submit Return Request
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
 </div>
+
+<script>
+function showReturnModal() {
+    document.getElementById('return-modal').classList.remove('hidden');
+}
+
+function hideReturnModal() {
+    document.getElementById('return-modal').classList.add('hidden');
+}
+
+// Close modal when clicking outside
+document.getElementById('return-modal').addEventListener('click', function(e) {
+    if (e.target === this) {
+        hideReturnModal();
+    }
+});
+</script>
 @endsection
 

@@ -22,10 +22,15 @@ class Order extends Model
         'delivery_state',
         'delivery_phone',
         'notes',
+        'received_at',
+        'return_requested_at',
+        'return_reason',
     ];
 
     protected $casts = [
         'total_amount' => 'decimal:2',
+        'received_at' => 'datetime',
+        'return_requested_at' => 'datetime',
     ];
 
     /**
@@ -75,6 +80,7 @@ class Order extends Model
             'shipped' => 'bg-indigo-100 text-indigo-800',
             'delivered' => 'bg-green-100 text-green-800',
             'cancelled' => 'bg-red-100 text-red-800',
+            'return_requested' => 'bg-orange-100 text-orange-800',
             default => 'bg-gray-100 text-gray-800',
         };
     }

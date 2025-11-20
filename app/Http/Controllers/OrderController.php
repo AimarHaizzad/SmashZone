@@ -197,12 +197,77 @@ class OrderController extends Controller
         }
 
         $request->validate([
-            'status' => 'required|in:pending,confirmed,processing,shipped,delivered,cancelled',
+            'status' => 'required|in:pending,confirmed,processing,shipped,delivered,cancelled,return_requested',
         ]);
 
         $order->update(['status' => $request->status]);
 
         return redirect()->back()->with('success', 'Order status updated successfully.');
+    }
+
+    /**
+     * Mark order as received (for customers)
+     */
+    public function markAsReceived(Order $order)
+    {
+        // Ensure user owns this order
+        if ($order->user_id !== auth()->id()) {
+            abort(403, 'Unauthorized access.');
+        }
+
+        // Only allow if order is delivered
+        if ($order->status !== 'delivered') {
+            return redirect()->back()->with('error', 'Order must be delivered before marking as received.');
+        }
+
+        // Check if already received
+        if ($order->received_at) {
+            return redirect()->back()->with('info', 'Order has already been marked as received.');
+        }
+
+        $order->update([
+            'received_at' => now(),
+        ]);
+
+        return redirect()->back()->with('success', 'Order marked as received. Thank you!');
+    }
+
+    /**
+     * Request order return (for customers)
+     */
+    public function requestReturn(Request $request, Order $order)
+    {
+        // Ensure user owns this order
+        if ($order->user_id !== auth()->id()) {
+            abort(403, 'Unauthorized access.');
+        }
+
+        // Only allow if order is delivered
+        if ($order->status !== 'delivered') {
+            return redirect()->back()->with('error', 'Order must be delivered before requesting a return.');
+        }
+
+        // Check if return already requested
+        if ($order->return_requested_at) {
+            return redirect()->back()->with('info', 'Return has already been requested for this order.');
+        }
+
+        $request->validate([
+            'return_reason' => 'required|string|max:1000',
+        ]);
+
+        $order->update([
+            'return_requested_at' => now(),
+            'return_reason' => $request->return_reason,
+            'status' => 'return_requested',
+        ]);
+
+        // Update shipping status if exists
+        if ($order->shipping) {
+            $order->shipping->update(['status' => 'returned']);
+        }
+
+        return redirect()->back()->with('success', 'Return request submitted successfully. We will process your request shortly.');
     }
 }
 
