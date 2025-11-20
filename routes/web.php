@@ -858,8 +858,10 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/staff', [App\Http\Controllers\StaffController::class, 'index'])->name('staff.index');
     Route::get('/staff/create', [App\Http\Controllers\StaffController::class, 'create'])->name('staff.create');
     Route::post('/staff', [App\Http\Controllers\StaffController::class, 'store'])->name('staff.store');
+    Route::post('/staff/activate-all', [App\Http\Controllers\StaffController::class, 'activateAll'])->name('staff.activate-all');
     Route::get('/staff/{staff}/edit', [App\Http\Controllers\StaffController::class, 'edit'])->name('staff.edit');
     Route::put('/staff/{staff}', [App\Http\Controllers\StaffController::class, 'update'])->name('staff.update');
+    Route::patch('/staff/{staff}/activate', [App\Http\Controllers\StaffController::class, 'activate'])->name('staff.activate');
     Route::delete('/staff/{staff}', [App\Http\Controllers\StaffController::class, 'destroy'])->name('staff.destroy');
 });
 

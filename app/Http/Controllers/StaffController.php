@@ -166,6 +166,48 @@ class StaffController extends Controller
     }
 
     /**
+     * Activate/verify a staff member
+     */
+    public function activate(User $staff)
+    {
+        // Check if user is owner
+        if (auth()->user()->role !== 'owner') {
+            abort(403, 'Unauthorized. Only owners can access staff management.');
+        }
+
+        if ($staff->role !== 'staff') {
+            abort(404);
+        }
+
+        // Verify the staff member's email
+        $staff->update([
+            'email_verified_at' => now()
+        ]);
+
+        return redirect()->route('staff.index')
+            ->with('success', 'Staff member activated successfully!');
+    }
+
+    /**
+     * Activate all pending staff members
+     */
+    public function activateAll()
+    {
+        // Check if user is owner
+        if (auth()->user()->role !== 'owner') {
+            abort(403, 'Unauthorized. Only owners can access staff management.');
+        }
+
+        // Activate all pending staff (where email_verified_at is null)
+        $activatedCount = User::where('role', 'staff')
+            ->whereNull('email_verified_at')
+            ->update(['email_verified_at' => now()]);
+
+        return redirect()->route('staff.index')
+            ->with('success', "Successfully activated {$activatedCount} staff member(s)!");
+    }
+
+    /**
      * Remove the specified staff member.
      */
     public function destroy(User $staff)

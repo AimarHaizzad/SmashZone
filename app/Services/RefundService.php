@@ -38,12 +38,36 @@ class RefundService
             return $existingRefund;
         }
 
+        // Calculate refund amount - use booking's total_price, not entire payment amount
+        // This handles cases where one payment has multiple bookings
+        $refundAmount = $booking->total_price ?? 0;
+        
+        // If booking doesn't have total_price, try to calculate from payment
+        if ($refundAmount <= 0) {
+            // If payment has multiple bookings, calculate proportional refund
+            $paymentBookings = $payment->bookings()->where('status', '!=', 'cancelled')->get();
+            if ($paymentBookings->count() > 1) {
+                // Calculate the proportion this booking represents
+                $totalBookingAmount = $paymentBookings->sum('total_price');
+                if ($totalBookingAmount > 0) {
+                    $proportion = ($booking->total_price ?? 0) / $totalBookingAmount;
+                    $refundAmount = $payment->amount * $proportion;
+                } else {
+                    // If no total_price on bookings, split equally
+                    $refundAmount = $payment->amount / $paymentBookings->count();
+                }
+            } else {
+                // Single booking payment - refund full amount
+                $refundAmount = $payment->amount;
+            }
+        }
+
         // Create refund record
         $refund = Refund::create([
             'payment_id' => $payment->id,
             'booking_id' => $booking->id,
             'user_id' => $booking->user_id,
-            'amount' => $payment->amount,
+            'amount' => $refundAmount,
             'status' => 'pending',
             'reason' => $reason ?? 'Booking cancelled by customer',
         ]);

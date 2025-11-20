@@ -285,20 +285,29 @@ class BookingController extends Controller
             'user' => $booking->user,
         ];
 
-        // Process refund if payment was made
+        // Process refund if payment was made and is paid
         $refundService = new RefundService();
         $refund = null;
         
-        try {
-            if ($refundService->isEligibleForRefund($booking)) {
-                $refund = $refundService->processRefund($booking, 'Booking cancelled by ' . ($user->isCustomer() ? 'customer' : 'staff/owner'));
+        // Always try to process refund if payment exists and is paid
+        if ($booking->payment && $booking->payment->status === 'paid') {
+            try {
+                if ($refundService->isEligibleForRefund($booking)) {
+                    $refund = $refundService->processRefund($booking, 'Booking cancelled by ' . ($user->isCustomer() ? 'customer' : 'staff/owner'));
+                } else {
+                    \Log::info('Booking not eligible for refund', [
+                        'booking_id' => $booking->id,
+                        'payment_id' => $booking->payment->id,
+                        'payment_status' => $booking->payment->status
+                    ]);
+                }
+            } catch (\Exception $e) {
+                \Log::error('Failed to process refund during booking cancellation', [
+                    'booking_id' => $booking->id,
+                    'error' => $e->getMessage()
+                ]);
+                // Continue with cancellation even if refund fails
             }
-        } catch (\Exception $e) {
-            \Log::error('Failed to process refund during booking cancellation', [
-                'booking_id' => $booking->id,
-                'error' => $e->getMessage()
-            ]);
-            // Continue with cancellation even if refund fails
         }
 
         // Send cancellation notification
@@ -313,17 +322,30 @@ class BookingController extends Controller
 
         $payment = $booking->payment;
 
-        // Delete the booking
-        $booking->delete();
+        // Mark booking as cancelled instead of deleting (so refund can reference it)
+        $booking->update(['status' => 'cancelled']);
 
         if ($payment) {
-            $remainingTotal = $payment->bookings()->sum('total_price');
+            // Recalculate payment amount based on remaining (non-cancelled) bookings
+            $remainingBookings = $payment->bookings()->where('status', '!=', 'cancelled')->get();
+            $remainingTotal = $remainingBookings->sum('total_price');
+            
             if ($remainingTotal <= 0) {
-                $payment->delete();
+                // All bookings cancelled - can delete payment if no refunds exist
+                $hasRefunds = $payment->refunds()->exists();
+                if (!$hasRefunds) {
+                    $payment->delete();
+                } else {
+                    // Keep payment record for refund tracking
+                    $payment->update([
+                        'amount' => 0,
+                        'status' => 'refunded'
+                    ]);
+                }
             } else {
                 $payment->update([
                     'amount' => $remainingTotal,
-                    'booking_id' => $payment->bookings()->orderBy('date')->orderBy('start_time')->value('id'),
+                    'booking_id' => $remainingBookings->orderBy('date')->orderBy('start_time')->value('id'),
                 ]);
             }
         }
@@ -462,6 +484,22 @@ class BookingController extends Controller
             return redirect()->back()->with('error', 'Cannot cancel booking - customer is not late enough (must be 30+ minutes late)');
         }
 
+        // Process refund if payment was made
+        $refundService = new RefundService();
+        $refund = null;
+        
+        try {
+            if ($refundService->isEligibleForRefund($booking)) {
+                $refund = $refundService->processRefund($booking, 'Booking cancelled by staff/owner - customer was late');
+            }
+        } catch (\Exception $e) {
+            \Log::error('Failed to process refund during booking cancellation', [
+                'booking_id' => $booking->id,
+                'error' => $e->getMessage()
+            ]);
+            // Continue with cancellation even if refund fails
+        }
+
         // Update booking status to cancelled
         $booking->update(['status' => 'cancelled']);
 
@@ -475,22 +513,39 @@ class BookingController extends Controller
             ]);
         }
 
+        // Send cancellation notification
+        try {
+            $booking->user->notify(new BookingCancellation($booking, 'Booking cancelled by staff/owner - customer was late'));
+        } catch (\Exception $e) {
+            \Log::error('Failed to send booking cancellation email', [
+                'booking_id' => $booking->id,
+                'error' => $e->getMessage()
+            ]);
+        }
+
         // Handle different cancellation rules based on payment method
+        $message = 'Booking cancelled successfully.';
+        
         if ($booking->payment) {
             $paymentMethod = $booking->payment->payment_method ?? 'online';
             
             if ($paymentMethod === 'pay_at_counter') {
                 // For pay at counter: court becomes available immediately
                 // No refund needed since payment wasn't processed
-                $message = 'Booking cancelled successfully. Court is now available for new bookings.';
+                $message .= ' Court is now available for new bookings.';
             } else {
                 // For online payments: court remains unavailable until booking time ends
                 // This prevents double booking and maintains payment integrity
-                $message = 'Booking cancelled successfully. Court will remain unavailable until the original booking time ends to maintain payment integrity.';
+                $message .= ' Court will remain unavailable until the original booking time ends to maintain payment integrity.';
             }
         } else {
             // No payment record - court becomes available immediately
-            $message = 'Booking cancelled successfully. Court is now available for new bookings.';
+            $message .= ' Court is now available for new bookings.';
+        }
+        
+        // Add refund information to message
+        if ($refund) {
+            $message .= ' A refund of RM ' . number_format($refund->amount, 2) . ' has been processed.';
         }
 
         return redirect()->back()->with('success', $message);
