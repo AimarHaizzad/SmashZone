@@ -37,7 +37,7 @@
             <div class="flex flex-col sm:flex-row gap-3 sm:gap-4 items-center">
                 <!-- Add Court Button (Owner and Staff) -->
                 @if(auth()->user() && (auth()->user()->role === 'owner' || auth()->user()->role === 'staff'))
-                    <a href="{{ route('courts.create') }}" 
+                    <a href="{{ route('courts.create', absolute: false) }}" 
                        class="w-full sm:w-auto bg-gradient-to-r from-green-600 to-blue-600 text-white px-4 sm:px-6 py-2 sm:py-3 rounded-xl font-semibold hover:from-green-700 hover:to-blue-700 transition-all transform hover:scale-105 shadow-lg flex items-center justify-center gap-2">
                         <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
@@ -120,11 +120,11 @@
                     @if(auth()->user() && (auth()->user()->role === 'owner' || auth()->user()->role === 'staff'))
                         @if(auth()->user()->role === 'staff' || auth()->user()->id === $court->owner_id)
                             <div class="flex flex-col sm:flex-row gap-2 mt-3 pt-3 border-t border-gray-100">
-                                <a href="{{ route('courts.edit', $court) }}" 
+                                <a href="{{ route('courts.edit', $court, absolute: false) }}" 
                                    class="flex-1 px-3 py-2 bg-blue-100 text-blue-700 rounded-lg font-medium hover:bg-blue-200 transition-colors text-center text-xs sm:text-sm">
                                     Edit
                                 </a>
-                                <form action="{{ route('courts.destroy', $court) }}" method="POST" class="flex-1" onsubmit="return confirm('Are you sure you want to delete this court?')">
+                                <form action="{{ route('courts.destroy', $court, absolute: false) }}" method="POST" class="flex-1" onsubmit="return confirm('Are you sure you want to delete this court?')">
                                     @csrf
                                     @method('DELETE')
                                     <button type="submit" 
@@ -149,7 +149,7 @@
                     <h3 class="text-2xl font-bold text-gray-800 mb-2">No Courts Available</h3>
                     <p class="text-gray-600 mb-6">There are currently no badminton courts registered in the system.</p>
                     @if(auth()->user() && (auth()->user()->role === 'owner' || auth()->user()->role === 'staff'))
-                        <a href="{{ route('courts.create') }}" 
+                        <a href="{{ route('courts.create', absolute: false) }}" 
                            class="inline-flex items-center gap-2 bg-gradient-to-r from-green-600 to-blue-600 text-white px-6 py-3 rounded-xl font-semibold hover:from-green-700 hover:to-blue-700 transition-all transform hover:scale-105 shadow-lg">
                             <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />

@@ -99,7 +99,7 @@ class StaffController extends Controller
         // Send email notification to the new staff member
         $staff->notify(new StaffAccountCreated($staff, $request->password));
 
-        return redirect()->route('staff.index')
+        return redirect()->route('staff.index', absolute: false)
             ->with('success', 'Staff member created successfully! An email with account details has been sent to ' . $staff->email);
     }
 
@@ -161,7 +161,7 @@ class StaffController extends Controller
             ]);
         }
 
-        return redirect()->route('staff.index')
+        return redirect()->route('staff.index', absolute: false)
             ->with('success', 'Staff member updated successfully!');
     }
 
@@ -184,7 +184,7 @@ class StaffController extends Controller
             'email_verified_at' => now()
         ]);
 
-        return redirect()->route('staff.index')
+        return redirect()->route('staff.index', absolute: false)
             ->with('success', 'Staff member activated successfully!');
     }
 
@@ -203,7 +203,7 @@ class StaffController extends Controller
             ->whereNull('email_verified_at')
             ->update(['email_verified_at' => now()]);
 
-        return redirect()->route('staff.index')
+        return redirect()->route('staff.index', absolute: false)
             ->with('success', "Successfully activated {$activatedCount} staff member(s)!");
     }
 
@@ -223,7 +223,7 @@ class StaffController extends Controller
 
         $staff->delete();
 
-        return redirect()->route('staff.index')
+        return redirect()->route('staff.index', absolute: false)
             ->with('success', 'Staff member deleted successfully!');
     }
 } 

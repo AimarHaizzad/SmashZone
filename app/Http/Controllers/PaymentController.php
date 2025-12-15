@@ -65,7 +65,7 @@ class PaymentController extends Controller
 
         // Check if payment is already completed
         if ($payment->status === 'paid') {
-            return redirect()->route('payments.success', $payment)->with('info', 'Payment already completed.');
+            return redirect()->route('payments.success', $payment, absolute: false)->with('info', 'Payment already completed.');
         }
 
         $payment->loadMissing('bookings.court', 'booking.court');
@@ -94,7 +94,7 @@ class PaymentController extends Controller
 
         // Check if payment is already completed
         if ($payment->status === 'paid') {
-            return redirect()->route('payments.success', $payment);
+            return redirect()->route('payments.success', $payment, absolute: false);
         }
 
         $payment->loadMissing('bookings.court', 'booking.court');
@@ -152,8 +152,8 @@ class PaymentController extends Controller
                     'quantity' => 1,
                 ]],
                 'mode' => 'payment',
-                'success_url' => route('payments.success', $payment) . '?session_id={CHECKOUT_SESSION_ID}',
-                'cancel_url' => route('payments.cancel', $payment),
+                'success_url' => route('payments.success', $payment, absolute: false) . '?session_id={CHECKOUT_SESSION_ID}',
+                'cancel_url' => route('payments.cancel', $payment, absolute: false),
                 'metadata' => [
                     'payment_id' => $payment->id,
                     'booking_id' => $primaryBooking?->id,

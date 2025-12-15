@@ -280,7 +280,7 @@
                 console.log('Creating payment session...'); // Debug log
                 
                 // Create payment session
-                const response = await fetch('{{ route("payments.process", $payment) }}', {
+                const response = await fetch('{{ route("payments.process", $payment, absolute: false) }}', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',

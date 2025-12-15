@@ -206,7 +206,7 @@
 
                 <!-- Action Buttons -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <a href="{{ route('payments.pay', $payment) }}" 
+                    <a href="{{ route('payments.pay', $payment, absolute: false) }}" 
                        class="flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-green-600 to-blue-600 text-white rounded-xl font-semibold hover:from-green-700 hover:to-blue-700 transition-all transform hover:scale-105">
                         <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />

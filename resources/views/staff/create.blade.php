@@ -10,7 +10,7 @@
                     <h1 class="text-3xl font-bold text-gray-900 mb-2">Add New Staff Member</h1>
                     <p class="text-gray-600">Create a new staff account with access to manage courts and bookings.</p>
                 </div>
-                <a href="{{ route('staff.index') }}" class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-xl shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
+                <a href="{{ route('staff.index', absolute: false) }}" class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-xl shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
                     <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
                     </svg>
@@ -21,7 +21,7 @@
 
         <!-- Form Section -->
         <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
-            <form method="POST" action="{{ route('staff.store') }}" class="space-y-8">
+            <form method="POST" action="{{ route('staff.store', absolute: false) }}" class="space-y-8">
                 @csrf
 
                 <!-- Personal Information Section -->
@@ -274,7 +274,7 @@
 
                 <!-- Submit Buttons -->
                 <div class="flex items-center justify-between pt-8 border-t border-gray-200">
-                    <a href="{{ route('staff.index') }}" class="inline-flex items-center px-6 py-3 border border-gray-300 text-sm font-medium rounded-xl shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
+                    <a href="{{ route('staff.index', absolute: false) }}" class="inline-flex items-center px-6 py-3 border border-gray-300 text-sm font-medium rounded-xl shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
                         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                         </svg>

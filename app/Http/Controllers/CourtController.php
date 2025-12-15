@@ -41,36 +41,64 @@ class CourtController extends Controller
      */
     public function store(Request $request)
     {
-        if (!auth()->user() || (!auth()->user()->isOwner() && !auth()->user()->isStaff())) {
-            abort(403);
-        }
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'status' => 'required|in:active,maintenance,closed',
-            'location' => 'nullable|in:middle,edge,corner,center,side,front,back',
-            'image' => 'nullable|image|max:10240',
-        ]);
-
-        if ($request->hasFile('image')) {
-            $validated['image'] = $request->file('image')->store('courts', 'public');
-        }
-
-        $validated['owner_id'] = auth()->id();
-        $pricingRules = $this->validatedPricingRules($request);
-        $court = Court::create($validated);
-        $this->syncPricingRules($court, $pricingRules);
-
-        // Send web notifications
         try {
-            $this->webNotificationService->notifyNewCourt($court);
-        } catch (\Exception $e) {
-            \Log::error('Failed to send web notification for new court', [
-                'court_id' => $court->id,
-                'error' => $e->getMessage()
+            if (!auth()->user() || (!auth()->user()->isOwner() && !auth()->user()->isStaff())) {
+                abort(403);
+            }
+            
+            $validated = $request->validate([
+                'name' => 'required|string|max:255',
+                'status' => 'required|in:active,maintenance,closed',
+                'location' => 'nullable|in:middle,edge,corner,center,side,front,back',
+                'image' => 'nullable|image|max:10240',
             ]);
-        }
 
-        return redirect()->route('courts.index')->with('success', 'Court created successfully.');
+            if ($request->hasFile('image')) {
+                $validated['image'] = $request->file('image')->store('courts', 'public');
+            }
+
+            $validated['owner_id'] = auth()->id();
+            
+            // Validate and sync pricing rules
+            try {
+                $pricingRules = $this->validatedPricingRules($request);
+            } catch (\Exception $e) {
+                \Log::error('Pricing rules validation failed', ['error' => $e->getMessage()]);
+                return back()->withErrors(['pricing_rules' => 'Invalid pricing rules: ' . $e->getMessage()])->withInput();
+            }
+            
+            $court = Court::create($validated);
+            
+            try {
+                $this->syncPricingRules($court, $pricingRules);
+            } catch (\Exception $e) {
+                \Log::error('Failed to sync pricing rules', [
+                    'court_id' => $court->id,
+                    'error' => $e->getMessage()
+                ]);
+                // Continue even if pricing rules fail
+            }
+
+            // Send web notifications
+            try {
+                $this->webNotificationService->notifyNewCourt($court);
+            } catch (\Exception $e) {
+                \Log::error('Failed to send web notification for new court', [
+                    'court_id' => $court->id,
+                    'error' => $e->getMessage()
+                ]);
+            }
+
+            return redirect()->route('courts.index', absolute: false)->with('success', 'Court created successfully.');
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            throw $e;
+        } catch (\Exception $e) {
+            \Log::error('Court store failed', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            return back()->withErrors(['error' => 'Failed to create court: ' . $e->getMessage()])->withInput();
+        }
     }
 
     /**
@@ -105,44 +133,71 @@ class CourtController extends Controller
      */
     public function update(Request $request, Court $court)
     {
-        if (!auth()->user() || (!auth()->user()->isOwner() && !auth()->user()->isStaff())) {
-            abort(403);
-        }
-        
-        // Staff can update any court, owners can only update their own courts
-        if (auth()->user()->isOwner() && $court->owner_id !== auth()->id()) {
-            abort(403);
-        }
-        
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'status' => 'required|in:active,maintenance,closed',
-            'location' => 'nullable|in:middle,edge,corner,center,side,front,back',
-            'image' => 'nullable|image|max:10240',
-        ]);
-
-        if ($request->hasFile('image')) {
-            if ($court->image) {
-                Storage::disk('public')->delete($court->image);
-            }
-            $validated['image'] = $request->file('image')->store('courts', 'public');
-        }
-
-        $pricingRules = $this->validatedPricingRules($request);
-        $court->update($validated);
-        $this->syncPricingRules($court, $pricingRules);
-
-        // Send web notifications
         try {
-            $this->webNotificationService->notifyCourtUpdated($court);
-        } catch (\Exception $e) {
-            \Log::error('Failed to send web notification for court update', [
-                'court_id' => $court->id,
-                'error' => $e->getMessage()
+            if (!auth()->user() || (!auth()->user()->isOwner() && !auth()->user()->isStaff())) {
+                abort(403);
+            }
+            
+            // Staff can update any court, owners can only update their own courts
+            if (auth()->user()->isOwner() && $court->owner_id !== auth()->id()) {
+                abort(403);
+            }
+            
+            $validated = $request->validate([
+                'name' => 'required|string|max:255',
+                'status' => 'required|in:active,maintenance,closed',
+                'location' => 'nullable|in:middle,edge,corner,center,side,front,back',
+                'image' => 'nullable|image|max:10240',
             ]);
-        }
 
-        return redirect()->route('courts.index')->with('success', 'Court updated successfully.');
+            if ($request->hasFile('image')) {
+                if ($court->image) {
+                    Storage::disk('public')->delete($court->image);
+                }
+                $validated['image'] = $request->file('image')->store('courts', 'public');
+            }
+
+            // Validate and sync pricing rules
+            try {
+                $pricingRules = $this->validatedPricingRules($request);
+            } catch (\Exception $e) {
+                \Log::error('Pricing rules validation failed', ['error' => $e->getMessage()]);
+                return back()->withErrors(['pricing_rules' => 'Invalid pricing rules: ' . $e->getMessage()])->withInput();
+            }
+            
+            $court->update($validated);
+            
+            try {
+                $this->syncPricingRules($court, $pricingRules);
+            } catch (\Exception $e) {
+                \Log::error('Failed to sync pricing rules', [
+                    'court_id' => $court->id,
+                    'error' => $e->getMessage()
+                ]);
+                // Continue even if pricing rules fail
+            }
+
+            // Send web notifications
+            try {
+                $this->webNotificationService->notifyCourtUpdated($court);
+            } catch (\Exception $e) {
+                \Log::error('Failed to send web notification for court update', [
+                    'court_id' => $court->id,
+                    'error' => $e->getMessage()
+                ]);
+            }
+
+            return redirect()->route('courts.index', absolute: false)->with('success', 'Court updated successfully.');
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            throw $e;
+        } catch (\Exception $e) {
+            \Log::error('Court update failed', [
+                'court_id' => $court->id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            return back()->withErrors(['error' => 'Failed to update court: ' . $e->getMessage()])->withInput();
+        }
     }
 
     /**
@@ -178,7 +233,7 @@ class CourtController extends Controller
             ]);
         }
 
-        return redirect()->route('courts.index')->with('success', 'Court deleted successfully.');
+        return redirect()->route('courts.index', absolute: false)->with('success', 'Court deleted successfully.');
     }
 
     public function availability(Request $request)
@@ -201,50 +256,74 @@ class CourtController extends Controller
 
     protected function validatedPricingRules(Request $request): array
     {
-        $rawRules = array_values(array_filter($request->input('pricing_rules', []), function ($rule) {
-            return is_array($rule) && (isset($rule['start_time']) || isset($rule['price_per_hour']));
-        }));
+        try {
+            $rawRules = array_values(array_filter($request->input('pricing_rules', []), function ($rule) {
+                return is_array($rule) && (isset($rule['start_time']) || isset($rule['price_per_hour']));
+            }));
 
-        $validator = Validator::make(
-            ['pricing_rules' => $rawRules],
-            [
-                'pricing_rules' => 'required|array|min:1',
-                'pricing_rules.*.label' => 'nullable|string|max:255',
-                'pricing_rules.*.start_time' => 'required|date_format:H:i',
-                'pricing_rules.*.end_time' => 'required|date_format:H:i',
-                'pricing_rules.*.price_per_hour' => 'required|numeric|min:0',
-            ]
-        );
-
-        $validator->after(function ($validator) use ($rawRules) {
-            foreach ($rawRules as $index => $rule) {
-                if (($rule['start_time'] ?? '') === ($rule['end_time'] ?? '')) {
-                    $validator->errors()->add("pricing_rules.{$index}.end_time", 'End time must be different from start time.');
-                }
+            // If no pricing rules provided, return empty array (will use default pricing)
+            if (empty($rawRules)) {
+                return [];
             }
-        });
 
-        $validated = $validator->validate();
+            $validator = Validator::make(
+                ['pricing_rules' => $rawRules],
+                [
+                    'pricing_rules' => 'array',
+                    'pricing_rules.*.label' => 'nullable|string|max:255',
+                    'pricing_rules.*.start_time' => 'required|date_format:H:i',
+                    'pricing_rules.*.end_time' => 'required|date_format:H:i',
+                    'pricing_rules.*.price_per_hour' => 'required|numeric|min:0',
+                ]
+            );
 
-        return collect($validated['pricing_rules'])
-            ->map(function ($rule) {
-                $start = strlen($rule['start_time']) === 5 ? "{$rule['start_time']}:00" : $rule['start_time'];
-                $end = strlen($rule['end_time']) === 5 ? "{$rule['end_time']}:00" : $rule['end_time'];
+            $validator->after(function ($validator) use ($rawRules) {
+                foreach ($rawRules as $index => $rule) {
+                    if (($rule['start_time'] ?? '') === ($rule['end_time'] ?? '')) {
+                        $validator->errors()->add("pricing_rules.{$index}.end_time", 'End time must be different from start time.');
+                    }
+                }
+            });
 
-                return [
-                    'label' => $rule['label'] ?? null,
-                    'start_time' => $start,
-                    'end_time' => $end,
-                    'day_of_week' => $rule['day_of_week'] ?? null,
-                    'price_per_hour' => $rule['price_per_hour'],
-                ];
-            })
-            ->toArray();
+            $validated = $validator->validate();
+
+            return collect($validated['pricing_rules'])
+                ->map(function ($rule) {
+                    $start = strlen($rule['start_time']) === 5 ? "{$rule['start_time']}:00" : $rule['start_time'];
+                    $end = strlen($rule['end_time']) === 5 ? "{$rule['end_time']}:00" : $rule['end_time'];
+
+                    return [
+                        'label' => $rule['label'] ?? null,
+                        'start_time' => $start,
+                        'end_time' => $end,
+                        'day_of_week' => $rule['day_of_week'] ?? null,
+                        'price_per_hour' => $rule['price_per_hour'],
+                    ];
+                })
+                ->toArray();
+        } catch (\Exception $e) {
+            \Log::error('Pricing rules validation error', ['error' => $e->getMessage()]);
+            throw $e;
+        }
     }
 
     protected function syncPricingRules(Court $court, array $pricingRules): void
     {
-        $court->pricingRules()->delete();
-        $court->pricingRules()->createMany($pricingRules);
+        try {
+            // Only sync if pricing rules are provided
+            if (empty($pricingRules)) {
+                return;
+            }
+            
+            $court->pricingRules()->delete();
+            $court->pricingRules()->createMany($pricingRules);
+        } catch (\Exception $e) {
+            \Log::error('Failed to sync pricing rules', [
+                'court_id' => $court->id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            throw $e;
+        }
     }
 }

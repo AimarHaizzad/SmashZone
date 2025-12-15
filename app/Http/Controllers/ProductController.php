@@ -40,25 +40,41 @@ class ProductController extends Controller
      */
     public function store(Request $request)
     {
-        if (!auth()->user() || (!auth()->user()->isOwner() && !auth()->user()->isStaff())) {
-            abort(403);
-        }
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'price' => 'required|numeric|min:0',
-            'quantity' => 'required|integer|min:0',
-            'image' => 'nullable|image|max:10240',
-            'category' => 'required|string|max:255',
-            'brand' => 'required|string|max:255',
-        ]);
+        try {
+            if (!auth()->user() || (!auth()->user()->isOwner() && !auth()->user()->isStaff())) {
+                abort(403);
+            }
+            
+            $validated = $request->validate([
+                'name' => 'required|string|max:255',
+                'description' => 'nullable|string',
+                'price' => 'required|numeric|min:0',
+                'quantity' => 'required|integer|min:0',
+                'image' => 'nullable|image|max:10240',
+                'category' => 'required|string|max:255',
+                'brand' => 'required|string|max:255',
+            ]);
 
-        if ($request->hasFile('image')) {
-            $validated['image'] = $request->file('image')->store('products', 'public');
-        }
+            if ($request->hasFile('image')) {
+                try {
+                    $validated['image'] = $request->file('image')->store('products', 'public');
+                } catch (\Exception $e) {
+                    \Log::error('Failed to store product image', ['error' => $e->getMessage()]);
+                    return back()->withErrors(['image' => 'Failed to upload image: ' . $e->getMessage()])->withInput();
+                }
+            }
 
-        Product::create($validated);
-        return redirect()->route('products.index')->with('success', 'Product created successfully.');
+            Product::create($validated);
+            return redirect()->route('products.index', absolute: false)->with('success', 'Product created successfully.');
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            throw $e;
+        } catch (\Exception $e) {
+            \Log::error('Product store failed', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            return back()->withErrors(['error' => 'Failed to create product: ' . $e->getMessage()])->withInput();
+        }
     }
 
     /**
@@ -85,29 +101,49 @@ class ProductController extends Controller
      */
     public function update(Request $request, Product $product)
     {
-        if (!auth()->user() || (!auth()->user()->isOwner() && !auth()->user()->isStaff())) {
-            abort(403);
-        }
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'price' => 'required|numeric|min:0',
-            'quantity' => 'required|integer|min:0',
-            'image' => 'nullable|image|max:10240',
-            'category' => 'required|string|max:255',
-            'brand' => 'required|string|max:255',
-        ]);
-
-        if ($request->hasFile('image')) {
-            // Delete old image if exists
-            if ($product->image) {
-                Storage::disk('public')->delete($product->image);
+        try {
+            if (!auth()->user() || (!auth()->user()->isOwner() && !auth()->user()->isStaff())) {
+                abort(403);
             }
-            $validated['image'] = $request->file('image')->store('products', 'public');
-        }
+            
+            $validated = $request->validate([
+                'name' => 'required|string|max:255',
+                'description' => 'nullable|string',
+                'price' => 'required|numeric|min:0',
+                'quantity' => 'required|integer|min:0',
+                'image' => 'nullable|image|max:10240',
+                'category' => 'required|string|max:255',
+                'brand' => 'required|string|max:255',
+            ]);
 
-        $product->update($validated);
-        return redirect()->route('products.index')->with('success', 'Product updated successfully.');
+            if ($request->hasFile('image')) {
+                try {
+                    // Delete old image if exists
+                    if ($product->image) {
+                        Storage::disk('public')->delete($product->image);
+                    }
+                    $validated['image'] = $request->file('image')->store('products', 'public');
+                } catch (\Exception $e) {
+                    \Log::error('Failed to update product image', [
+                        'product_id' => $product->id,
+                        'error' => $e->getMessage()
+                    ]);
+                    return back()->withErrors(['image' => 'Failed to upload image: ' . $e->getMessage()])->withInput();
+                }
+            }
+
+            $product->update($validated);
+            return redirect()->route('products.index', absolute: false)->with('success', 'Product updated successfully.');
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            throw $e;
+        } catch (\Exception $e) {
+            \Log::error('Product update failed', [
+                'product_id' => $product->id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            return back()->withErrors(['error' => 'Failed to update product: ' . $e->getMessage()])->withInput();
+        }
     }
 
     /**
@@ -115,13 +151,32 @@ class ProductController extends Controller
      */
     public function destroy(Product $product)
     {
-        if (!auth()->user() || (!auth()->user()->isOwner() && !auth()->user()->isStaff())) {
-            abort(403);
+        try {
+            if (!auth()->user() || (!auth()->user()->isOwner() && !auth()->user()->isStaff())) {
+                abort(403);
+            }
+            
+            if ($product->image) {
+                try {
+                    Storage::disk('public')->delete($product->image);
+                } catch (\Exception $e) {
+                    \Log::error('Failed to delete product image', [
+                        'product_id' => $product->id,
+                        'error' => $e->getMessage()
+                    ]);
+                    // Continue with deletion even if image deletion fails
+                }
+            }
+            
+            $product->delete();
+            return redirect()->route('products.index', absolute: false)->with('success', 'Product deleted successfully.');
+        } catch (\Exception $e) {
+            \Log::error('Product destroy failed', [
+                'product_id' => $product->id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            return back()->withErrors(['error' => 'Failed to delete product: ' . $e->getMessage()]);
         }
-        if ($product->image) {
-            Storage::disk('public')->delete($product->image);
-        }
-        $product->delete();
-        return redirect()->route('products.index')->with('success', 'Product deleted successfully.');
     }
 }

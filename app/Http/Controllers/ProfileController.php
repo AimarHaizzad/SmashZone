@@ -49,7 +49,7 @@ class ProfileController extends Controller
 
         $user->save();
 
-        return Redirect::route('profile.edit')->with('status', 'profile-updated');
+        return Redirect::route('profile.edit', absolute: false)->with('status', 'profile-updated');
     }
 
     /**
@@ -70,6 +70,6 @@ class ProfileController extends Controller
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return Redirect::to('/');
+        return Redirect::to('/', absolute: false);
     }
 }

@@ -15,7 +15,7 @@
 
     <!-- Enhanced Form -->
     <div class="bg-white rounded-3xl shadow-xl border border-gray-100 p-8">
-        <form action="{{ route('products.store') }}" method="POST" enctype="multipart/form-data" class="space-y-6">
+        <form action="{{ route('products.store', absolute: false) }}" method="POST" enctype="multipart/form-data" class="space-y-6">
             @csrf
             
             <!-- Product Basic Information -->
@@ -253,7 +253,7 @@
 
             <!-- Action Buttons -->
             <div class="flex gap-4 pt-6">
-                <a href="{{ route('products.index') }}" 
+                <a href="{{ route('products.index', absolute: false) }}" 
                    class="flex-1 px-6 py-3 bg-gray-100 text-gray-700 rounded-xl font-semibold hover:bg-gray-200 transition-colors text-center">
                     Cancel
                 </a>

@@ -35,7 +35,7 @@
             ];
             $pricingRules = old('pricing_rules', $defaultPricing);
         @endphp
-        <form action="{{ route('courts.store') }}" method="POST" enctype="multipart/form-data" class="p-8 space-y-8">
+        <form action="{{ route('courts.store', absolute: false) }}" method="POST" enctype="multipart/form-data" class="p-8 space-y-8">
             @csrf
             
             <!-- Basic Information Section -->
@@ -235,7 +235,7 @@
             
             <!-- Action Buttons -->
             <div class="flex flex-col sm:flex-row gap-4 pt-6 border-t border-gray-200">
-                <a href="{{ route('courts.index') }}" 
+                <a href="{{ route('courts.index', absolute: false) }}" 
                    class="flex-1 px-6 py-4 bg-gray-100 text-gray-700 rounded-xl font-semibold hover:bg-gray-200 transition-colors text-center">
                     Cancel
                 </a>

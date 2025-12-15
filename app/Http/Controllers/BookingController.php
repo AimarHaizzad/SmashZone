@@ -150,7 +150,7 @@ class BookingController extends Controller
             ]);
         }
 
-        return redirect()->route('bookings.index')->with('success', 'Booking created successfully.');
+        return redirect()->route('bookings.index', absolute: false)->with('success', 'Booking created successfully.');
     }
 
     /**
@@ -233,7 +233,7 @@ class BookingController extends Controller
             ]);
         }
 
-        return redirect()->route('bookings.index')->with('success', 'Booking updated successfully.');
+        return redirect()->route('bookings.index', absolute: false)->with('success', 'Booking updated successfully.');
     }
 
     /**

@@ -80,10 +80,10 @@ class CartController extends Controller
         session(['cart' => $cart]);
 
         if (!empty($messages)) {
-            return redirect()->route('cart.index')->with('info', implode(' ', $messages));
+            return redirect()->route('cart.index', absolute: false)->with('info', implode(' ', $messages));
         }
 
-        return redirect()->route('cart.index')->with('success', 'Cart updated successfully.');
+        return redirect()->route('cart.index', absolute: false)->with('success', 'Cart updated successfully.');
     }
 
     public function remove(Request $request)
@@ -99,7 +99,7 @@ class CartController extends Controller
     {
         $cart = session('cart', []);
         if (empty($cart)) {
-            return redirect()->route('cart.index')->with('error', 'Your cart is empty.');
+            return redirect()->route('cart.index', absolute: false)->with('error', 'Your cart is empty.');
         }
 
         $products = Product::whereIn('id', array_keys($cart))->get();

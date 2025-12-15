@@ -43,7 +43,7 @@
             })->toArray();
             $pricingRules = old('pricing_rules', !empty($existingPricing) ? $existingPricing : $defaultPricing);
         @endphp
-        <form action="{{ route('courts.update', $court) }}" method="POST" enctype="multipart/form-data" class="p-8 space-y-8">
+        <form action="{{ route('courts.update', $court, absolute: false) }}" method="POST" enctype="multipart/form-data" class="p-8 space-y-8">
             @csrf
             @method('PUT')
             
@@ -259,7 +259,7 @@
             
             <!-- Action Buttons -->
             <div class="flex flex-col sm:flex-row gap-4 pt-6 border-t border-gray-200">
-                <a href="{{ route('courts.index') }}" 
+                <a href="{{ route('courts.index', absolute: false) }}" 
                    class="flex-1 px-6 py-4 bg-gray-100 text-gray-700 rounded-xl font-semibold hover:bg-gray-200 transition-colors text-center">
                     Cancel
                 </a>

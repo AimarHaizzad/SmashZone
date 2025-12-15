@@ -44,7 +44,7 @@
                     </svg>
                     Browse Courts
                 </a>
-                <a href="{{ route('bookings.index') }}" 
+                <a href="{{ route('bookings.index', absolute: false) }}" 
                    class="inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-xl font-semibold hover:from-green-700 hover:to-green-800 transition-all transform hover:scale-105 shadow-lg">
                     <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
@@ -213,7 +213,7 @@
                                         </button>
                                         @if($showPayButton)
                                             @php $renderedPaymentButtons[] = $paymentId; @endphp
-                                            <a href="{{ route('payments.pay', $payment) }}" class="px-3 py-1.5 bg-green-50 text-green-700 rounded-lg font-medium hover:bg-green-100 transition-colors text-sm">
+                                            <a href="{{ route('payments.pay', $payment, absolute: false) }}" class="px-3 py-1.5 bg-green-50 text-green-700 rounded-lg font-medium hover:bg-green-100 transition-colors text-sm">
                                                 <svg class="w-4 h-4 inline mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
                                                 </svg>
@@ -228,7 +228,7 @@
                                             </span>
                                         @endif
                                         @if($canCancel)
-                                            <form action="{{ route('bookings.destroy', $booking) }}" method="POST" onsubmit="return confirm('Are you sure you want to cancel this booking?')" class="inline">
+                                            <form action="{{ route('bookings.destroy', $booking, absolute: false) }}" method="POST" onsubmit="return confirm('Are you sure you want to cancel this booking?')" class="inline">
                                                 @csrf
                                                 @method('DELETE')
                                                 <button type="submit" class="px-3 py-1.5 bg-red-50 text-red-700 rounded-lg font-medium hover:bg-red-100 transition-colors text-sm">

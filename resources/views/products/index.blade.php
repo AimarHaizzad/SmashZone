@@ -82,7 +82,7 @@
                 </a>
             </div>
             @if(auth()->user() && (auth()->user()->role === 'owner' || auth()->user()->role === 'staff'))
-                <a href="{{ route('products.create') }}" 
+                <a href="{{ route('products.create', absolute: false) }}" 
                    class="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl shadow-lg hover:from-blue-700 hover:to-blue-800 font-semibold transition-all transform hover:scale-105">
                     <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
@@ -168,7 +168,7 @@
                                 Out of stock
                             @endif
                         </div>
-                        <form action="{{ route('cart.add') }}" method="POST" class="space-y-3">
+                        <form action="{{ route('cart.add', absolute: false) }}" method="POST" class="space-y-3">
                             @csrf
                             <input type="hidden" name="product_id" value="{{ $product->id }}">
                             <div class="flex items-center gap-2">
@@ -193,7 +193,7 @@
                     
                     @if(auth()->user() && (auth()->user()->role === 'owner' || auth()->user()->role === 'staff'))
                         <div class="flex gap-2 mt-4">
-                            <a href="{{ route('products.edit', $product) }}" 
+                            <a href="{{ route('products.edit', $product, absolute: false) }}" 
                                class="flex-1 bg-gradient-to-r from-yellow-500 to-yellow-600 text-white px-4 py-3 rounded-xl font-semibold hover:from-yellow-600 hover:to-yellow-700 transition-all transform hover:scale-105 shadow-lg text-center">
                                 <div class="flex items-center justify-center gap-2">
                                     <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -202,7 +202,7 @@
                                     Edit
                                 </div>
                             </a>
-                            <form action="{{ route('products.destroy', $product) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this product?');" class="flex-1">
+                            <form action="{{ route('products.destroy', $product, absolute: false) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this product?');" class="flex-1">
                                 @csrf
                                 @method('DELETE')
                                 <button type="submit" 
@@ -230,7 +230,7 @@
                     <h3 class="text-xl font-semibold text-gray-600 mb-2">No Products Found</h3>
                     <p class="text-gray-500 mb-6">We couldn't find any products matching your criteria.</p>
                     @if(auth()->user() && (auth()->user()->role === 'owner' || auth()->user()->role === 'staff'))
-                        <a href="{{ route('products.create') }}" 
+                        <a href="{{ route('products.create', absolute: false) }}" 
                            class="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl shadow-lg hover:from-blue-700 hover:to-blue-800 font-semibold transition-all transform hover:scale-105">
                             <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />

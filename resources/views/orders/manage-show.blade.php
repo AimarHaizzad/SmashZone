@@ -28,7 +28,7 @@
             <!-- Order Status Management -->
             <div class="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
                 <h2 class="text-xl font-bold text-gray-900 mb-4">Order Status</h2>
-                <form action="{{ route('orders.update-status', $order) }}" method="POST" class="space-y-4">
+                <form action="{{ route('orders.update-status', $order, absolute: false) }}" method="POST" class="space-y-4">
                     @csrf
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">Current Status</label>
@@ -78,7 +78,7 @@
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <!-- Approve Return -->
-                        <form action="{{ route('orders.approve-return', $order) }}" method="POST" onsubmit="return confirm('Are you sure you want to approve this return? This will cancel the order and process a refund.')">
+                        <form action="{{ route('orders.approve-return', $order, absolute: false) }}" method="POST" onsubmit="return confirm('Are you sure you want to approve this return? This will cancel the order and process a refund.')">
                             @csrf
                             <button type="submit" class="w-full px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-semibold flex items-center justify-center gap-2">
                                 <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -101,7 +101,7 @@
                     <div id="reject-modal" class="hidden fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center">
                         <div class="bg-white rounded-xl shadow-xl p-6 max-w-md w-full mx-4">
                             <h3 class="text-xl font-bold text-gray-900 mb-4">Reject Return Request</h3>
-                            <form action="{{ route('orders.reject-return', $order) }}" method="POST">
+                            <form action="{{ route('orders.reject-return', $order, absolute: false) }}" method="POST">
                                 @csrf
                                 <div class="mb-4">
                                     <label class="block text-sm font-medium text-gray-700 mb-2">Rejection Reason *</label>
@@ -163,7 +163,7 @@
                     </div>
                 @endif
 
-                <form action="{{ route('orders.update-shipping', $order) }}" method="POST" class="space-y-4">
+                <form action="{{ route('orders.update-shipping', $order, absolute: false) }}" method="POST" class="space-y-4">
                     @csrf
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">Shipping Status</label>

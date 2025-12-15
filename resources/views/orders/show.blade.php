@@ -172,7 +172,7 @@
             
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <!-- Mark as Received -->
-                <form action="{{ route('orders.mark-received', $order) }}" method="POST" onsubmit="return confirm('Are you sure you want to mark this order as received?');">
+                <form action="{{ route('orders.mark-received', $order, absolute: false) }}" method="POST" onsubmit="return confirm('Are you sure you want to mark this order as received?');">
                     @csrf
                     <button type="submit" class="w-full px-6 py-4 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-xl font-bold hover:from-green-700 hover:to-green-800 transition-all transform hover:scale-105 shadow-lg">
                         <div class="flex items-center justify-center gap-2">
@@ -245,7 +245,7 @@
                     </svg>
                 </button>
             </div>
-            <form action="{{ route('orders.request-return', $order) }}" method="POST">
+            <form action="{{ route('orders.request-return', $order, absolute: false) }}" method="POST">
                 @csrf
                 <div class="mb-4">
                     <label class="block text-sm font-medium text-gray-700 mb-2">
