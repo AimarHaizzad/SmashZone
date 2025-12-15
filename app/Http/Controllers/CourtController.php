@@ -21,8 +21,18 @@ class CourtController extends Controller
      */
     public function index()
     {
-        $courts = Court::all();
-        return view('courts.index', compact('courts'));
+        try {
+            $courts = Court::with('owner')->get();
+            return view('courts.index', compact('courts'));
+        } catch (\Exception $e) {
+            \Log::error('Courts index failed', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            // Return empty collection if there's an error
+            $courts = collect();
+            return view('courts.index', compact('courts'))->withErrors(['error' => 'Failed to load courts. Please try again later.']);
+        }
     }
 
     /**
@@ -89,7 +99,8 @@ class CourtController extends Controller
                 ]);
             }
 
-            return redirect()->route('courts.index', absolute: false)->with('success', 'Court created successfully.');
+            // Use simple redirect to avoid URL generation issues
+            return redirect('/courts')->with('success', 'Court created successfully.');
         } catch (\Illuminate\Validation\ValidationException $e) {
             throw $e;
         } catch (\Exception $e) {
@@ -187,7 +198,8 @@ class CourtController extends Controller
                 ]);
             }
 
-            return redirect()->route('courts.index', absolute: false)->with('success', 'Court updated successfully.');
+            // Use simple redirect to avoid URL generation issues
+            return redirect('/courts')->with('success', 'Court updated successfully.');
         } catch (\Illuminate\Validation\ValidationException $e) {
             throw $e;
         } catch (\Exception $e) {
@@ -233,7 +245,8 @@ class CourtController extends Controller
             ]);
         }
 
-        return redirect()->route('courts.index', absolute: false)->with('success', 'Court deleted successfully.');
+        // Use simple redirect to avoid URL generation issues
+        return redirect('/courts')->with('success', 'Court deleted successfully.');
     }
 
     public function availability(Request $request)

@@ -138,6 +138,17 @@ class PaymentController extends Controller
             ]);
 
             // Create Stripe checkout session
+            // Stripe requires absolute URLs, so we need to use the full URL
+            $appUrl = config('app.url', env('APP_URL', 'https://smashzone-ywoa.onrender.com'));
+            $successUrl = $appUrl . route('payments.success', $payment, absolute: false) . '?session_id={CHECKOUT_SESSION_ID}';
+            $cancelUrl = $appUrl . route('payments.cancel', $payment, absolute: false);
+            
+            \Log::info('Stripe URLs', [
+                'success_url' => $successUrl,
+                'cancel_url' => $cancelUrl,
+                'app_url' => $appUrl
+            ]);
+            
             $session = Session::create([
                 'payment_method_types' => ['card', 'fpx'],
                 'line_items' => [[
@@ -152,8 +163,8 @@ class PaymentController extends Controller
                     'quantity' => 1,
                 ]],
                 'mode' => 'payment',
-                'success_url' => route('payments.success', $payment, absolute: false) . '?session_id={CHECKOUT_SESSION_ID}',
-                'cancel_url' => route('payments.cancel', $payment, absolute: false),
+                'success_url' => $successUrl,
+                'cancel_url' => $cancelUrl,
                 'metadata' => [
                     'payment_id' => $payment->id,
                     'booking_id' => $primaryBooking?->id,

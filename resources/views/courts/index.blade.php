@@ -16,6 +16,34 @@
 </div>
 
 <div class="max-w-7xl mx-auto py-4 sm:py-8">
+    <!-- Success/Error Messages -->
+    @if(session('success'))
+        <div class="mb-6 p-4 bg-green-50 border-l-4 border-green-500 rounded-lg">
+            <div class="flex items-center gap-2">
+                <svg class="w-5 h-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <p class="text-sm font-semibold text-green-800">{{ session('success') }}</p>
+            </div>
+        </div>
+    @endif
+
+    @if($errors->any())
+        <div class="mb-6 p-4 bg-red-50 border-l-4 border-red-500 rounded-lg">
+            <div class="flex items-center gap-2 mb-2">
+                <svg class="w-5 h-5 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <h3 class="text-lg font-semibold text-red-800">Error</h3>
+            </div>
+            <ul class="list-disc list-inside space-y-1 text-sm text-red-700">
+                @foreach($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
+
     <!-- Enhanced Header Section -->
     <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-4 sm:p-6 mb-6 sm:mb-8">
         <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 sm:gap-6">
@@ -58,8 +86,9 @@
                 <!-- Court Image with Status Badge -->
                 <div class="relative">
                     <img src="{{ $court->image ? asset('storage/' . $court->image) : asset('images/default-badminton-court.jpg') }}" 
-                         alt="{{ $court->name }}" 
-                         class="h-40 sm:h-48 w-full object-cover">
+                         alt="{{ $court->name ?? 'Court' }}" 
+                         class="h-40 sm:h-48 w-full object-cover"
+                         onerror="this.onerror=null; this.src='{{ asset('images/default-badminton-court.jpg') }}';">
                     
                     <!-- Court Type Badge (if available) -->
                     @if($court->type)
@@ -77,7 +106,7 @@
                         <svg class="w-4 h-4 sm:w-5 sm:h-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                         </svg>
-                        {{ $court->name }}
+                        {{ $court->name ?? 'Unnamed Court' }}
                     </h2>
                     
                     
@@ -87,14 +116,14 @@
                             <svg class="w-3 h-3 sm:w-4 sm:h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                             </svg>
-                            <span>Owner: {{ $court->owner->name ?? 'Unknown' }}</span>
+                            <span>Owner: {{ $court->owner->name ?? ($court->owner_id ? 'User #' . $court->owner_id : 'Unknown') }}</span>
                         </div>
                         <div class="flex items-center gap-2 text-xs sm:text-sm">
                             <svg class="w-3 h-3 sm:w-4 sm:h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
-                            <span class="font-medium {{ $court->status === 'active' ? 'text-green-600' : ($court->status === 'maintenance' ? 'text-yellow-600' : 'text-red-600') }}">
-                                Status: {{ ucfirst($court->status) }}
+                            <span class="font-medium {{ ($court->status ?? 'active') === 'active' ? 'text-green-600' : (($court->status ?? 'active') === 'maintenance' ? 'text-yellow-600' : 'text-red-600') }}">
+                                Status: {{ ucfirst($court->status ?? 'active') }}
                             </span>
                         </div>
                         @if($court->location)
