@@ -57,8 +57,8 @@
 
                 <!-- Auth Buttons -->
                 <div class="flex items-center space-x-4">
-                    <a href="{{ route('login') }}" class="text-gray-700 hover:text-green-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">Login</a>
-                    <a href="{{ route('register') }}" class="bg-gradient-to-r from-green-600 to-blue-600 text-white px-6 py-2 rounded-lg font-semibold hover:from-green-700 hover:to-blue-700 transition-all transform hover:scale-105 shadow-lg">Get Started</a>
+                    <a href="{{ route('login', absolute: false) }}" class="text-gray-700 hover:text-green-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">Login</a>
+                    <a href="{{ route('register', absolute: false) }}" class="bg-gradient-to-r from-green-600 to-blue-600 text-white px-6 py-2 rounded-lg font-semibold hover:from-green-700 hover:to-blue-700 transition-all transform hover:scale-105 shadow-lg">Get Started</a>
                 </div>
             </div>
         </div>
@@ -87,7 +87,7 @@
                         </p>
 
                         <div class="flex flex-col sm:flex-row gap-4">
-                            <a href="{{ route('register') }}" 
+                            <a href="{{ route('register', absolute: false) }}" 
                                class="bg-white text-green-600 px-8 py-4 rounded-xl font-bold text-lg hover:bg-gray-100 transition-all transform hover:scale-105 shadow-lg text-center">
                                 Start Playing Today
                             </a>
@@ -239,7 +239,7 @@
                         Whether you're a beginner looking to start your badminton journey or a professional player seeking the best facilities, 
                         SmashZone has everything you need to excel in this amazing sport.
                     </p>
-                    <a href="{{ route('register') }}" 
+                    <a href="{{ route('register', absolute: false) }}" 
                        class="bg-gradient-to-r from-green-600 to-blue-600 text-white px-8 py-4 rounded-xl font-bold text-lg hover:from-green-700 hover:to-blue-700 transition-all transform hover:scale-105 shadow-lg inline-block">
                         Join SmashZone Today
                     </a>
@@ -280,7 +280,7 @@
                    class="bg-white text-green-600 px-8 py-4 rounded-xl font-bold text-lg hover:bg-gray-100 transition-all transform hover:scale-105 shadow-lg">
                     Create Free Account
                 </a>
-                <a href="{{ route('login') }}" 
+                <a href="{{ route('login', absolute: false) }}" 
                    class="border-2 border-white text-white px-8 py-4 rounded-xl font-bold text-lg hover:bg-white hover:text-green-600 transition-all transform hover:scale-105">
                     Sign In
                 </a>
@@ -329,7 +329,7 @@
                         <li><a href="#home" class="text-gray-400 hover:text-white transition-colors">Home</a></li>
                         <li><a href="#features" class="text-gray-400 hover:text-white transition-colors">Features</a></li>
                         <li><a href="#about" class="text-gray-400 hover:text-white transition-colors">About</a></li>
-                        <li><a href="{{ route('login') }}" class="text-gray-400 hover:text-white transition-colors">Login</a></li>
+                        <li><a href="{{ route('login', absolute: false) }}" class="text-gray-400 hover:text-white transition-colors">Login</a></li>
                     </ul>
                 </div>
                 

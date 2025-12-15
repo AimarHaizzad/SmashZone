@@ -60,31 +60,42 @@ if [ ! -z "$DATABASE_URL" ]; then
     # Parse DATABASE_URL (Render format: postgresql://user:password@host:port/database)
     # Remove protocol
     DB_URL=$(echo $DATABASE_URL | sed 's|postgresql://||' | sed 's|postgres://||')
-    # Extract user
+    # Extract user (everything before the first colon)
     DB_USER=$(echo $DB_URL | cut -d':' -f1)
     # Extract password (between first : and @)
-    DB_PASS=$(echo $DB_URL | cut -d':' -f2 | cut -d'@' -f1)
+    DB_PASS=$(echo $DB_URL | sed "s|^${DB_USER}:||" | cut -d'@' -f1)
     # Extract host:port (between @ and /)
     DB_HOST_PORT=$(echo $DB_URL | cut -d'@' -f2 | cut -d'/' -f1)
-    # Extract host and port
-    if echo "$DB_HOST_PORT" | grep -q ':'; then
-        # Port is specified
-        DB_HOST=$(echo $DB_HOST_PORT | cut -d':' -f1)
-        DB_PORT=$(echo $DB_HOST_PORT | cut -d':' -f2)
-        # Validate port is numeric
+    # Extract host and port - handle cases where port might be missing
+    if echo "$DB_HOST_PORT" | grep -qE ':[0-9]+$'; then
+        # Port is specified and is numeric
+        DB_HOST=$(echo $DB_HOST_PORT | sed 's|:[0-9]*$||')
+        DB_PORT=$(echo $DB_HOST_PORT | sed 's|^.*:||')
+        # Double-check port is numeric
         if ! echo "$DB_PORT" | grep -qE '^[0-9]+$'; then
+            echo "⚠️ Invalid port format, using default 5432"
             DB_PORT="5432"
         fi
     else
-        # No port specified, use default
+        # No port specified or invalid format, use default
         DB_HOST="$DB_HOST_PORT"
         DB_PORT="5432"
     fi
     # Extract database name (after /, before ?)
     DB_NAME=$(echo $DB_URL | cut -d'/' -f2 | cut -d'?' -f1)
     
+    # Always set port to ensure it's never empty
+    if [ -z "$DB_PORT" ]; then
+        DB_PORT="5432"
+    fi
+    
+    echo "   Parsed DB_HOST: $DB_HOST"
+    echo "   Parsed DB_PORT: $DB_PORT"
+    echo "   Parsed DB_NAME: $DB_NAME"
+    echo "   Parsed DB_USER: $DB_USER"
+    
     [ ! -z "$DB_HOST" ] && set_env_var "DB_HOST" "$DB_HOST"
-    [ ! -z "$DB_PORT" ] && set_env_var "DB_PORT" "$DB_PORT"
+    set_env_var "DB_PORT" "$DB_PORT"
     [ ! -z "$DB_NAME" ] && set_env_var "DB_DATABASE" "$DB_NAME"
     [ ! -z "$DB_USER" ] && set_env_var "DB_USERNAME" "$DB_USER"
     [ ! -z "$DB_PASS" ] && set_env_var "DB_PASSWORD" "$DB_PASS"
@@ -138,7 +149,9 @@ fi
 echo "📋 Database configuration:"
 echo "   DB_CONNECTION: $(grep "^DB_CONNECTION=" .env | cut -d '=' -f2 || echo 'not set')"
 echo "   DB_HOST: $(grep "^DB_HOST=" .env | cut -d '=' -f2 || echo 'not set')"
+echo "   DB_PORT: $(grep "^DB_PORT=" .env | cut -d '=' -f2 || echo 'not set')"
 echo "   DB_DATABASE: $(grep "^DB_DATABASE=" .env | cut -d '=' -f2 || echo 'not set')"
+echo "   DB_USERNAME: $(grep "^DB_USERNAME=" .env | cut -d '=' -f2 || echo 'not set')"
 
 # Clear config cache (IMPORTANT: must clear before migrations to pick up new DB_CONNECTION)
 echo "🔄 Clearing configuration cache..."
@@ -153,6 +166,15 @@ if [ "$DB_CONN_TYPE" != "pgsql" ] && [ ! -z "$DATABASE_URL" ]; then
     echo "⚠️ WARNING: DB_CONNECTION is not 'pgsql' but DATABASE_URL is set!"
     echo "   Forcing DB_CONNECTION=pgsql..."
     set_env_var "DB_CONNECTION" "pgsql"
+    php artisan config:clear || true
+fi
+
+# Verify DB_PORT is set and valid
+DB_PORT_VALUE=$(grep "^DB_PORT=" .env | cut -d '=' -f2 || echo '')
+if [ -z "$DB_PORT_VALUE" ] || ! echo "$DB_PORT_VALUE" | grep -qE '^[0-9]+$'; then
+    echo "⚠️ WARNING: DB_PORT is not set or invalid: '$DB_PORT_VALUE'"
+    echo "   Setting DB_PORT to default 5432..."
+    set_env_var "DB_PORT" "5432"
     php artisan config:clear || true
 fi
 
