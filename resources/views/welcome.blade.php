@@ -276,7 +276,7 @@
                 Join thousands of players who trust SmashZone for their badminton needs
             </p>
             <div class="flex flex-col sm:flex-row gap-4 justify-center">
-                <a href="{{ route('register') }}" 
+                <a href="{{ route('register', absolute: false) }}" 
                    class="bg-white text-green-600 px-8 py-4 rounded-xl font-bold text-lg hover:bg-gray-100 transition-all transform hover:scale-105 shadow-lg">
                     Create Free Account
                 </a>
