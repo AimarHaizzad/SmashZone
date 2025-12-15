@@ -34,7 +34,7 @@
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-blue-600 text-sm font-medium">Total Revenue</p>
-                    <p class="text-2xl font-bold text-blue-900">RM {{ number_format($revenueData['total_revenue'], 2) }}</p>
+                    <p class="text-2xl font-bold text-blue-900">RM {{ number_format($revenueData['total_revenue'] ?? 0, 2) }}</p>
                 </div>
                 <div class="w-12 h-12 bg-blue-500 rounded-lg flex items-center justify-center">
                     <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -48,7 +48,7 @@
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-green-600 text-sm font-medium">Conversion Rate</p>
-                    <p class="text-2xl font-bold text-green-900">{{ number_format($performanceData['conversion_rate'], 1) }}%</p>
+                    <p class="text-2xl font-bold text-green-900">{{ number_format($performanceData['conversion_rate'] ?? 0, 1) }}%</p>
                 </div>
                 <div class="w-12 h-12 bg-green-500 rounded-lg flex items-center justify-center">
                     <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -62,7 +62,7 @@
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-purple-600 text-sm font-medium">Avg Booking Value</p>
-                    <p class="text-2xl font-bold text-purple-900">RM {{ number_format($performanceData['avg_booking_value'], 2) }}</p>
+                    <p class="text-2xl font-bold text-purple-900">RM {{ number_format($performanceData['avg_booking_value'] ?? 0, 2) }}</p>
                 </div>
                 <div class="w-12 h-12 bg-purple-500 rounded-lg flex items-center justify-center">
                     <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -76,7 +76,7 @@
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-orange-600 text-sm font-medium">Monthly Growth</p>
-                    <p class="text-2xl font-bold text-orange-900">{{ number_format($performanceData['monthly_growth'], 1) }}%</p>
+                    <p class="text-2xl font-bold text-orange-900">{{ number_format($performanceData['monthly_growth'] ?? 0, 1) }}%</p>
                 </div>
                 <div class="w-12 h-12 bg-orange-500 rounded-lg flex items-center justify-center">
                     <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -183,15 +183,15 @@
         <div class="bg-white rounded-xl shadow-lg p-6 border border-gray-200">
             <h3 class="text-lg font-semibold text-gray-900 mb-4">Revenue by Court</h3>
             <div class="space-y-4">
-                @foreach($revenueData['by_court'] as $court)
+                @foreach(($revenueData['by_court'] ?? []) as $court)
                 <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                     <div>
-                        <p class="font-medium text-gray-900">{{ $court->name }}</p>
-                        <p class="text-sm text-gray-600">{{ $court->booking_count }} bookings</p>
+                        <p class="font-medium text-gray-900">{{ $court->name ?? 'Unknown Court' }}</p>
+                        <p class="text-sm text-gray-600">{{ $court->booking_count ?? 0 }} bookings</p>
                     </div>
                     <div class="text-right">
-                        <p class="font-semibold text-green-600">RM {{ number_format($court->total_revenue, 2) }}</p>
-                        <p class="text-xs text-gray-500">{{ number_format(($court->total_revenue / $revenueData['total_revenue']) * 100, 1) }}%</p>
+                        <p class="font-semibold text-green-600">RM {{ number_format($court->total_revenue ?? 0, 2) }}</p>
+                        <p class="text-xs text-gray-500">{{ ($revenueData['total_revenue'] ?? 0) > 0 ? number_format((($court->total_revenue ?? 0) / $revenueData['total_revenue']) * 100, 1) : 0 }}%</p>
                     </div>
                 </div>
                 @endforeach
@@ -213,17 +213,17 @@
         <div class="bg-white rounded-xl shadow-lg p-6 border border-gray-200">
             <h3 class="text-lg font-semibold text-gray-900 mb-4">Court Utilization Rate</h3>
             <div class="space-y-4">
-                @foreach($utilizationData['utilization_rate'] as $court)
+                @foreach(($utilizationData['utilization_rate'] ?? []) as $court)
                 <div class="flex items-center justify-between">
                     <div class="flex-1">
-                        <p class="font-medium text-gray-900">{{ $court->name }}</p>
+                        <p class="font-medium text-gray-900">{{ $court->name ?? 'Unknown Court' }}</p>
                         <div class="w-full bg-gray-200 rounded-full h-2 mt-1">
-                            <div class="bg-blue-600 h-2 rounded-full" style="width: {{ min($court->utilization_rate, 100) }}%"></div>
+                            <div class="bg-blue-600 h-2 rounded-full" style="width: {{ min($court->utilization_rate ?? 0, 100) }}%"></div>
                         </div>
                     </div>
                     <div class="ml-4 text-right">
-                        <p class="font-semibold text-blue-600">{{ number_format($court->utilization_rate, 1) }}%</p>
-                        <p class="text-xs text-gray-500">{{ $court->bookings_count }} bookings</p>
+                        <p class="font-semibold text-blue-600">{{ number_format($court->utilization_rate ?? 0, 1) }}%</p>
+                        <p class="text-xs text-gray-500">{{ $court->bookings_count ?? 0 }} bookings</p>
                     </div>
                 </div>
                 @endforeach
@@ -237,20 +237,20 @@
         <div class="bg-white rounded-xl shadow-lg p-6 border border-gray-200">
             <h3 class="text-lg font-semibold text-gray-900 mb-4">Top Customers</h3>
             <div class="space-y-3">
-                @foreach($customerData['top_customers'] as $index => $customer)
+                @foreach(($customerData['top_customers'] ?? []) as $index => $customer)
                 <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                     <div class="flex items-center">
                         <div class="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white text-sm font-bold mr-3">
                             {{ $index + 1 }}
                         </div>
                         <div>
-                            <p class="font-medium text-gray-900">{{ $customer->name }}</p>
-                            <p class="text-sm text-gray-600">{{ $customer->email }}</p>
+                            <p class="font-medium text-gray-900">{{ $customer->name ?? 'Unknown Customer' }}</p>
+                            <p class="text-sm text-gray-600">{{ $customer->email ?? 'No email' }}</p>
                         </div>
                     </div>
                     <div class="text-right">
-                        <p class="font-semibold text-green-600">RM {{ number_format($customer->total_spent, 2) }}</p>
-                        <p class="text-xs text-gray-500">{{ $customer->booking_count }} bookings</p>
+                        <p class="font-semibold text-green-600">RM {{ number_format($customer->total_spent ?? 0, 2) }}</p>
+                        <p class="text-xs text-gray-500">{{ $customer->booking_count ?? 0 }} bookings</p>
                     </div>
                 </div>
                 @endforeach
@@ -262,22 +262,22 @@
             <h3 class="text-lg font-semibold text-gray-900 mb-4">Customer Insights</h3>
             <div class="grid grid-cols-2 gap-4">
                 <div class="text-center p-4 bg-blue-50 rounded-lg">
-                    <p class="text-2xl font-bold text-blue-600">{{ $customerData['new_customers'] }}</p>
+                    <p class="text-2xl font-bold text-blue-600">{{ $customerData['new_customers'] ?? 0 }}</p>
                     <p class="text-sm text-blue-600">New Customers</p>
                     <p class="text-xs text-gray-500">This Month</p>
                 </div>
                 <div class="text-center p-4 bg-green-50 rounded-lg">
-                    <p class="text-2xl font-bold text-green-600">{{ $customerData['returning_customers'] }}</p>
+                    <p class="text-2xl font-bold text-green-600">{{ $customerData['returning_customers'] ?? 0 }}</p>
                     <p class="text-sm text-green-600">Returning</p>
                     <p class="text-xs text-gray-500">Loyal Customers</p>
                 </div>
                 <div class="text-center p-4 bg-purple-50 rounded-lg">
-                    <p class="text-2xl font-bold text-purple-600">{{ number_format($customerData['avg_bookings_per_customer'], 1) }}</p>
+                    <p class="text-2xl font-bold text-purple-600">{{ number_format($customerData['avg_bookings_per_customer'] ?? 0, 1) }}</p>
                     <p class="text-sm text-purple-600">Avg Bookings</p>
                     <p class="text-xs text-gray-500">Per Customer</p>
                 </div>
                 <div class="text-center p-4 bg-orange-50 rounded-lg">
-                    <p class="text-2xl font-bold text-orange-600">{{ $customerData['top_customers']->count() }}</p>
+                    <p class="text-2xl font-bold text-orange-600">{{ ($customerData['top_customers'] ?? collect())->count() }}</p>
                     <p class="text-sm text-orange-600">VIP Customers</p>
                     <p class="text-xs text-gray-500">Top Spenders</p>
                 </div>
@@ -295,7 +295,7 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 1.343-3 3s1.343 3 3 3 3-1.343 3-3-1.343-3-3-3zm0 0V4m0 7v7" />
                     </svg>
                 </div>
-                <p class="text-2xl font-bold text-gray-900">RM {{ number_format($performanceData['current_month_revenue'], 2) }}</p>
+                <p class="text-2xl font-bold text-gray-900">RM {{ number_format($performanceData['current_month_revenue'] ?? 0, 2) }}</p>
                 <p class="text-sm text-gray-600">Current Month Revenue</p>
             </div>
             <div class="text-center">
@@ -304,7 +304,7 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
                     </svg>
                 </div>
-                <p class="text-2xl font-bold text-gray-900">RM {{ number_format($performanceData['last_month_revenue'], 2) }}</p>
+                <p class="text-2xl font-bold text-gray-900">RM {{ number_format($performanceData['last_month_revenue'] ?? 0, 2) }}</p>
                 <p class="text-sm text-gray-600">Last Month Revenue</p>
             </div>
             <div class="text-center">
@@ -328,10 +328,10 @@ const monthlyCtx = document.getElementById('monthlyRevenueChart').getContext('2d
 const monthlyChart = new Chart(monthlyCtx, {
     type: 'line',
     data: {
-        labels: @json($revenueData['monthly_labels']),
+        labels: @json($revenueData['monthly_labels'] ?? []),
         datasets: [{
             label: 'Revenue (RM)',
-            data: @json($revenueData['monthly_data']),
+            data: @json($revenueData['monthly_data'] ?? []),
             borderColor: 'rgb(59, 130, 246)',
             backgroundColor: 'rgba(59, 130, 246, 0.1)',
             tension: 0.4,
@@ -364,10 +364,10 @@ const peakCtx = document.getElementById('peakHoursChart').getContext('2d');
 const peakChart = new Chart(peakCtx, {
     type: 'bar',
     data: {
-        labels: @json($utilizationData['peak_hours_labels']),
+        labels: @json($utilizationData['peak_hours_labels'] ?? []),
         datasets: [{
             label: 'Bookings',
-            data: @json($utilizationData['peak_hours_data']),
+            data: @json($utilizationData['peak_hours_data'] ?? []),
             backgroundColor: 'rgba(34, 197, 94, 0.8)',
             borderColor: 'rgb(34, 197, 94)',
             borderWidth: 1
