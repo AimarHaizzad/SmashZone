@@ -67,40 +67,78 @@ class StaffController extends Controller
      */
     public function store(Request $request)
     {
-        // Check if user is owner
-        if (auth()->user()->role !== 'owner') {
-            abort(403, 'Unauthorized. Only owners can access staff management.');
-        }
+        try {
+            // Check if user is owner
+            if (!auth()->user() || auth()->user()->role !== 'owner') {
+                abort(403, 'Unauthorized. Only owners can access staff management.');
+            }
 
-        $validator = Validator::make($request->all(), [
-            'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
-            'password' => ['required', 'confirmed', Password::defaults()],
-            'phone' => ['nullable', 'string', 'max:20'],
-            'position' => ['nullable', 'string', 'max:100'],
-        ]);
+            $validator = Validator::make($request->all(), [
+                'name' => ['required', 'string', 'max:255'],
+                'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
+                'password' => ['required', 'confirmed', Password::defaults()],
+                'phone' => ['nullable', 'string', 'max:20'],
+                'position' => ['nullable', 'string', 'max:100'],
+            ]);
 
-        if ($validator->fails()) {
+            if ($validator->fails()) {
+                return redirect()->back()
+                    ->withErrors($validator)
+                    ->withInput();
+            }
+
+            try {
+                $staff = User::create([
+                    'name' => $request->name,
+                    'email' => $request->email,
+                    'password' => Hash::make($request->password),
+                    'role' => 'staff',
+                    'phone' => $request->phone,
+                    'position' => $request->position,
+                    'email_verified_at' => now(), // Auto-verify staff accounts
+                ]);
+
+                // Send email notification to the new staff member
+                // Wrap in try-catch so email failure doesn't prevent staff creation
+                $emailSent = false;
+                try {
+                    $staff->notify(new StaffAccountCreated($staff, $request->password));
+                    $emailSent = true;
+                } catch (\Exception $e) {
+                    \Log::error('Failed to send staff account creation email', [
+                        'staff_id' => $staff->id,
+                        'staff_email' => $staff->email,
+                        'error' => $e->getMessage(),
+                        'trace' => $e->getTraceAsString()
+                    ]);
+                }
+
+                $message = 'Staff member created successfully!';
+                if ($emailSent) {
+                    $message .= ' An email with account details has been sent to ' . $staff->email;
+                } else {
+                    $message .= ' Note: Email notification could not be sent. Please inform the staff member manually.';
+                }
+
+                return redirect('/staff')->with('success', $message);
+            } catch (\Exception $e) {
+                \Log::error('Failed to create staff member', [
+                    'error' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString()
+                ]);
+                return redirect()->back()
+                    ->withErrors(['error' => 'Failed to create staff member: ' . $e->getMessage()])
+                    ->withInput();
+            }
+        } catch (\Exception $e) {
+            \Log::error('Staff creation error', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
             return redirect()->back()
-                ->withErrors($validator)
+                ->withErrors(['error' => 'An error occurred while creating the staff member. Please try again.'])
                 ->withInput();
         }
-
-        $staff = User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
-            'role' => 'staff',
-            'phone' => $request->phone,
-            'position' => $request->position,
-            'email_verified_at' => now(), // Auto-verify staff accounts
-        ]);
-
-        // Send email notification to the new staff member
-        $staff->notify(new StaffAccountCreated($staff, $request->password));
-
-        return redirect()->route('staff.index', absolute: false)
-            ->with('success', 'Staff member created successfully! An email with account details has been sent to ' . $staff->email);
     }
 
     /**

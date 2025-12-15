@@ -76,7 +76,7 @@ class ProductController extends Controller
 
             try {
                 Product::create($validated);
-                return redirect()->route('products.index', absolute: false)->with('success', 'Product created successfully.');
+                return redirect('/products')->with('success', 'Product created successfully.');
             } catch (\Exception $e) {
                 \Log::error('Product creation failed', [
                     'error' => $e->getMessage(),
@@ -152,7 +152,7 @@ class ProductController extends Controller
             }
 
             $product->update($validated);
-            return redirect()->route('products.index', absolute: false)->with('success', 'Product updated successfully.');
+            return redirect('/products')->with('success', 'Product updated successfully.');
         } catch (\Illuminate\Validation\ValidationException $e) {
             throw $e;
         } catch (\Exception $e) {
@@ -188,7 +188,7 @@ class ProductController extends Controller
             }
             
             $product->delete();
-            return redirect()->route('products.index', absolute: false)->with('success', 'Product deleted successfully.');
+            return redirect('/products')->with('success', 'Product deleted successfully.');
         } catch (\Exception $e) {
             \Log::error('Product destroy failed', [
                 'product_id' => $product->id,

@@ -382,34 +382,86 @@ class AnalyticsController extends Controller
 
     public function exportPDF()
     {
-        if (!auth()->user()->isOwner()) {
-            abort(403, 'Unauthorized.');
+        try {
+            if (!auth()->user() || !auth()->user()->isOwner()) {
+                abort(403, 'Unauthorized.');
+            }
+
+            $user = auth()->user();
+            
+            try {
+                $revenueData = $this->getRevenueAnalytics($user);
+            } catch (\Exception $e) {
+                \Log::error('Revenue analytics error in PDF export', ['error' => $e->getMessage()]);
+                $revenueData = $this->getEmptyRevenueData();
+            }
+            
+            try {
+                $utilizationData = $this->getCourtUtilization($user);
+            } catch (\Exception $e) {
+                \Log::error('Court utilization error in PDF export', ['error' => $e->getMessage()]);
+                $utilizationData = $this->getEmptyUtilizationData();
+            }
+            
+            try {
+                $customerData = $this->getCustomerAnalytics($user);
+            } catch (\Exception $e) {
+                \Log::error('Customer analytics error in PDF export', ['error' => $e->getMessage()]);
+                $customerData = $this->getEmptyCustomerData();
+            }
+            
+            try {
+                $performanceData = $this->getPerformanceMetrics($user);
+            } catch (\Exception $e) {
+                \Log::error('Performance metrics error in PDF export', ['error' => $e->getMessage()]);
+                $performanceData = $this->getEmptyPerformanceData();
+            }
+
+            try {
+                $pdf = PDF::loadView('analytics.pdf', compact(
+                    'revenueData',
+                    'utilizationData',
+                    'customerData', 
+                    'performanceData'
+                ));
+
+                return $pdf->download('smashzone-analytics-' . now()->format('Y-m-d') . '.pdf');
+            } catch (\Exception $e) {
+                \Log::error('PDF generation failed', ['error' => $e->getMessage()]);
+                return redirect('/analytics')->withErrors(['error' => 'Failed to generate PDF: ' . $e->getMessage()]);
+            }
+        } catch (\Exception $e) {
+            \Log::error('PDF export failed', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            return redirect('/analytics')->withErrors(['error' => 'Failed to export PDF. Please try again later.']);
         }
-
-        $user = auth()->user();
-        
-        $revenueData = $this->getRevenueAnalytics($user);
-        $utilizationData = $this->getCourtUtilization($user);
-        $customerData = $this->getCustomerAnalytics($user);
-        $performanceData = $this->getPerformanceMetrics($user);
-
-        $pdf = PDF::loadView('analytics.pdf', compact(
-            'revenueData',
-            'utilizationData',
-            'customerData', 
-            'performanceData'
-        ));
-
-        return $pdf->download('smashzone-analytics-' . now()->format('Y-m-d') . '.pdf');
     }
 
     public function exportExcel()
     {
-        if (!auth()->user()->isOwner()) {
-            abort(403, 'Unauthorized.');
-        }
+        try {
+            if (!auth()->user() || !auth()->user()->isOwner()) {
+                abort(403, 'Unauthorized.');
+            }
 
-        return Excel::download(new AnalyticsExport(auth()->user()), 'smashzone-analytics-' . now()->format('Y-m-d') . '.xlsx');
+            try {
+                return Excel::download(new AnalyticsExport(auth()->user()), 'smashzone-analytics-' . now()->format('Y-m-d') . '.xlsx');
+            } catch (\Exception $e) {
+                \Log::error('Excel export failed', [
+                    'error' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString()
+                ]);
+                return redirect('/analytics')->withErrors(['error' => 'Failed to generate Excel: ' . $e->getMessage()]);
+            }
+        } catch (\Exception $e) {
+            \Log::error('Excel export failed', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            return redirect('/analytics')->withErrors(['error' => 'Failed to export Excel. Please try again later.']);
+        }
     }
 
     private function getEmptyRevenueData()
