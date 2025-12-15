@@ -13,15 +13,25 @@ class ProductController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Product::query();
-        
-        // Filter by category if provided
-        if ($request->has('category') && $request->category !== '') {
-            $query->where('category', $request->category);
+        try {
+            $query = Product::query();
+            
+            // Filter by category if provided
+            if ($request->has('category') && $request->category !== '') {
+                $query->where('category', $request->category);
+            }
+            
+            $products = $query->get();
+            return view('products.index', compact('products'));
+        } catch (\Exception $e) {
+            \Log::error('Product index failed', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            // Return empty products collection if there's an error
+            $products = collect();
+            return view('products.index', compact('products'))->withErrors(['error' => 'Failed to load products. Please try again later.']);
         }
-        
-        $products = $query->get();
-        return view('products.index', compact('products'));
     }
 
     /**
@@ -64,8 +74,17 @@ class ProductController extends Controller
                 }
             }
 
-            Product::create($validated);
-            return redirect()->route('products.index', absolute: false)->with('success', 'Product created successfully.');
+            try {
+                Product::create($validated);
+                return redirect()->route('products.index', absolute: false)->with('success', 'Product created successfully.');
+            } catch (\Exception $e) {
+                \Log::error('Product creation failed', [
+                    'error' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString(),
+                    'data' => $validated
+                ]);
+                return back()->withErrors(['error' => 'Failed to save product: ' . $e->getMessage()])->withInput();
+            }
         } catch (\Illuminate\Validation\ValidationException $e) {
             throw $e;
         } catch (\Exception $e) {

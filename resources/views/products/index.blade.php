@@ -150,8 +150,8 @@
                     
                     <!-- Price Section -->
                     <div class="flex items-center gap-3 mb-4">
-                        <span class="text-2xl font-bold text-red-600">RM {{ number_format($product->price, 2) }}</span>
-                        @if($product->old_price)
+                        <span class="text-2xl font-bold text-red-600">RM {{ number_format($product->price ?? 0, 2) }}</span>
+                        @if(!empty($product->old_price) && $product->old_price > $product->price)
                             <span class="text-lg text-gray-400 line-through">RM {{ number_format($product->old_price, 2) }}</span>
                             <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">
                                 {{ round((($product->old_price - $product->price) / $product->old_price) * 100) }}% OFF
@@ -161,8 +161,8 @@
 
                     <!-- Action Buttons -->
                     @if(!auth()->user() || (auth()->user() && auth()->user()->role !== 'owner'))
-                        <div class="mb-3 text-sm {{ $product->quantity > 0 ? 'text-gray-600' : 'text-red-600 font-semibold' }}">
-                            @if($product->quantity > 0)
+                        <div class="mb-3 text-sm {{ ($product->quantity ?? 0) > 0 ? 'text-gray-600' : 'text-red-600 font-semibold' }}">
+                            @if(($product->quantity ?? 0) > 0)
                                 In stock: {{ $product->quantity }}
                             @else
                                 Out of stock
@@ -174,8 +174,8 @@
                             <div class="flex items-center gap-2">
                                 <label for="qty-{{ $product->id }}" class="text-sm font-medium text-gray-700">Quantity:</label>
                                 <input id="qty-{{ $product->id }}" name="quantity" type="number" min="1" value="1" 
-                                       max="{{ max(1, $product->quantity) }}"
-                                       {{ $product->quantity <= 0 ? 'disabled' : '' }}
+                                       max="{{ max(1, $product->quantity ?? 0) }}"
+                                       {{ ($product->quantity ?? 0) <= 0 ? 'disabled' : '' }}
                                        class="w-20 border-2 border-gray-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-300 focus:border-blue-500 transition-colors {{ $product->quantity <= 0 ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : '' }}">
                             </div>
                             <button type="submit" 
