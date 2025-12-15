@@ -166,6 +166,36 @@ php artisan migrate --force || {
 echo "🔗 Creating storage link..."
 php artisan storage:link || echo "⚠️ Storage link already exists"
 
+# Build frontend assets (Vite)
+echo "🎨 Building frontend assets..."
+if [ -f package.json ]; then
+    # Check if Node.js is available, install if needed
+    if ! command -v npm >/dev/null 2>&1; then
+        echo "   Node.js not found. Attempting to install..."
+        if command -v apt-get >/dev/null 2>&1; then
+            apt-get update -qq && apt-get install -y -qq nodejs npm || echo "⚠️ Failed to install Node.js"
+        else
+            echo "⚠️ Cannot install Node.js automatically. Please ensure Node.js is available."
+        fi
+    fi
+    
+    if command -v npm >/dev/null 2>&1; then
+        echo "   Installing Node dependencies..."
+        npm install --no-audit --no-fund --silent || echo "⚠️ npm install failed, continuing..."
+        echo "   Building production assets..."
+        # Ensure build directory exists and is writable
+        mkdir -p public/build
+        chmod -R 775 public/build || true
+        npm run build || echo "⚠️ Asset build failed, continuing..."
+        # Ensure built assets are readable
+        chmod -R 755 public/build || true
+    else
+        echo "⚠️ npm not available. Skipping asset build."
+    fi
+else
+    echo "⚠️ package.json not found. Skipping asset build."
+fi
+
 # Cache configuration for better performance
 echo "⚡ Optimizing application..."
 php artisan config:cache || true
