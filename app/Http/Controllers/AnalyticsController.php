@@ -63,8 +63,11 @@ class AnalyticsController extends Controller
                 $predictionService = new BookingPredictionService();
                 $predictionData = $predictionService->predictWeeklyTrends($user->id);
             } catch (\Exception $e) {
-                \Log::error('Prediction service error', ['error' => $e->getMessage()]);
-                $predictionData = [];
+                \Log::error('Prediction service error', [
+                    'error' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString()
+                ]);
+                $predictionData = $this->getEmptyPredictionData();
             }
 
             return view('analytics.index', compact(
@@ -84,7 +87,7 @@ class AnalyticsController extends Controller
                 'utilizationData' => $this->getEmptyUtilizationData(),
                 'customerData' => $this->getEmptyCustomerData(),
                 'performanceData' => $this->getEmptyPerformanceData(),
-                'predictionData' => []
+                'predictionData' => $this->getEmptyPredictionData()
             ])->withErrors(['error' => 'Failed to load analytics. Please try again later.']);
         }
     }
@@ -509,6 +512,42 @@ class AnalyticsController extends Controller
             'current_month_revenue' => 0,
             'last_month_revenue' => 0,
             'court_efficiency' => collect()
+        ];
+    }
+
+    private function getEmptyPredictionData()
+    {
+        // Generate empty predictions for next 7 days
+        $predictions = [];
+        for ($i = 0; $i < 7; $i++) {
+            $date = now()->addDays($i);
+            $predictions[] = [
+                'date' => $date->format('Y-m-d'),
+                'day_name' => $date->format('l'),
+                'predicted_bookings' => 0,
+                'revenue_estimate' => 0,
+                'confidence' => 0,
+                'is_peak_day' => false,
+                'is_low_day' => false
+            ];
+        }
+
+        return [
+            'predictions' => $predictions,
+            'confidence' => [
+                'overall' => 0,
+                'by_day' => array_fill(0, 7, 0)
+            ],
+            'recommendations' => [
+                [
+                    'type' => 'info',
+                    'title' => 'No Data Available',
+                    'description' => 'Insufficient historical data to generate predictions.',
+                    'actions' => ['Continue booking courts to build prediction data']
+                ]
+            ],
+            'patterns' => [],
+            'historical_data' => []
         ];
     }
 } 

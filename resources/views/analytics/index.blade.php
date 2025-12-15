@@ -102,7 +102,7 @@
                 </div>
                 <div class="text-right">
                     <div class="text-sm text-gray-500">Confidence Score</div>
-                    <div class="text-2xl font-bold text-purple-600">{{ $predictionData['confidence']['overall'] }}%</div>
+                    <div class="text-2xl font-bold text-purple-600">{{ $predictionData['confidence']['overall'] ?? 0 }}%</div>
                 </div>
             </div>
 
@@ -118,7 +118,7 @@
                 <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
                     <h3 class="text-lg font-semibold text-gray-900 mb-4">Daily Predictions</h3>
                     <div class="space-y-3">
-                        @foreach($predictionData['predictions'] as $prediction)
+                        @foreach(($predictionData['predictions'] ?? []) as $prediction)
                         <div class="flex items-center justify-between p-4 rounded-lg {{ $prediction['is_peak_day'] ? 'bg-green-50 border border-green-200' : ($prediction['is_low_day'] ? 'bg-yellow-50 border border-yellow-200' : 'bg-gray-50 border border-gray-200') }}">
                             <div class="flex items-center gap-3">
                                 <div class="w-10 h-10 rounded-full flex items-center justify-center {{ $prediction['is_peak_day'] ? 'bg-green-500' : ($prediction['is_low_day'] ? 'bg-yellow-500' : 'bg-gray-500') }} text-white font-bold">
@@ -148,7 +148,7 @@
                     AI Recommendations
                 </h3>
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    @foreach($predictionData['recommendations'] as $recommendation)
+                    @foreach(($predictionData['recommendations'] ?? []) as $recommendation)
                     <div class="p-4 rounded-lg border {{ $recommendation['type'] === 'peak_days' ? 'bg-green-50 border-green-200' : ($recommendation['type'] === 'low_days' ? 'bg-yellow-50 border-yellow-200' : 'bg-blue-50 border-blue-200') }}">
                         <h4 class="font-semibold text-gray-900 mb-2">{{ $recommendation['title'] }}</h4>
                         <p class="text-sm text-gray-600 mb-3">{{ $recommendation['description'] }}</p>
@@ -393,8 +393,8 @@ const peakChart = new Chart(peakCtx, {
 const predictionCtx = document.getElementById('predictionChart').getContext('2d');
 
 // Prepare prediction data
-const predictionData = @json($predictionData['predictions']);
-const labels = predictionData.map(p => p.day_name);
+const predictionData = @json($predictionData['predictions'] ?? []);
+const labels = predictionData.map(p => p.day_name || '');
 const data = predictionData.map(p => p.predicted_bookings || 0);
 const pointColors = predictionData.map(p => {
     if (p.is_peak_day) return 'rgb(34, 197, 94)';
@@ -431,7 +431,7 @@ const predictionChart = new Chart(predictionCtx, {
             tooltip: {
                 callbacks: {
                     afterLabel: function(context) {
-                        const prediction = predictionData[context.dataIndex];
+                        const prediction = predictionData[context.dataIndex] || {};
                         return [
                             'Revenue: RM ' + (prediction.revenue_estimate || 0).toLocaleString(),
                             'Confidence: ' + (prediction.confidence || 0) + '%',
