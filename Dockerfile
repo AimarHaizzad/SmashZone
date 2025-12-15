@@ -71,14 +71,15 @@ ENV APACHE_LOG_DIR=/var/log/apache2
 ENV APACHE_LOCK_DIR=/var/lock/apache2
 ENV APACHE_PID_FILE=/var/run/apache2.pid
 
-# Expose port (Railway provides PORT env variable, default to 80)
-# Railway typically uses ports like 8080, but our app will listen on whatever PORT is provided
-EXPOSE 80
+# Expose port (Render provides PORT env variable, default to 10000)
+# Render typically uses port 10000, but our app will listen on whatever PORT is provided
+EXPOSE 10000
 
-# Copy startup script
+# Copy startup script (support both Railway and Render)
 COPY railway-start.sh /usr/local/bin/railway-start.sh
-RUN chmod +x /usr/local/bin/railway-start.sh
+COPY render-start.sh /usr/local/bin/render-start.sh
+RUN chmod +x /usr/local/bin/railway-start.sh /usr/local/bin/render-start.sh
 
-# Start Apache
-CMD ["/usr/local/bin/railway-start.sh"]
+# Start Apache (use render-start.sh for Render, railway-start.sh for Railway)
+CMD ["/usr/local/bin/render-start.sh"]
 
