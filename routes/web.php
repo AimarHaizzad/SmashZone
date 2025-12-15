@@ -443,6 +443,47 @@ Route::get('/test-bookings-status', function() {
     }
 });
 
+Route::get('/create-owner-account', function() {
+    try {
+        // Create or update the main owner account
+        $owner = App\Models\User::firstOrCreate(
+            ['email' => 'AimarHaizzad@gmail.com'],
+            [
+                'name' => 'Owner',
+                'password' => bcrypt('Aimar123'),
+                'role' => 'owner',
+                'email_verified_at' => now(),
+            ]
+        );
+        
+        // If owner already exists, update password to ensure it's correct
+        if ($owner->wasRecentlyCreated === false) {
+            $owner->password = bcrypt('Aimar123');
+            $owner->role = 'owner';
+            $owner->email_verified_at = now();
+            $owner->save();
+        }
+        
+        return response()->json([
+            'success' => true,
+            'message' => 'Owner account created/updated successfully!',
+            'account' => [
+                'email' => $owner->email,
+                'password' => 'Aimar123',
+                'role' => $owner->role,
+                'id' => $owner->id,
+            ],
+            'login_url' => route('login', absolute: false)
+        ]);
+    } catch (Exception $e) {
+        return response()->json([
+            'success' => false,
+            'error' => $e->getMessage(),
+            'trace' => $e->getTraceAsString()
+        ], 500);
+    }
+});
+
 Route::get('/create-test-data', function() {
     try {
         // Create test owner

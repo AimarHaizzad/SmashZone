@@ -184,6 +184,30 @@ php artisan migrate --force || {
     echo "⚠️ Migration failed! Check your database connection."
 }
 
+# Create owner account if it doesn't exist
+echo "👤 Ensuring owner account exists..."
+php -r "
+require __DIR__ . '/vendor/autoload.php';
+\$app = require_once __DIR__ . '/bootstrap/app.php';
+\$app->make('Illuminate\Contracts\Console\Kernel')->bootstrap();
+\$owner = App\Models\User::firstOrCreate(
+    ['email' => 'AimarHaizzad@gmail.com'],
+    [
+        'name' => 'Owner',
+        'password' => bcrypt('Aimar123'),
+        'role' => 'owner',
+        'email_verified_at' => now(),
+    ]
+);
+if (!\$owner->wasRecentlyCreated) {
+    \$owner->password = bcrypt('Aimar123');
+    \$owner->role = 'owner';
+    \$owner->email_verified_at = now();
+    \$owner->save();
+}
+echo '✅ Owner account ready: AimarHaizzad@gmail.com / Aimar123' . PHP_EOL;
+" || echo "⚠️ Could not create owner account (this is okay if it already exists)"
+
 # Create storage link
 echo "🔗 Creating storage link..."
 php artisan storage:link || echo "⚠️ Storage link already exists"
