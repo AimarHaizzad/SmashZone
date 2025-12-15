@@ -57,17 +57,34 @@ if [ ! -z "$DATABASE_URL" ]; then
     echo "✅ Detected Render PostgreSQL (DATABASE_URL)"
     echo "   DATABASE_URL detected, forcing DB_CONNECTION=pgsql"
     set_env_var "DB_CONNECTION" "pgsql"
-    # Parse DATABASE_URL (Render format)
-    DB_URL=$(echo $DATABASE_URL | sed 's|postgresql://||')
+    # Parse DATABASE_URL (Render format: postgresql://user:password@host:port/database)
+    # Remove protocol
+    DB_URL=$(echo $DATABASE_URL | sed 's|postgresql://||' | sed 's|postgres://||')
+    # Extract user
     DB_USER=$(echo $DB_URL | cut -d':' -f1)
+    # Extract password (between first : and @)
     DB_PASS=$(echo $DB_URL | cut -d':' -f2 | cut -d'@' -f1)
+    # Extract host:port (between @ and /)
     DB_HOST_PORT=$(echo $DB_URL | cut -d'@' -f2 | cut -d'/' -f1)
-    DB_HOST=$(echo $DB_HOST_PORT | cut -d':' -f1)
-    DB_PORT=$(echo $DB_HOST_PORT | cut -d':' -f2)
+    # Extract host and port
+    if echo "$DB_HOST_PORT" | grep -q ':'; then
+        # Port is specified
+        DB_HOST=$(echo $DB_HOST_PORT | cut -d':' -f1)
+        DB_PORT=$(echo $DB_HOST_PORT | cut -d':' -f2)
+        # Validate port is numeric
+        if ! echo "$DB_PORT" | grep -qE '^[0-9]+$'; then
+            DB_PORT="5432"
+        fi
+    else
+        # No port specified, use default
+        DB_HOST="$DB_HOST_PORT"
+        DB_PORT="5432"
+    fi
+    # Extract database name (after /, before ?)
     DB_NAME=$(echo $DB_URL | cut -d'/' -f2 | cut -d'?' -f1)
     
     [ ! -z "$DB_HOST" ] && set_env_var "DB_HOST" "$DB_HOST"
-    [ ! -z "$DB_PORT" ] && set_env_var "DB_PORT" "${DB_PORT:-5432}"
+    [ ! -z "$DB_PORT" ] && set_env_var "DB_PORT" "$DB_PORT"
     [ ! -z "$DB_NAME" ] && set_env_var "DB_DATABASE" "$DB_NAME"
     [ ! -z "$DB_USER" ] && set_env_var "DB_USERNAME" "$DB_USER"
     [ ! -z "$DB_PASS" ] && set_env_var "DB_PASSWORD" "$DB_PASS"
