@@ -25,7 +25,7 @@ return new class extends Migration
             // For PostgreSQL, Laravel's enum() creates a check constraint
             // Find and drop all check constraints on the status column
             $constraints = DB::select("
-                SELECT constraint_name 
+                SELECT tc.constraint_name 
                 FROM information_schema.table_constraints tc
                 JOIN information_schema.constraint_column_usage ccu 
                     ON tc.constraint_name = ccu.constraint_name
@@ -64,7 +64,7 @@ return new class extends Migration
         if ($driver === 'pgsql') {
             // For PostgreSQL, find and drop all check constraints on the status column
             $constraints = DB::select("
-                SELECT constraint_name 
+                SELECT tc.constraint_name 
                 FROM information_schema.table_constraints tc
                 JOIN information_schema.constraint_column_usage ccu 
                     ON tc.constraint_name = ccu.constraint_name
