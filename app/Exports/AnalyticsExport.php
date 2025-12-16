@@ -68,42 +68,14 @@ class RevenueSummarySheet implements FromCollection, WithHeadings, WithMapping, 
             ->orderBy('payments.payment_date', 'desc')
             ->get();
             
-            // Return empty collection with at least one row if no data
-            if ($payments->isEmpty()) {
-                return collect([
-                    (object)[
-                        'court_name' => 'No Data',
-                        'customer_name' => 'No bookings found',
-                        'customer_email' => '',
-                        'date' => '',
-                        'start_time' => '',
-                        'end_time' => '',
-                        'amount' => 0,
-                        'payment_date' => '',
-                        'status' => ''
-                    ]
-                ]);
-            }
-            
+            // Return collection (can be empty)
             return $payments;
         } catch (\Exception $e) {
             Log::error('RevenueSummarySheet collection error', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
-            return collect([
-                (object)[
-                    'court_name' => 'Error',
-                    'customer_name' => 'Failed to load data',
-                    'customer_email' => '',
-                    'date' => '',
-                    'start_time' => '',
-                    'end_time' => '',
-                    'amount' => 0,
-                    'payment_date' => '',
-                    'status' => ''
-                ]
-            ]);
+            return collect([]);
         }
     }
 
@@ -125,6 +97,10 @@ class RevenueSummarySheet implements FromCollection, WithHeadings, WithMapping, 
     public function map($row): array
     {
         try {
+            if (!is_object($row) && !is_array($row)) {
+                return ['', '', '', '', '', '', '0.00', '', ''];
+            }
+            
             return [
                 $row->court_name ?? 'Unknown Court',
                 $row->customer_name ?? 'Unknown Customer',
@@ -138,7 +114,7 @@ class RevenueSummarySheet implements FromCollection, WithHeadings, WithMapping, 
             ];
         } catch (\Exception $e) {
             Log::error('RevenueSummarySheet map error', ['error' => $e->getMessage()]);
-            return [];
+            return ['Error', 'Failed to map', '', '', '', '', '0.00', '', ''];
         }
     }
 
@@ -169,30 +145,14 @@ class CourtUtilizationSheet implements FromCollection, WithHeadings, WithMapping
             }], 'total_price')
             ->get();
             
-            // Return empty collection with at least one row if no data
-            if ($courts->isEmpty()) {
-                $court = new Court();
-                $court->name = 'No Courts';
-                $court->location = 'No data available';
-                $court->price_per_hour = 0;
-                $court->bookings_count = 0;
-                $court->bookings_sum_total_price = 0;
-                return collect([$court]);
-            }
-            
+            // Return empty collection if no data (Excel can handle empty collections)
             return $courts;
         } catch (\Exception $e) {
             Log::error('CourtUtilizationSheet collection error', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
-            $court = new Court();
-            $court->name = 'Error';
-            $court->location = 'Failed to load data';
-            $court->price_per_hour = 0;
-            $court->bookings_count = 0;
-            $court->bookings_sum_total_price = 0;
-            return collect([$court]);
+            return collect([]);
         }
     }
 
@@ -212,6 +172,10 @@ class CourtUtilizationSheet implements FromCollection, WithHeadings, WithMapping
     public function map($row): array
     {
         try {
+            if (!is_object($row) && !is_array($row)) {
+                return ['', '', '0.00', 0, '0.00', '0.00', '0.0'];
+            }
+            
             $bookingsCount = $row->bookings_count ?? 0;
             $totalPrice = $row->bookings_sum_total_price ?? 0;
             $utilizationRate = $bookingsCount > 0 ? ($bookingsCount * 2) / (24 * 30) * 100 : 0;
@@ -228,7 +192,7 @@ class CourtUtilizationSheet implements FromCollection, WithHeadings, WithMapping
             ];
         } catch (\Exception $e) {
             Log::error('CourtUtilizationSheet map error', ['error' => $e->getMessage()]);
-            return [];
+            return ['Error', 'Failed to map', '0.00', 0, '0.00', '0.00', '0.0'];
         }
     }
 
@@ -271,38 +235,14 @@ class CustomerAnalyticsSheet implements FromCollection, WithHeadings, WithMappin
             ->orderBy('total_spent', 'desc')
             ->get();
             
-            // Return empty collection with at least one row if no data
-            if ($customers->isEmpty()) {
-                return collect([
-                    (object)[
-                        'name' => 'No Customers',
-                        'email' => 'No data available',
-                        'booking_count' => 0,
-                        'total_spent' => 0,
-                        'avg_spent_per_booking' => 0,
-                        'first_booking' => '',
-                        'last_booking' => ''
-                    ]
-                ]);
-            }
-            
+            // Return collection (can be empty)
             return $customers;
         } catch (\Exception $e) {
             Log::error('CustomerAnalyticsSheet collection error', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
-            return collect([
-                (object)[
-                    'name' => 'Error',
-                    'email' => 'Failed to load data',
-                    'booking_count' => 0,
-                    'total_spent' => 0,
-                    'avg_spent_per_booking' => 0,
-                    'first_booking' => '',
-                    'last_booking' => ''
-                ]
-            ]);
+            return collect([]);
         }
     }
 
@@ -323,6 +263,10 @@ class CustomerAnalyticsSheet implements FromCollection, WithHeadings, WithMappin
     public function map($row): array
     {
         try {
+            if (!is_object($row) && !is_array($row)) {
+                return ['', '', 0, '0.00', '0.00', '', '', 'New'];
+            }
+            
             $bookingCount = $row->booking_count ?? 0;
             $customerType = $bookingCount > 5 ? 'VIP' : ($bookingCount > 2 ? 'Regular' : 'New');
             
@@ -338,7 +282,7 @@ class CustomerAnalyticsSheet implements FromCollection, WithHeadings, WithMappin
             ];
         } catch (\Exception $e) {
             Log::error('CustomerAnalyticsSheet map error', ['error' => $e->getMessage()]);
-            return [];
+            return ['Error', 'Failed to map', 0, '0.00', '0.00', '', '', 'New'];
         }
     }
 
@@ -442,28 +386,14 @@ class PerformanceMetricsSheet implements FromCollection, WithHeadings, WithMappi
                 'unit' => '%'
             ]);
 
-            // Ensure at least one metric exists
-            if ($metrics->isEmpty()) {
-                $metrics->push([
-                    'metric' => 'No Data',
-                    'value' => 0,
-                    'unit' => 'N/A'
-                ]);
-            }
-            
+            // Return metrics collection (can be empty)
             return $metrics;
         } catch (\Exception $e) {
             Log::error('PerformanceMetricsSheet collection error', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
-            return collect([
-                [
-                    'metric' => 'Error',
-                    'value' => 0,
-                    'unit' => 'Failed to load data'
-                ]
-            ]);
+            return collect([]);
         }
     }
 
@@ -479,6 +409,10 @@ class PerformanceMetricsSheet implements FromCollection, WithHeadings, WithMappi
     public function map($row): array
     {
         try {
+            if (!is_array($row)) {
+                return ['Error', '0', 'N/A'];
+            }
+            
             $unit = $row['unit'] ?? '';
             $value = $row['value'] ?? 0;
             
@@ -492,7 +426,7 @@ class PerformanceMetricsSheet implements FromCollection, WithHeadings, WithMappi
             ];
         } catch (\Exception $e) {
             Log::error('PerformanceMetricsSheet map error', ['error' => $e->getMessage()]);
-            return [];
+            return ['Error', '0', 'N/A'];
         }
     }
 

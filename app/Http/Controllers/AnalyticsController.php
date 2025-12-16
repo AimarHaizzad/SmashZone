@@ -462,24 +462,33 @@ class AnalyticsController extends Controller
             }
 
             try {
-                // Create export instance
-                $export = new AnalyticsExport($user);
-                
-                // Validate export instance
-                if (!$export instanceof \Maatwebsite\Excel\Concerns\WithMultipleSheets) {
-                    \Log::error('Export does not implement WithMultipleSheets');
-                    return redirect('/analytics')->withErrors(['error' => 'Invalid export configuration.']);
-                }
-
-                $filename = 'smashzone-analytics-' . now()->format('Y-m-d') . '.xlsx';
-                
                 // Set memory limit for large exports
                 ini_set('memory_limit', '512M');
                 set_time_limit(300); // 5 minutes
                 
-                \Log::info('Starting Excel export', ['user_id' => $user->id, 'filename' => $filename]);
+                // Create export instance
+                $export = new AnalyticsExport($user);
                 
-                return Excel::download($export, $filename);
+                $filename = 'smashzone-analytics-' . now()->format('Y-m-d') . '.xlsx';
+                
+                \Log::info('Starting Excel export', [
+                    'user_id' => $user->id, 
+                    'filename' => $filename,
+                    'export_class' => get_class($export)
+                ]);
+                
+                // Try to generate the export
+                try {
+                    return Excel::download($export, $filename);
+                } catch (\Throwable $ex) {
+                    \Log::error('Excel::download failed', [
+                        'error' => $ex->getMessage(),
+                        'file' => $ex->getFile(),
+                        'line' => $ex->getLine(),
+                        'trace' => $ex->getTraceAsString()
+                    ]);
+                    throw $ex;
+                }
             } catch (\Illuminate\Database\QueryException $e) {
                 \Log::error('Excel export database error', [
                     'error' => $e->getMessage(),
@@ -494,6 +503,15 @@ class AnalyticsController extends Controller
                     'user_id' => $user->id ?? null
                 ]);
                 return redirect('/analytics')->withErrors(['error' => 'Excel generation error. Please try again later.']);
+            } catch (\TypeError $e) {
+                \Log::error('Excel export TypeError', [
+                    'error' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString(),
+                    'file' => $e->getFile(),
+                    'line' => $e->getLine(),
+                    'user_id' => $user->id ?? null
+                ]);
+                return redirect('/analytics')->withErrors(['error' => 'Data type error in Excel export. Please check your data.']);
             } catch (\Exception $e) {
                 \Log::error('Excel export failed', [
                     'error' => $e->getMessage(),
@@ -503,7 +521,7 @@ class AnalyticsController extends Controller
                     'user_id' => $user->id ?? null,
                     'class' => get_class($e)
                 ]);
-                return redirect('/analytics')->withErrors(['error' => 'Failed to generate Excel file: ' . $e->getMessage()]);
+                return redirect('/analytics')->withErrors(['error' => 'Failed to generate Excel file. Error: ' . substr($e->getMessage(), 0, 100)]);
             }
         } catch (\Exception $e) {
             \Log::error('Excel export failed (outer catch)', [
