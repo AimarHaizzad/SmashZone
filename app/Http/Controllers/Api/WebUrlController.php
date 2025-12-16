@@ -39,7 +39,10 @@ class WebUrlController extends Controller
         $targetPage = $targetPages[$pageType] ?? 'dashboard';
         
         // Generate mobile-auth URL with user data
-        $baseUrl = config('app.url', 'https://smashzone-production-1930.up.railway.app');  // Use Railway production URL
+        // For Android Studio: Use APP_URL from .env or fallback to Render production URL
+        // For local Android emulator testing, set APP_URL in .env to your local IP (e.g., http://192.168.1.100:8000)
+        // For Android emulator, use http://10.0.2.2:8000 (10.0.2.2 is the emulator's alias for localhost)
+        $baseUrl = config('app.url', 'https://smashzone-ywoa.onrender.com');
         $webUrl = $baseUrl . '/mobile-auth?' . http_build_query([
             'authenticated' => 'true',
             'user_id' => $user->id,
