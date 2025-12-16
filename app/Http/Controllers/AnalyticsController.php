@@ -455,30 +455,61 @@ class AnalyticsController extends Controller
                 abort(403, 'Unauthorized. Only owners can export analytics.');
             }
 
+            // Check if Excel package is available
+            if (!class_exists(\Maatwebsite\Excel\Facades\Excel::class)) {
+                \Log::error('Excel package not found');
+                return redirect('/analytics')->withErrors(['error' => 'Excel export package not available.']);
+            }
+
             try {
+                // Create export instance
                 $export = new AnalyticsExport($user);
+                
+                // Validate export instance
+                if (!$export instanceof \Maatwebsite\Excel\Concerns\WithMultipleSheets) {
+                    \Log::error('Export does not implement WithMultipleSheets');
+                    return redirect('/analytics')->withErrors(['error' => 'Invalid export configuration.']);
+                }
+
                 $filename = 'smashzone-analytics-' . now()->format('Y-m-d') . '.xlsx';
+                
+                // Set memory limit for large exports
+                ini_set('memory_limit', '512M');
+                set_time_limit(300); // 5 minutes
+                
+                \Log::info('Starting Excel export', ['user_id' => $user->id, 'filename' => $filename]);
                 
                 return Excel::download($export, $filename);
             } catch (\Illuminate\Database\QueryException $e) {
                 \Log::error('Excel export database error', [
                     'error' => $e->getMessage(),
-                    'trace' => $e->getTraceAsString()
+                    'trace' => $e->getTraceAsString(),
+                    'user_id' => $user->id ?? null
                 ]);
-                return redirect('/analytics')->withErrors(['error' => 'Database error while generating Excel. Please try again later.']);
+                return redirect('/analytics')->withErrors(['error' => 'Database error while generating Excel. Please check logs for details.']);
+            } catch (\PhpOffice\PhpSpreadsheet\Exception $e) {
+                \Log::error('Excel export PhpSpreadsheet error', [
+                    'error' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString(),
+                    'user_id' => $user->id ?? null
+                ]);
+                return redirect('/analytics')->withErrors(['error' => 'Excel generation error. Please try again later.']);
             } catch (\Exception $e) {
                 \Log::error('Excel export failed', [
                     'error' => $e->getMessage(),
                     'trace' => $e->getTraceAsString(),
                     'file' => $e->getFile(),
-                    'line' => $e->getLine()
+                    'line' => $e->getLine(),
+                    'user_id' => $user->id ?? null,
+                    'class' => get_class($e)
                 ]);
-                return redirect('/analytics')->withErrors(['error' => 'Failed to generate Excel file. Please try again later.']);
+                return redirect('/analytics')->withErrors(['error' => 'Failed to generate Excel file: ' . $e->getMessage()]);
             }
         } catch (\Exception $e) {
             \Log::error('Excel export failed (outer catch)', [
                 'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
+                'class' => get_class($e)
             ]);
             return redirect('/analytics')->withErrors(['error' => 'Failed to export Excel. Please try again later.']);
         }

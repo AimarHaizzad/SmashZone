@@ -45,7 +45,7 @@ class RevenueSummarySheet implements FromCollection, WithHeadings, WithMapping, 
     public function collection()
     {
         try {
-            return Payment::whereHas('booking', function($query) {
+            $payments = Payment::whereHas('booking', function($query) {
                 $query->whereHas('court', function($q) {
                     $q->where('owner_id', $this->user->id);
                 });
@@ -67,9 +67,43 @@ class RevenueSummarySheet implements FromCollection, WithHeadings, WithMapping, 
             )
             ->orderBy('payments.payment_date', 'desc')
             ->get();
+            
+            // Return empty collection with at least one row if no data
+            if ($payments->isEmpty()) {
+                return collect([
+                    (object)[
+                        'court_name' => 'No Data',
+                        'customer_name' => 'No bookings found',
+                        'customer_email' => '',
+                        'date' => '',
+                        'start_time' => '',
+                        'end_time' => '',
+                        'amount' => 0,
+                        'payment_date' => '',
+                        'status' => ''
+                    ]
+                ]);
+            }
+            
+            return $payments;
         } catch (\Exception $e) {
-            \Log::error('RevenueSummarySheet collection error', ['error' => $e->getMessage()]);
-            return collect([]);
+            Log::error('RevenueSummarySheet collection error', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            return collect([
+                (object)[
+                    'court_name' => 'Error',
+                    'customer_name' => 'Failed to load data',
+                    'customer_email' => '',
+                    'date' => '',
+                    'start_time' => '',
+                    'end_time' => '',
+                    'amount' => 0,
+                    'payment_date' => '',
+                    'status' => ''
+                ]
+            ]);
         }
     }
 
@@ -126,7 +160,7 @@ class CourtUtilizationSheet implements FromCollection, WithHeadings, WithMapping
     public function collection()
     {
         try {
-            return Court::where('owner_id', $this->user->id)
+            $courts = Court::where('owner_id', $this->user->id)
             ->withCount(['bookings' => function($query) {
                 $query->where('date', '>=', now()->subMonths(6));
             }])
@@ -134,9 +168,31 @@ class CourtUtilizationSheet implements FromCollection, WithHeadings, WithMapping
                 $query->where('date', '>=', now()->subMonths(6));
             }], 'total_price')
             ->get();
+            
+            // Return empty collection with at least one row if no data
+            if ($courts->isEmpty()) {
+                $court = new Court();
+                $court->name = 'No Courts';
+                $court->location = 'No data available';
+                $court->price_per_hour = 0;
+                $court->bookings_count = 0;
+                $court->bookings_sum_total_price = 0;
+                return collect([$court]);
+            }
+            
+            return $courts;
         } catch (\Exception $e) {
-            \Log::error('CourtUtilizationSheet collection error', ['error' => $e->getMessage()]);
-            return collect([]);
+            Log::error('CourtUtilizationSheet collection error', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            $court = new Court();
+            $court->name = 'Error';
+            $court->location = 'Failed to load data';
+            $court->price_per_hour = 0;
+            $court->bookings_count = 0;
+            $court->bookings_sum_total_price = 0;
+            return collect([$court]);
         }
     }
 
@@ -194,7 +250,7 @@ class CustomerAnalyticsSheet implements FromCollection, WithHeadings, WithMappin
     public function collection()
     {
         try {
-            return Payment::whereHas('booking', function($query) {
+            $customers = Payment::whereHas('booking', function($query) {
                 $query->whereHas('court', function($q) {
                     $q->where('owner_id', $this->user->id);
                 });
@@ -214,9 +270,39 @@ class CustomerAnalyticsSheet implements FromCollection, WithHeadings, WithMappin
             ->groupBy('users.id', 'users.name', 'users.email')
             ->orderBy('total_spent', 'desc')
             ->get();
+            
+            // Return empty collection with at least one row if no data
+            if ($customers->isEmpty()) {
+                return collect([
+                    (object)[
+                        'name' => 'No Customers',
+                        'email' => 'No data available',
+                        'booking_count' => 0,
+                        'total_spent' => 0,
+                        'avg_spent_per_booking' => 0,
+                        'first_booking' => '',
+                        'last_booking' => ''
+                    ]
+                ]);
+            }
+            
+            return $customers;
         } catch (\Exception $e) {
-            \Log::error('CustomerAnalyticsSheet collection error', ['error' => $e->getMessage()]);
-            return collect([]);
+            Log::error('CustomerAnalyticsSheet collection error', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            return collect([
+                (object)[
+                    'name' => 'Error',
+                    'email' => 'Failed to load data',
+                    'booking_count' => 0,
+                    'total_spent' => 0,
+                    'avg_spent_per_booking' => 0,
+                    'first_booking' => '',
+                    'last_booking' => ''
+                ]
+            ]);
         }
     }
 
@@ -356,10 +442,28 @@ class PerformanceMetricsSheet implements FromCollection, WithHeadings, WithMappi
                 'unit' => '%'
             ]);
 
+            // Ensure at least one metric exists
+            if ($metrics->isEmpty()) {
+                $metrics->push([
+                    'metric' => 'No Data',
+                    'value' => 0,
+                    'unit' => 'N/A'
+                ]);
+            }
+            
             return $metrics;
         } catch (\Exception $e) {
-            \Log::error('PerformanceMetricsSheet collection error', ['error' => $e->getMessage()]);
-            return collect([]);
+            Log::error('PerformanceMetricsSheet collection error', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            return collect([
+                [
+                    'metric' => 'Error',
+                    'value' => 0,
+                    'unit' => 'Failed to load data'
+                ]
+            ]);
         }
     }
 

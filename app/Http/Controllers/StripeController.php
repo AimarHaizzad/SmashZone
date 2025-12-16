@@ -10,9 +10,17 @@ use App\Models\Payment;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Shipping;
+use App\Services\WebNotificationService;
 
 class StripeController extends Controller
 {
+    protected $webNotificationService;
+
+    public function __construct(WebNotificationService $webNotificationService)
+    {
+        $this->webNotificationService = $webNotificationService;
+    }
+
     public function checkout(Request $request)
     {
         $cart = session('cart', []);
@@ -182,8 +190,18 @@ class StripeController extends Controller
                         session()->forget('delivery_info');
                         session()->forget('cart');
 
+                        // Load order relationships
+                        $order->load(['items.product', 'shipping', 'user']);
+
+                        // Send web notifications to owners and staff
+                        try {
+                            $this->webNotificationService->notifyNewOrder($order);
+                        } catch (\Exception $e) {
+                            // Log the error but don't fail the order creation
+                            \Log::error('Failed to send web notification for new order: ' . $e->getMessage());
+                        }
+
                         // Pass order to success view
-                        $order->load(['items.product', 'shipping']);
                         return view('cart.success', compact('order'));
                     }
                 }

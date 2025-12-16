@@ -617,10 +617,12 @@ Route::middleware(['auth'])->group(function () {
         })->name('refunds.manual');
     });
 
-    // Analytics & Reports
-    Route::get('analytics', [App\Http\Controllers\AnalyticsController::class, 'index'])->name('analytics.index');
-    Route::get('analytics/export-pdf', [App\Http\Controllers\AnalyticsController::class, 'exportPDF'])->name('analytics.export-pdf');
-    Route::get('analytics/export-excel', [App\Http\Controllers\AnalyticsController::class, 'exportExcel'])->name('analytics.export-excel');
+    // Analytics & Reports (Owner only)
+    Route::middleware(['auth'])->group(function () {
+        Route::get('analytics', [App\Http\Controllers\AnalyticsController::class, 'index'])->name('analytics.index');
+        Route::get('analytics/export-pdf', [App\Http\Controllers\AnalyticsController::class, 'exportPDF'])->name('analytics.export-pdf');
+        Route::get('analytics/export-excel', [App\Http\Controllers\AnalyticsController::class, 'exportExcel'])->name('analytics.export-excel');
+    });
 });
 
 // Stripe webhook (outside auth middleware)

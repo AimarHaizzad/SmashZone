@@ -6,6 +6,7 @@ use App\Models\WebNotification;
 use App\Models\User;
 use App\Models\Booking;
 use App\Models\Court;
+use App\Models\Order;
 use Illuminate\Support\Facades\Log;
 
 class WebNotificationService
@@ -263,6 +264,60 @@ class WebNotificationService
         }
 
         Log::info("Web notifications sent for court deletion: {$courtName}");
+    }
+
+    /**
+     * Notify about new order created.
+     */
+    public function notifyNewOrder(Order $order): void
+    {
+        $customer = $order->user;
+        $itemCount = $order->items->sum('quantity');
+        $itemText = $itemCount === 1 ? 'item' : 'items';
+        
+        // Notify all owners
+        $owners = User::where('role', 'owner')->get();
+        foreach ($owners as $owner) {
+            $this->create([
+                'user_id' => $owner->id,
+                'type' => 'order_created',
+                'title' => 'New Order Received',
+                'message' => "New order #{$order->order_number} from {$customer->name} - {$itemCount} {$itemText} (RM " . number_format($order->total_amount, 2) . ")",
+                'data' => [
+                    'order_id' => $order->id,
+                    'order_number' => $order->order_number,
+                    'customer_id' => $customer->id,
+                    'customer_name' => $customer->name,
+                    'total_amount' => $order->total_amount,
+                    'item_count' => $itemCount,
+                    'delivery_method' => $order->delivery_method,
+                    'status' => $order->status,
+                ],
+            ]);
+        }
+
+        // Notify all staff members
+        $staffUsers = User::where('role', 'staff')->get();
+        foreach ($staffUsers as $staff) {
+            $this->create([
+                'user_id' => $staff->id,
+                'type' => 'order_created',
+                'title' => 'New Order Received',
+                'message' => "New order #{$order->order_number} from {$customer->name} - {$itemCount} {$itemText} (RM " . number_format($order->total_amount, 2) . ")",
+                'data' => [
+                    'order_id' => $order->id,
+                    'order_number' => $order->order_number,
+                    'customer_id' => $customer->id,
+                    'customer_name' => $customer->name,
+                    'total_amount' => $order->total_amount,
+                    'item_count' => $itemCount,
+                    'delivery_method' => $order->delivery_method,
+                    'status' => $order->status,
+                ],
+            ]);
+        }
+
+        Log::info("Web notifications sent for new order: {$order->order_number}");
     }
 
     /**
