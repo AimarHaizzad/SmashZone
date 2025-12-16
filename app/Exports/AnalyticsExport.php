@@ -11,6 +11,7 @@ use App\Models\Payment;
 use App\Models\Booking;
 use App\Models\Court;
 use App\Models\User;
+use Illuminate\Support\Facades\Log;
 
 class AnalyticsExport implements WithMultipleSheets
 {
@@ -24,15 +25,15 @@ class AnalyticsExport implements WithMultipleSheets
     public function sheets(): array
     {
         return [
-            'Revenue Summary' => new RevenueSummarySheet($this->user),
-            'Court Utilization' => new CourtUtilizationSheet($this->user),
-            'Customer Analytics' => new CustomerAnalyticsSheet($this->user),
-            'Performance Metrics' => new PerformanceMetricsSheet($this->user),
+            new RevenueSummarySheet($this->user),
+            new CourtUtilizationSheet($this->user),
+            new CustomerAnalyticsSheet($this->user),
+            new PerformanceMetricsSheet($this->user),
         ];
     }
 }
 
-class RevenueSummarySheet implements FromCollection, WithHeadings, WithMapping
+class RevenueSummarySheet implements FromCollection, WithHeadings, WithMapping, WithTitle
 {
     protected $user;
 
@@ -89,21 +90,31 @@ class RevenueSummarySheet implements FromCollection, WithHeadings, WithMapping
 
     public function map($row): array
     {
-        return [
-            $row->court_name,
-            $row->customer_name,
-            $row->customer_email,
-            $row->date,
-            $row->start_time,
-            $row->end_time,
-            number_format($row->amount, 2),
-            $row->payment_date,
-            ucfirst($row->status)
-        ];
+        try {
+            return [
+                $row->court_name ?? 'Unknown Court',
+                $row->customer_name ?? 'Unknown Customer',
+                $row->customer_email ?? 'No email',
+                $row->date ?? '',
+                $row->start_time ?? '',
+                $row->end_time ?? '',
+                number_format($row->amount ?? 0, 2),
+                $row->payment_date ?? '',
+                ucfirst($row->status ?? 'unknown')
+            ];
+        } catch (\Exception $e) {
+            Log::error('RevenueSummarySheet map error', ['error' => $e->getMessage()]);
+            return [];
+        }
+    }
+
+    public function title(): string
+    {
+        return 'Revenue Summary';
     }
 }
 
-class CourtUtilizationSheet implements FromCollection, WithHeadings, WithMapping
+class CourtUtilizationSheet implements FromCollection, WithHeadings, WithMapping, WithTitle
 {
     protected $user;
 
@@ -144,22 +155,34 @@ class CourtUtilizationSheet implements FromCollection, WithHeadings, WithMapping
 
     public function map($row): array
     {
-        $utilizationRate = $row->bookings_count > 0 ? ($row->bookings_count * 2) / (24 * 30) * 100 : 0;
-        $avgRevenue = $row->bookings_count > 0 ? $row->bookings_sum_total_price / $row->bookings_count : 0;
+        try {
+            $bookingsCount = $row->bookings_count ?? 0;
+            $totalPrice = $row->bookings_sum_total_price ?? 0;
+            $utilizationRate = $bookingsCount > 0 ? ($bookingsCount * 2) / (24 * 30) * 100 : 0;
+            $avgRevenue = $bookingsCount > 0 ? $totalPrice / $bookingsCount : 0;
 
-        return [
-            $row->name,
-            $row->location,
-            number_format($row->price_per_hour, 2),
-            $row->bookings_count,
-            number_format($row->bookings_sum_total_price, 2),
-            number_format($avgRevenue, 2),
-            number_format($utilizationRate, 1)
-        ];
+            return [
+                $row->name ?? 'Unknown Court',
+                $row->location ?? 'Unknown Location',
+                number_format($row->price_per_hour ?? 0, 2),
+                $bookingsCount,
+                number_format($totalPrice, 2),
+                number_format($avgRevenue, 2),
+                number_format($utilizationRate, 1)
+            ];
+        } catch (\Exception $e) {
+            Log::error('CourtUtilizationSheet map error', ['error' => $e->getMessage()]);
+            return [];
+        }
+    }
+
+    public function title(): string
+    {
+        return 'Court Utilization';
     }
 }
 
-class CustomerAnalyticsSheet implements FromCollection, WithHeadings, WithMapping
+class CustomerAnalyticsSheet implements FromCollection, WithHeadings, WithMapping, WithTitle
 {
     protected $user;
 
@@ -213,22 +236,33 @@ class CustomerAnalyticsSheet implements FromCollection, WithHeadings, WithMappin
 
     public function map($row): array
     {
-        $customerType = $row->booking_count > 5 ? 'VIP' : ($row->booking_count > 2 ? 'Regular' : 'New');
-        
-        return [
-            $row->name,
-            $row->email,
-            $row->booking_count,
-            number_format($row->total_spent, 2),
-            number_format($row->avg_spent_per_booking, 2),
-            $row->first_booking,
-            $row->last_booking,
-            $customerType
-        ];
+        try {
+            $bookingCount = $row->booking_count ?? 0;
+            $customerType = $bookingCount > 5 ? 'VIP' : ($bookingCount > 2 ? 'Regular' : 'New');
+            
+            return [
+                $row->name ?? 'Unknown Customer',
+                $row->email ?? 'No email',
+                $bookingCount,
+                number_format($row->total_spent ?? 0, 2),
+                number_format($row->avg_spent_per_booking ?? 0, 2),
+                $row->first_booking ?? '',
+                $row->last_booking ?? '',
+                $customerType
+            ];
+        } catch (\Exception $e) {
+            Log::error('CustomerAnalyticsSheet map error', ['error' => $e->getMessage()]);
+            return [];
+        }
+    }
+
+    public function title(): string
+    {
+        return 'Customer Analytics';
     }
 }
 
-class PerformanceMetricsSheet implements FromCollection, WithHeadings, WithMapping
+class PerformanceMetricsSheet implements FromCollection, WithHeadings, WithMapping, WithTitle
 {
     protected $user;
 
@@ -340,13 +374,26 @@ class PerformanceMetricsSheet implements FromCollection, WithHeadings, WithMappi
 
     public function map($row): array
     {
-        $value = $row['unit'] === 'RM' ? number_format($row['value'], 2) : 
-                ($row['unit'] === '%' ? number_format($row['value'], 1) : $row['value']);
+        try {
+            $unit = $row['unit'] ?? '';
+            $value = $row['value'] ?? 0;
+            
+            $formattedValue = $unit === 'RM' ? number_format($value, 2) : 
+                            ($unit === '%' ? number_format($value, 1) : $value);
 
-        return [
-            $row['metric'],
-            $value,
-            $row['unit']
-        ];
+            return [
+                $row['metric'] ?? 'Unknown Metric',
+                $formattedValue,
+                $unit
+            ];
+        } catch (\Exception $e) {
+            Log::error('PerformanceMetricsSheet map error', ['error' => $e->getMessage()]);
+            return [];
+        }
+    }
+
+    public function title(): string
+    {
+        return 'Performance Metrics';
     }
 } 

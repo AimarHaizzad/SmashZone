@@ -445,21 +445,38 @@ class AnalyticsController extends Controller
     public function exportExcel()
     {
         try {
-            if (!auth()->user() || !auth()->user()->isOwner()) {
-                abort(403, 'Unauthorized.');
+            if (!auth()->check()) {
+                return redirect('/login')->withErrors(['error' => 'Please login to export analytics.']);
+            }
+
+            $user = auth()->user();
+            
+            if (!$user->isOwner()) {
+                abort(403, 'Unauthorized. Only owners can export analytics.');
             }
 
             try {
-                return Excel::download(new AnalyticsExport(auth()->user()), 'smashzone-analytics-' . now()->format('Y-m-d') . '.xlsx');
-            } catch (\Exception $e) {
-                \Log::error('Excel export failed', [
+                $export = new AnalyticsExport($user);
+                $filename = 'smashzone-analytics-' . now()->format('Y-m-d') . '.xlsx';
+                
+                return Excel::download($export, $filename);
+            } catch (\Illuminate\Database\QueryException $e) {
+                \Log::error('Excel export database error', [
                     'error' => $e->getMessage(),
                     'trace' => $e->getTraceAsString()
                 ]);
-                return redirect('/analytics')->withErrors(['error' => 'Failed to generate Excel: ' . $e->getMessage()]);
+                return redirect('/analytics')->withErrors(['error' => 'Database error while generating Excel. Please try again later.']);
+            } catch (\Exception $e) {
+                \Log::error('Excel export failed', [
+                    'error' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString(),
+                    'file' => $e->getFile(),
+                    'line' => $e->getLine()
+                ]);
+                return redirect('/analytics')->withErrors(['error' => 'Failed to generate Excel file. Please try again later.']);
             }
         } catch (\Exception $e) {
-            \Log::error('Excel export failed', [
+            \Log::error('Excel export failed (outer catch)', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
