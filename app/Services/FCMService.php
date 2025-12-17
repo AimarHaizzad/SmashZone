@@ -45,6 +45,12 @@ class FCMService
         }
 
         try {
+            // Check if private key is available
+            if (empty($this->serviceAccount['private_key'])) {
+                Log::error('FCM: Private key is missing');
+                return false;
+            }
+
             $jwt = [
                 'iss' => $this->serviceAccount['client_email'],
                 'scope' => 'https://www.googleapis.com/auth/firebase.messaging',
@@ -59,8 +65,21 @@ class FCMService
             $base64Header = str_replace(['+', '/', '='], ['-', '_', ''], base64_encode($header));
             $base64Payload = str_replace(['+', '/', '='], ['-', '_', ''], base64_encode($payload));
             
+            // Ensure private key has proper newlines
+            $privateKey = $this->serviceAccount['private_key'];
+            if (strpos($privateKey, '\\n') !== false) {
+                $privateKey = str_replace('\\n', "\n", $privateKey);
+            }
+            
             $signature = '';
-            openssl_sign($base64Header . '.' . $base64Payload, $signature, $this->serviceAccount['private_key'], 'SHA256');
+            $signResult = openssl_sign($base64Header . '.' . $base64Payload, $signature, $privateKey, 'SHA256');
+            
+            if (!$signResult) {
+                $opensslError = openssl_error_string();
+                Log::error('FCM: Failed to sign JWT', ['openssl_error' => $opensslError]);
+                return false;
+            }
+            
             $base64Signature = str_replace(['+', '/', '='], ['-', '_', ''], base64_encode($signature));
             
             $jwtToken = $base64Header . '.' . $base64Payload . '.' . $base64Signature;
@@ -72,15 +91,31 @@ class FCMService
             
             if ($response->successful()) {
                 $tokenData = $response->json();
-                $this->accessToken = $tokenData['access_token'];
+                $this->accessToken = $tokenData['access_token'] ?? null;
                 $this->tokenExpiry = time() + ($tokenData['expires_in'] ?? 3600);
-                return $this->accessToken;
+                
+                if ($this->accessToken) {
+                    Log::info('FCM: Access token generated successfully');
+                    return $this->accessToken;
+                } else {
+                    Log::error('FCM: Access token missing in response', ['response' => $tokenData]);
+                    return false;
+                }
             } else {
-                Log::error('Failed to get access token', ['response' => $response->body()]);
+                Log::error('FCM: Failed to get access token', [
+                    'status' => $response->status(),
+                    'response' => $response->body(),
+                    'headers' => $response->headers()
+                ]);
                 return false;
             }
         } catch (\Exception $e) {
-            Log::error('Access token error', ['error' => $e->getMessage()]);
+            Log::error('FCM: Access token error', [
+                'error' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => $e->getTraceAsString()
+            ]);
             return false;
         }
     }
@@ -101,9 +136,15 @@ class FCMService
         $token = DB::table('fcm_tokens')->where('user_id', $userId)->value('token');
         
         if (!$token) {
-            Log::warning("No FCM token found for user {$userId}");
+            Log::warning("FCM: No FCM token found for user {$userId}");
             return false;
         }
+        
+        Log::info("FCM: Sending notification to user {$userId}", [
+            'title' => $title,
+            'body' => $body,
+            'token_preview' => substr($token, 0, 30) . '...'
+        ]);
         
         return $this->sendNotification($token, $title, $body, $data);
     }
@@ -182,28 +223,50 @@ class FCMService
     private function sendFCMRequest($payload, $accessToken)
     {
         try {
+            if (empty($accessToken)) {
+                Log::error('FCM: Access token is empty');
+                return false;
+            }
+
+            Log::info('FCM: Sending request', [
+                'url' => $this->fcmUrl,
+                'token_preview' => substr($payload['message']['token'] ?? '', 0, 30) . '...',
+                'title' => $payload['message']['notification']['title'] ?? ''
+            ]);
+
             $response = Http::withHeaders([
                 'Authorization' => 'Bearer ' . $accessToken,
                 'Content-Type' => 'application/json'
-            ])->post($this->fcmUrl, $payload);
+            ])->timeout(30)->post($this->fcmUrl, $payload);
 
             if ($response->successful()) {
                 $responseData = $response->json();
-                Log::info('FCM v1 notification sent successfully', ['response' => $responseData]);
+                Log::info('FCM: Notification sent successfully', [
+                    'response' => $responseData,
+                    'message_id' => $responseData['name'] ?? null
+                ]);
                 
                 // Save notification to database
                 $this->saveNotification($payload['message']['token'], $payload['message']['notification']['title'], $payload['message']['notification']['body'], $payload['message']['data']);
                 
                 return $responseData;
             } else {
-                Log::error('FCM v1 notification failed', [
+                $errorBody = $response->body();
+                $errorJson = json_decode($errorBody, true);
+                
+                Log::error('FCM: Notification failed', [
                     'status' => $response->status(),
-                    'response' => $response->body()
+                    'response' => $errorBody,
+                    'error_details' => $errorJson['error'] ?? null
                 ]);
                 return false;
             }
         } catch (\Exception $e) {
-            Log::error('FCM v1 notification error', ['error' => $e->getMessage()]);
+            Log::error('FCM: Notification exception', [
+                'error' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine()
+            ]);
             return false;
         }
     }

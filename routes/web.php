@@ -119,17 +119,105 @@ Route::get('/test-middleware', function() {
 use App\Services\FCMService;
 
 Route::get('/test-notification', function () {
-    $fcm = new FCMService();
-    
-    // Test notification
-    $fcm->sendToUser(
-        1,  // Replace with your user ID
-        "Test Notification 🔔",
-        "If you see this, Firebase is working!",
-        ['type' => 'test']
-    );
-    
-    return "Notification sent! Check your phone.";
+    try {
+        $userId = request('user_id', 1);
+        
+        // Check if FCM token exists
+        $fcmToken = DB::table('fcm_tokens')->where('user_id', $userId)->value('token');
+        
+        if (!$fcmToken) {
+            $allTokens = DB::table('fcm_tokens')->get(['user_id', 'token', 'created_at']);
+            return response()->json([
+                'success' => false,
+                'error' => 'No FCM token found',
+                'message' => "No FCM token found for user ID {$userId}",
+                'help' => [
+                    'step_1' => 'Make sure you have logged in to the Android app',
+                    'step_2' => 'The app should automatically register the FCM token',
+                    'step_3' => 'Check if any tokens exist in the database',
+                    'available_tokens' => $allTokens->map(function($token) {
+                        return [
+                            'user_id' => $token->user_id,
+                            'token_preview' => substr($token->token, 0, 30) . '...',
+                            'created_at' => $token->created_at
+                        ];
+                    })
+                ]
+            ], 404);
+        }
+        
+        // Initialize FCM Service
+        $fcm = new FCMService();
+        
+        // Test access token generation first
+        $reflection = new \ReflectionClass($fcm);
+        $getAccessTokenMethod = $reflection->getMethod('getAccessToken');
+        $getAccessTokenMethod->setAccessible(true);
+        
+        $accessToken = $getAccessTokenMethod->invoke($fcm);
+        
+        if (!$accessToken) {
+            return response()->json([
+                'success' => false,
+                'error' => 'Failed to generate access token',
+                'message' => 'Could not generate OAuth 2.0 access token for Firebase',
+                'help' => [
+                    'step_1' => 'Check Firebase service account credentials',
+                    'step_2' => 'Verify private key is correctly formatted',
+                    'step_3' => 'Check Laravel logs for detailed error: storage/logs/laravel.log'
+                ],
+                'token_found' => true,
+                'token_preview' => substr($fcmToken, 0, 30) . '...'
+            ], 500);
+        }
+        
+        // Send notification
+        $result = $fcm->sendToUser(
+            $userId,
+            "Test Notification 🔔",
+            "If you see this, Firebase is working!",
+            ['type' => 'test', 'timestamp' => now()->toIso8601String()]
+        );
+        
+        if ($result) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Notification sent successfully! Check your phone.',
+                'user_id' => $userId,
+                'token_preview' => substr($fcmToken, 0, 30) . '...',
+                'result' => $result,
+                'access_token_preview' => substr($accessToken, 0, 20) . '...'
+            ]);
+        } else {
+            return response()->json([
+                'success' => false,
+                'error' => 'Notification sending failed',
+                'message' => 'FCM service returned false. Check Laravel logs for details.',
+                'user_id' => $userId,
+                'token_found' => true,
+                'access_token_generated' => true,
+                'help' => [
+                    'step_1' => 'Check storage/logs/laravel.log for detailed error',
+                    'step_2' => 'Verify FCM token is still valid (not expired)',
+                    'step_3' => 'Check Firebase project settings and permissions'
+                ]
+            ], 500);
+        }
+        
+    } catch (\Exception $e) {
+        \Log::error('FCM Test Error', [
+            'error' => $e->getMessage(),
+            'trace' => $e->getTraceAsString()
+        ]);
+        
+        return response()->json([
+            'success' => false,
+            'error' => 'Exception occurred',
+            'message' => $e->getMessage(),
+            'file' => $e->getFile(),
+            'line' => $e->getLine()
+        ], 500);
+    }
 });
 
 Route::get('/test-notification-simple', function () {
