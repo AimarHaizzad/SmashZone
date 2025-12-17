@@ -370,4 +370,103 @@ class FCMService
 
         return $this->sendToUser($userId, $title, $body, $data);
     }
+
+    /**
+     * Send order confirmation notification (for product purchases)
+     */
+    public function sendOrderConfirmation($userId, $orderDetails)
+    {
+        $title = "Order Confirmed! 🛍️";
+        $body = "Your order #{$orderDetails['order_number']} has been confirmed. Total: RM " . number_format($orderDetails['total_amount'], 2);
+        
+        $data = [
+            'type' => 'order_confirmed',
+            'order_id' => $orderDetails['order_id'],
+            'order_number' => $orderDetails['order_number'],
+            'total_amount' => $orderDetails['total_amount'],
+            'status' => 'confirmed'
+        ];
+
+        return $this->sendToUser($userId, $title, $body, $data);
+    }
+
+    /**
+     * Send order status update notification
+     */
+    public function sendOrderStatusUpdate($userId, $orderDetails)
+    {
+        $statusMessages = [
+            'processing' => 'Your order is being processed',
+            'shipped' => 'Your order has been shipped',
+            'delivered' => 'Your order has been delivered',
+            'cancelled' => 'Your order has been cancelled'
+        ];
+
+        $status = $orderDetails['status'] ?? 'processing';
+        $message = $statusMessages[$status] ?? 'Your order status has been updated';
+
+        $title = "Order Update 📦";
+        $body = "{$message} for order #{$orderDetails['order_number']}";
+        
+        $data = [
+            'type' => 'order_status_update',
+            'order_id' => $orderDetails['order_id'],
+            'order_number' => $orderDetails['order_number'],
+            'status' => $status
+        ];
+
+        return $this->sendToUser($userId, $title, $body, $data);
+    }
+
+    /**
+     * Send shipping update notification
+     */
+    public function sendShippingUpdate($userId, $shippingDetails)
+    {
+        $title = "Shipping Update 🚚";
+        $body = "Your order #{$shippingDetails['order_number']} is {$shippingDetails['status']}";
+        
+        $data = [
+            'type' => 'shipping_update',
+            'order_id' => $shippingDetails['order_id'],
+            'order_number' => $shippingDetails['order_number'],
+            'status' => $shippingDetails['status'],
+            'tracking_number' => $shippingDetails['tracking_number'] ?? null,
+            'estimated_delivery' => $shippingDetails['estimated_delivery'] ?? null
+        ];
+
+        return $this->sendToUser($userId, $title, $body, $data);
+    }
+
+    /**
+     * Send product stock update notification
+     */
+    public function sendProductStockUpdate($userId, $productDetails)
+    {
+        $title = "Product Update 📦";
+        $body = "{$productDetails['product_name']} is now {$productDetails['status']}";
+        
+        $data = [
+            'type' => 'product_stock_update',
+            'product_id' => $productDetails['product_id'],
+            'product_name' => $productDetails['product_name'],
+            'status' => $productDetails['status'],
+            'quantity' => $productDetails['quantity'] ?? null
+        ];
+
+        return $this->sendToUser($userId, $title, $body, $data);
+    }
+
+    /**
+     * Send general notification
+     */
+    public function sendGeneralNotification($userId, $title, $body, $data = [])
+    {
+        $notificationData = array_merge([
+            'type' => 'general',
+            'timestamp' => now()->toIso8601String()
+        ], $data);
+
+        return $this->sendToUser($userId, $title, $body, $notificationData);
+    }
 }

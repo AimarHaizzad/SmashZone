@@ -8,6 +8,8 @@ use App\Models\Booking;
 use Stripe\Stripe;
 use Stripe\Checkout\Session;
 use App\Notifications\PaymentConfirmation;
+use App\Notifications\BookingConfirmation;
+use App\Services\FCMService;
 
 class PaymentController extends Controller
 {
@@ -228,6 +230,50 @@ class PaymentController extends Controller
                         \Log::error('Failed to send payment confirmation email: ' . $e->getMessage());
                     }
 
+                    // Send booking confirmation email with invoice for each booking
+                    try {
+                        $bookings = $payment->bookings()->with('court')->get();
+                        if ($bookings->isEmpty() && $payment->booking) {
+                            $bookings = collect([$payment->booking]);
+                        }
+
+                        foreach ($bookings as $booking) {
+                            try {
+                                // Send booking confirmation email with invoice PDF
+                                $booking->load('court');
+                                $payment->load('user');
+                                $booking->user->notify(new BookingConfirmation($booking, $payment));
+                                
+                                // Send FCM notification for booking confirmation
+                                try {
+                                    $fcmService = new FCMService();
+                                    $fcmService->sendBookingConfirmation($booking->user_id, [
+                                        'booking_id' => $booking->id,
+                                        'court_name' => $booking->court->name ?? 'Court',
+                                        'date' => \Carbon\Carbon::parse($booking->date)->format('M d, Y'),
+                                        'time' => \Carbon\Carbon::createFromFormat('H:i:s', $booking->start_time)->format('g:i A') . ' - ' . \Carbon\Carbon::createFromFormat('H:i:s', $booking->end_time)->format('g:i A'),
+                                        'amount' => $booking->total_price
+                                    ]);
+                                } catch (\Exception $e) {
+                                    \Log::error('Failed to send FCM notification for booking confirmation', [
+                                        'booking_id' => $booking->id,
+                                        'error' => $e->getMessage()
+                                    ]);
+                                }
+                            } catch (\Exception $e) {
+                                \Log::error('Failed to send booking confirmation email', [
+                                    'booking_id' => $booking->id,
+                                    'error' => $e->getMessage()
+                                ]);
+                            }
+                        }
+                    } catch (\Exception $e) {
+                        \Log::error('Failed to send booking confirmation notifications', [
+                            'payment_id' => $payment->id,
+                            'error' => $e->getMessage()
+                        ]);
+                    }
+
                     return view('payments.success', compact('payment', 'session'));
                 }
             } catch (\Exception $e) {
@@ -271,6 +317,50 @@ class PaymentController extends Controller
             $payment->user->notify(new PaymentConfirmation($payment));
         } catch (\Exception $e) {
             \Log::error('Failed to send payment confirmation email: ' . $e->getMessage());
+        }
+
+        // Send booking confirmation email with invoice for each booking
+        try {
+            $bookings = $payment->bookings()->with('court')->get();
+            if ($bookings->isEmpty() && $payment->booking) {
+                $bookings = collect([$payment->booking]);
+            }
+
+            foreach ($bookings as $booking) {
+                try {
+                    // Send booking confirmation email with invoice PDF
+                    $booking->load('court');
+                    $payment->load('user');
+                    $booking->user->notify(new BookingConfirmation($booking, $payment));
+                    
+                    // Send FCM notification for booking confirmation
+                    try {
+                        $fcmService = new FCMService();
+                        $fcmService->sendBookingConfirmation($booking->user_id, [
+                            'booking_id' => $booking->id,
+                            'court_name' => $booking->court->name ?? 'Court',
+                            'date' => \Carbon\Carbon::parse($booking->date)->format('M d, Y'),
+                            'time' => \Carbon\Carbon::createFromFormat('H:i:s', $booking->start_time)->format('g:i A') . ' - ' . \Carbon\Carbon::createFromFormat('H:i:s', $booking->end_time)->format('g:i A'),
+                            'amount' => $booking->total_price
+                        ]);
+                    } catch (\Exception $e) {
+                        \Log::error('Failed to send FCM notification for booking confirmation', [
+                            'booking_id' => $booking->id,
+                            'error' => $e->getMessage()
+                        ]);
+                    }
+                } catch (\Exception $e) {
+                    \Log::error('Failed to send booking confirmation email', [
+                        'booking_id' => $booking->id,
+                        'error' => $e->getMessage()
+                    ]);
+                }
+            }
+        } catch (\Exception $e) {
+            \Log::error('Failed to send booking confirmation notifications', [
+                'payment_id' => $payment->id,
+                'error' => $e->getMessage()
+            ]);
         }
 
         return redirect()->back()->with('success', 'Payment marked as paid successfully.');

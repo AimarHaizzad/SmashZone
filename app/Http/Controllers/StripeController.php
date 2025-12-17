@@ -11,6 +11,7 @@ use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Shipping;
 use App\Services\WebNotificationService;
+use App\Services\FCMService;
 
 class StripeController extends Controller
 {
@@ -199,6 +200,22 @@ class StripeController extends Controller
                         } catch (\Exception $e) {
                             // Log the error but don't fail the order creation
                             \Log::error('Failed to send web notification for new order: ' . $e->getMessage());
+                        }
+
+                        // Send FCM notification to user for product purchase
+                        try {
+                            $fcmService = new FCMService();
+                            $fcmService->sendOrderConfirmation($order->user_id, [
+                                'order_id' => $order->id,
+                                'order_number' => $order->order_number,
+                                'total_amount' => $order->total_amount,
+                                'item_count' => $order->items()->count()
+                            ]);
+                        } catch (\Exception $e) {
+                            \Log::error('Failed to send FCM notification for order', [
+                                'order_id' => $order->id,
+                                'error' => $e->getMessage()
+                            ]);
                         }
 
                         // Pass order to success view

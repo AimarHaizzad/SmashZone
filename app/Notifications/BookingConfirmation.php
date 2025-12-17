@@ -7,19 +7,22 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 use App\Models\Booking;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class BookingConfirmation extends Notification implements ShouldQueue
 {
     use Queueable;
 
     public $booking;
+    public $payment;
 
     /**
      * Create a new notification instance.
      */
-    public function __construct(Booking $booking)
+    public function __construct(Booking $booking, $payment = null)
     {
         $this->booking = $booking;
+        $this->payment = $payment ?? $booking->payment;
     }
 
     /**
@@ -42,7 +45,7 @@ class BookingConfirmation extends Notification implements ShouldQueue
         $endTime = \Carbon\Carbon::parse($this->booking->end_time)->format('g:i A');
         $date = \Carbon\Carbon::parse($this->booking->date)->format('l, F j, Y');
 
-        return (new MailMessage)
+        $mailMessage = (new MailMessage)
             ->subject('Booking Confirmation - ' . $court->name)
             ->greeting('Hello ' . $notifiable->name . '!')
             ->line('Your badminton court booking has been confirmed!')
@@ -51,12 +54,38 @@ class BookingConfirmation extends Notification implements ShouldQueue
             ->line('📅 **Date:** ' . $date)
             ->line('⏰ **Time:** ' . $startTime . ' - ' . $endTime)
             ->line('💰 **Total Amount:** RM ' . number_format($this->booking->total_price, 2))
-            ->line('📋 **Booking ID:** #' . $this->booking->id)
+            ->line('📋 **Booking ID:** #' . $this->booking->id);
+
+        // Add invoice PDF attachment if payment exists
+        if ($this->payment && $this->payment->status === 'paid') {
+            try {
+                $pdf = Pdf::loadView('emails.booking-invoice', [
+                    'booking' => $this->booking,
+                    'payment' => $this->payment
+                ]);
+                
+                $invoiceFileName = 'booking-invoice-' . $this->booking->id . '.pdf';
+                $mailMessage->attachData($pdf->output(), $invoiceFileName, [
+                    'mime' => 'application/pdf',
+                ]);
+                
+                $mailMessage->line('📄 **Invoice attached** - Please find your invoice PDF attached to this email.');
+            } catch (\Exception $e) {
+                \Log::error('Failed to attach invoice PDF', [
+                    'booking_id' => $this->booking->id,
+                    'error' => $e->getMessage()
+                ]);
+            }
+        }
+
+        $mailMessage
             ->action('View Booking Details', url('/bookings/' . $this->booking->id))
             ->line('Please arrive 10 minutes before your scheduled time.')
             ->line('If you need to cancel or modify your booking, please contact us at least 24 hours in advance.')
             ->line('Thank you for choosing SmashZone!')
             ->salutation('Best regards, The SmashZone Team');
+
+        return $mailMessage;
     }
 
     /**
