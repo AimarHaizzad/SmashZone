@@ -71,12 +71,10 @@
                 <label class="block text-sm font-medium text-gray-700 mb-2">Shipping Status</label>
                 <select name="shipping_status" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                     <option value="">All Shipping Statuses</option>
-                    <option value="pending" {{ request('shipping_status') == 'pending' ? 'selected' : '' }}>Pending</option>
                     <option value="preparing" {{ request('shipping_status') == 'preparing' ? 'selected' : '' }}>Preparing</option>
-                    <option value="ready_for_pickup" {{ request('shipping_status') == 'ready_for_pickup' ? 'selected' : '' }}>Ready for Pickup</option>
-                    <option value="in_transit" {{ request('shipping_status') == 'in_transit' ? 'selected' : '' }}>In Transit</option>
                     <option value="out_for_delivery" {{ request('shipping_status') == 'out_for_delivery' ? 'selected' : '' }}>Out for Delivery</option>
                     <option value="delivered" {{ request('shipping_status') == 'delivered' ? 'selected' : '' }}>Delivered</option>
+                    <option value="cancelled" {{ request('shipping_status') == 'cancelled' ? 'selected' : '' }}>Cancelled</option>
                 </select>
             </div>
 

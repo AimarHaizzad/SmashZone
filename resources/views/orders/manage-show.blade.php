@@ -168,15 +168,10 @@
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">Shipping Status</label>
                         <select name="status" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                            <option value="pending" {{ $order->shipping && $order->shipping->status == 'pending' ? 'selected' : '' }}>Pending</option>
-                            <option value="preparing" {{ $order->shipping && $order->shipping->status == 'preparing' ? 'selected' : '' }}>Preparing Order</option>
-                            <option value="ready_for_pickup" {{ $order->shipping && $order->shipping->status == 'ready_for_pickup' ? 'selected' : '' }}>Ready for Pickup</option>
-                            <option value="picked_up" {{ $order->shipping && $order->shipping->status == 'picked_up' ? 'selected' : '' }}>Picked Up</option>
-                            <option value="in_transit" {{ $order->shipping && $order->shipping->status == 'in_transit' ? 'selected' : '' }}>In Transit</option>
+                            <option value="preparing" {{ $order->shipping && $order->shipping->status == 'preparing' ? 'selected' : '' }}>Preparing</option>
                             <option value="out_for_delivery" {{ $order->shipping && $order->shipping->status == 'out_for_delivery' ? 'selected' : '' }}>Out for Delivery</option>
                             <option value="delivered" {{ $order->shipping && $order->shipping->status == 'delivered' ? 'selected' : '' }}>Delivered</option>
-                            <option value="failed" {{ $order->shipping && $order->shipping->status == 'failed' ? 'selected' : '' }}>Delivery Failed</option>
-                            <option value="returned" {{ $order->shipping && $order->shipping->status == 'returned' ? 'selected' : '' }}>Returned</option>
+                            <option value="cancelled" {{ $order->shipping && $order->shipping->status == 'cancelled' ? 'selected' : '' }}>Cancelled</option>
                         </select>
                     </div>
 
@@ -201,7 +196,7 @@
                                value="{{ $order->shipping ? $order->shipping->tracking_number : '' }}"
                                placeholder="Leave empty to auto-generate"
                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                        <p class="text-xs text-gray-500 mt-1">Leave empty to auto-generate when status changes to "In Transit"</p>
+                        <p class="text-xs text-gray-500 mt-1">Leave empty to auto-generate when status changes to "Out for Delivery"</p>
                     </div>
 
                     <div>

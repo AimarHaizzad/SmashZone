@@ -180,7 +180,7 @@ class StripeController extends Controller
                         $carrier = $deliveryInfo['method'] === 'pickup' ? 'Self Pickup' : null;
                         Shipping::create([
                             'order_id' => $order->id,
-                            'status' => 'pending',
+                            'status' => 'preparing',
                             'carrier' => $carrier,
                             'estimated_delivery_date' => $deliveryInfo['method'] === 'delivery' 
                                 ? now()->addDays(3) 

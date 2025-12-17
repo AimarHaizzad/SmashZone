@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\Order;
 use App\Models\Shipping;
 use Illuminate\Support\Facades\Auth;
+use App\Services\FCMService;
 
 class OrderController extends Controller
 {
@@ -141,7 +142,7 @@ class OrderController extends Controller
         }
 
         $request->validate([
-            'status' => 'required|in:pending,preparing,ready_for_pickup,picked_up,in_transit,out_for_delivery,delivered,failed,returned',
+            'status' => 'required|in:preparing,out_for_delivery,delivered,cancelled',
             'tracking_number' => 'nullable|string|max:255',
             'carrier' => 'nullable|string|max:255',
             'notes' => 'nullable|string',
@@ -163,8 +164,8 @@ class OrderController extends Controller
 
         if ($request->tracking_number) {
             $updateData['tracking_number'] = $request->tracking_number;
-        } else if ($request->status === 'in_transit' && !$shipping->tracking_number) {
-            // Auto-generate tracking number when shipping
+        } else if ($request->status === 'out_for_delivery' && !$shipping->tracking_number) {
+            // Auto-generate tracking number when out for delivery
             $updateData['tracking_number'] = Shipping::generateTrackingNumber($request->carrier);
         }
 
@@ -173,7 +174,7 @@ class OrderController extends Controller
         }
 
         // Update timestamps based on status
-        if ($request->status === 'in_transit' && !$shipping->shipped_at) {
+        if ($request->status === 'out_for_delivery' && !$shipping->shipped_at) {
             $updateData['shipped_at'] = now();
         }
 
@@ -183,7 +184,39 @@ class OrderController extends Controller
             $order->update(['status' => 'delivered']);
         }
 
+        if ($request->status === 'cancelled') {
+            // Also update order status to cancelled
+            $order->update(['status' => 'cancelled']);
+        }
+
         $shipping->update($updateData);
+
+        // Send FCM notification to customer when status changes to "out_for_delivery" or "delivered"
+        if (in_array($request->status, ['out_for_delivery', 'delivered'])) {
+            try {
+                $fcmService = new FCMService();
+                $order->load('user');
+                
+                $statusLabels = [
+                    'out_for_delivery' => 'Out for Delivery',
+                    'delivered' => 'Delivered'
+                ];
+                
+                $fcmService->sendShippingUpdate($order->user_id, [
+                    'order_id' => $order->id,
+                    'order_number' => $order->order_number,
+                    'status' => $statusLabels[$request->status] ?? $request->status,
+                    'tracking_number' => $shipping->tracking_number,
+                    'estimated_delivery' => $shipping->estimated_delivery_date ? $shipping->estimated_delivery_date->format('Y-m-d') : null
+                ]);
+            } catch (\Exception $e) {
+                \Log::error('Failed to send FCM notification for shipping update', [
+                    'order_id' => $order->id,
+                    'status' => $request->status,
+                    'error' => $e->getMessage()
+                ]);
+            }
+        }
 
         return redirect()->back()->with('success', 'Shipping status updated successfully.');
     }
@@ -265,7 +298,7 @@ class OrderController extends Controller
 
         // Update shipping status if exists
         if ($order->shipping) {
-            $order->shipping->update(['status' => 'returned']);
+            $order->shipping->update(['status' => 'cancelled']);
         }
 
         return redirect()->back()->with('success', 'Return request submitted successfully. We will process your request shortly.');
@@ -312,7 +345,7 @@ class OrderController extends Controller
 
         // Update shipping status
         if ($order->shipping) {
-            $order->shipping->update(['status' => 'returned']);
+            $order->shipping->update(['status' => 'cancelled']);
         }
 
         $message = 'Return request approved and order cancelled successfully.';

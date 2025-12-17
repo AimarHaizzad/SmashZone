@@ -423,15 +423,31 @@ class FCMService
      */
     public function sendShippingUpdate($userId, $shippingDetails)
     {
-        $title = "Shipping Update 🚚";
-        $body = "Your order #{$shippingDetails['order_number']} is {$shippingDetails['status']}";
+        $status = $shippingDetails['status'] ?? 'updated';
+        $orderNumber = $shippingDetails['order_number'] ?? '';
+        $trackingNumber = $shippingDetails['tracking_number'] ?? null;
+        
+        // Customize title and body based on status
+        if ($status === 'Out for Delivery' || $status === 'out_for_delivery') {
+            $title = "Your Order is Out for Delivery! 🚚";
+            $body = "Order #{$orderNumber} is on its way to you";
+            if ($trackingNumber) {
+                $body .= ". Track it: {$trackingNumber}";
+            }
+        } elseif ($status === 'Delivered' || $status === 'delivered') {
+            $title = "Order Delivered! ✅";
+            $body = "Your order #{$orderNumber} has been delivered successfully!";
+        } else {
+            $title = "Shipping Update 🚚";
+            $body = "Your order #{$orderNumber} is {$status}";
+        }
         
         $data = [
             'type' => 'shipping_update',
             'order_id' => $shippingDetails['order_id'],
-            'order_number' => $shippingDetails['order_number'],
-            'status' => $shippingDetails['status'],
-            'tracking_number' => $shippingDetails['tracking_number'] ?? null,
+            'order_number' => $orderNumber,
+            'status' => strtolower(str_replace(' ', '_', $status)), // Normalize status
+            'tracking_number' => $trackingNumber,
             'estimated_delivery' => $shippingDetails['estimated_delivery'] ?? null
         ];
 

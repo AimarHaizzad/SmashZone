@@ -53,15 +53,10 @@ class Shipping extends Model
     public function getStatusBadgeClassAttribute()
     {
         return match($this->status) {
-            'pending' => 'bg-gray-100 text-gray-800',
             'preparing' => 'bg-yellow-100 text-yellow-800',
-            'ready_for_pickup' => 'bg-blue-100 text-blue-800',
-            'picked_up' => 'bg-indigo-100 text-indigo-800',
-            'in_transit' => 'bg-purple-100 text-purple-800',
             'out_for_delivery' => 'bg-orange-100 text-orange-800',
             'delivered' => 'bg-green-100 text-green-800',
-            'failed' => 'bg-red-100 text-red-800',
-            'returned' => 'bg-pink-100 text-pink-800',
+            'cancelled' => 'bg-red-100 text-red-800',
             default => 'bg-gray-100 text-gray-800',
         };
     }
@@ -69,15 +64,10 @@ class Shipping extends Model
     public function getStatusLabelAttribute()
     {
         return match($this->status) {
-            'pending' => 'Pending',
-            'preparing' => 'Preparing Order',
-            'ready_for_pickup' => 'Ready for Pickup',
-            'picked_up' => 'Picked Up',
-            'in_transit' => 'In Transit',
+            'preparing' => 'Preparing',
             'out_for_delivery' => 'Out for Delivery',
             'delivered' => 'Delivered',
-            'failed' => 'Delivery Failed',
-            'returned' => 'Returned',
+            'cancelled' => 'Cancelled',
             default => 'Unknown',
         };
     }
@@ -85,15 +75,10 @@ class Shipping extends Model
     public function getProgressPercentageAttribute()
     {
         $statuses = [
-            'pending' => 0,
-            'preparing' => 20,
-            'ready_for_pickup' => 40,
-            'picked_up' => 50,
-            'in_transit' => 60,
-            'out_for_delivery' => 80,
+            'preparing' => 33,
+            'out_for_delivery' => 66,
             'delivered' => 100,
-            'failed' => 0,
-            'returned' => 0,
+            'cancelled' => 0,
         ];
 
         return $statuses[$this->status] ?? 0;
