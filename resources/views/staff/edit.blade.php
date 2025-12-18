@@ -21,7 +21,7 @@
 
         <!-- Form Section -->
         <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
-            <form method="POST" action="{{ route('staff.update', $staff, absolute: false) }}" class="space-y-8">
+            <form method="POST" action="{{ route('staff.update', $staff) }}" class="space-y-8">
                 @csrf
                 @method('PUT')
 

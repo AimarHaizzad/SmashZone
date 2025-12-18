@@ -49,7 +49,7 @@
                 </div>
             @endif
 
-            <form method="POST" action="{{ route('staff.store', absolute: false) }}" class="space-y-8">
+            <form method="POST" action="{{ route('staff.store') }}" class="space-y-8">
                 @csrf
 
                 <!-- Personal Information Section -->

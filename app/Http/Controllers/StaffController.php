@@ -120,7 +120,7 @@ class StaffController extends Controller
                     $message .= ' Note: Email notification could not be sent. Please inform the staff member manually.';
                 }
 
-                return redirect('/staff')->with('success', $message);
+                return redirect()->route('staff.index')->with('success', $message);
             } catch (\Exception $e) {
                 \Log::error('Failed to create staff member', [
                     'error' => $e->getMessage(),
@@ -199,7 +199,7 @@ class StaffController extends Controller
             ]);
         }
 
-        return redirect()->route('staff.index', absolute: false)
+        return redirect()->route('staff.index')
             ->with('success', 'Staff member updated successfully!');
     }
 
@@ -208,22 +208,46 @@ class StaffController extends Controller
      */
     public function activate(User $staff)
     {
-        // Check if user is owner
-        if (auth()->user()->role !== 'owner') {
-            abort(403, 'Unauthorized. Only owners can access staff management.');
+        try {
+            // Check if user is owner
+            if (!auth()->check() || auth()->user()->role !== 'owner') {
+                abort(403, 'Unauthorized. Only owners can access staff management.');
+            }
+
+            if (!$staff || $staff->role !== 'staff') {
+                abort(404, 'Staff member not found.');
+            }
+
+            // Check if already activated
+            if ($staff->email_verified_at) {
+                return redirect()->route('staff.index')
+                    ->with('info', 'Staff member is already activated.');
+            }
+
+            // Verify the staff member's email
+            $staff->update([
+                'email_verified_at' => now()
+            ]);
+
+            return redirect()->route('staff.index')
+                ->with('success', 'Staff member activated successfully!');
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            \Log::error('Staff member not found for activation', [
+                'error' => $e->getMessage()
+            ]);
+
+            return redirect()->route('staff.index')
+                ->with('error', 'Staff member not found.');
+        } catch (\Exception $e) {
+            \Log::error('Failed to activate staff member', [
+                'staff_id' => isset($staff) ? $staff->id : null,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return redirect()->route('staff.index')
+                ->with('error', 'Failed to activate staff member. Please try again.');
         }
-
-        if ($staff->role !== 'staff') {
-            abort(404);
-        }
-
-        // Verify the staff member's email
-        $staff->update([
-            'email_verified_at' => now()
-        ]);
-
-        return redirect()->route('staff.index', absolute: false)
-            ->with('success', 'Staff member activated successfully!');
     }
 
     /**
@@ -250,18 +274,29 @@ class StaffController extends Controller
      */
     public function destroy(User $staff)
     {
-        // Check if user is owner
-        if (auth()->user()->role !== 'owner') {
-            abort(403, 'Unauthorized. Only owners can access staff management.');
+        try {
+            // Check if user is owner
+            if (auth()->user()->role !== 'owner') {
+                abort(403, 'Unauthorized. Only owners can access staff management.');
+            }
+
+            if ($staff->role !== 'staff') {
+                abort(404);
+            }
+
+            $staff->delete();
+
+            return redirect()->route('staff.index')
+                ->with('success', 'Staff member deleted successfully!');
+        } catch (\Exception $e) {
+            \Log::error('Failed to delete staff member', [
+                'staff_id' => $staff->id ?? null,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return redirect()->route('staff.index')
+                ->with('error', 'Failed to delete staff member: ' . $e->getMessage());
         }
-
-        if ($staff->role !== 'staff') {
-            abort(404);
-        }
-
-        $staff->delete();
-
-        return redirect()->route('staff.index', absolute: false)
-            ->with('success', 'Staff member deleted successfully!');
     }
 } 
