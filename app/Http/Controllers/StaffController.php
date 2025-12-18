@@ -241,7 +241,7 @@ class StaffController extends Controller
             ->whereNull('email_verified_at')
             ->update(['email_verified_at' => now()]);
 
-        return redirect()->route('staff.index', absolute: false)
+        return redirect()->route('staff.index')
             ->with('success', "Successfully activated {$activatedCount} staff member(s)!");
     }
 
