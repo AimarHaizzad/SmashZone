@@ -247,27 +247,43 @@ class AnalyticsController extends Controller
     {
         try {
             // Top customers by spending - ranked by total amount spent
-            // Get court IDs for this owner first
+            // Use Eloquent relationships for better reliability
             $courtIds = Court::where('owner_id', $user->id)->pluck('id');
             
             if ($courtIds->isEmpty()) {
                 return $this->getEmptyCustomerData();
             }
             
-            // Get top customers using a simpler, more reliable query
-            $topCustomers = DB::table('bookings')
-                ->join('payments', 'bookings.id', '=', 'payments.booking_id')
-                ->join('users', 'bookings.user_id', '=', 'users.id')
-                ->whereIn('bookings.court_id', $courtIds)
-                ->where('payments.status', 'paid')
-                ->select('users.id', 'users.name', 'users.email')
-                ->selectRaw('SUM(payments.amount) as total_spent')
-                ->selectRaw('COUNT(bookings.id) as booking_count')
-                ->groupBy('users.id', 'users.name', 'users.email')
-                ->orderByDesc(DB::raw('SUM(payments.amount)'))
-                ->orderByDesc(DB::raw('COUNT(bookings.id)'))
-                ->limit(10)
-                ->get();
+            // Get all paid payments for bookings in owner's courts
+            $payments = Payment::whereHas('booking', function($query) use ($courtIds) {
+                $query->whereIn('court_id', $courtIds);
+            })
+            ->where('status', 'paid')
+            ->with(['booking.user', 'booking'])
+            ->get();
+            
+            // Group by user and calculate totals
+            $customerStats = $payments->filter(function($payment) {
+                return $payment->booking && $payment->booking->user;
+            })->groupBy(function($payment) {
+                return $payment->booking->user_id;
+            })->map(function($userPayments, $userId) {
+                $firstPayment = $userPayments->first();
+                $user = $firstPayment->booking->user;
+                
+                return (object)[
+                    'id' => $user->id,
+                    'name' => $user->name ?? 'Unknown',
+                    'email' => $user->email ?? 'No email',
+                    'total_spent' => $userPayments->sum('amount'),
+                    'booking_count' => $userPayments->unique('booking_id')->count()
+                ];
+            })->values();
+            
+            // Sort by total_spent descending, then by booking_count
+            $topCustomers = $customerStats->sortByDesc(function($customer) {
+                return [$customer->total_spent, $customer->booking_count];
+            })->take(10)->values();
             
             // Add rank to each customer
             $rank = 1;
