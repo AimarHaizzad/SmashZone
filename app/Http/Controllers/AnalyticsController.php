@@ -246,7 +246,9 @@ class AnalyticsController extends Controller
     private function getCustomerAnalytics($user)
     {
         try {
-            // Top customers by spending
+            // Top customers by spending - ranked by total amount spent
+            $driver = DB::getDriverName();
+            
             $topCustomers = Payment::whereHas('booking', function($query) use ($user) {
                 $query->whereHas('court', function($q) use ($user) {
                     $q->where('owner_id', $user->id);
@@ -255,11 +257,19 @@ class AnalyticsController extends Controller
             ->where('payments.status', 'paid')
             ->join('bookings', 'payments.booking_id', '=', 'bookings.id')
             ->join('users', 'bookings.user_id', '=', 'users.id')
-            ->selectRaw('users.name, users.email, SUM(payments.amount) as total_spent, COUNT(*) as booking_count')
+            ->selectRaw('users.id, users.name, users.email, SUM(payments.amount) as total_spent, COUNT(DISTINCT bookings.id) as booking_count')
             ->groupBy('users.id', 'users.name', 'users.email')
             ->orderBy('total_spent', 'desc')
+            ->orderBy('booking_count', 'desc')
             ->limit(10)
             ->get();
+            
+            // Add rank to each customer
+            $rank = 1;
+            $topCustomers = $topCustomers->map(function($customer) use (&$rank) {
+                $customer->rank = $rank++;
+                return $customer;
+            });
 
             // Customer retention
             $customerRetention = Booking::whereHas('court', function($query) use ($user) {

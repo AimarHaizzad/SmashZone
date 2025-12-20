@@ -237,23 +237,31 @@
         <div class="bg-white rounded-xl shadow-lg p-6 border border-gray-200">
             <h3 class="text-lg font-semibold text-gray-900 mb-4">Top Customers</h3>
             <div class="space-y-3">
-                @foreach(($customerData['top_customers'] ?? []) as $index => $customer)
-                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                    <div class="flex items-center">
-                        <div class="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white text-sm font-bold mr-3">
-                            {{ $index + 1 }}
+                @forelse(($customerData['top_customers'] ?? collect()) as $customer)
+                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                    <div class="flex items-center flex-1">
+                        <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white text-sm font-bold mr-3 shadow-sm">
+                            {{ $customer->rank ?? ($loop->iteration) }}
                         </div>
-                        <div>
+                        <div class="flex-1">
                             <p class="font-medium text-gray-900">{{ $customer->name ?? 'Unknown Customer' }}</p>
                             <p class="text-sm text-gray-600">{{ $customer->email ?? 'No email' }}</p>
                         </div>
                     </div>
-                    <div class="text-right">
-                        <p class="font-semibold text-green-600">RM {{ number_format($customer->total_spent ?? 0, 2) }}</p>
-                        <p class="text-xs text-gray-500">{{ $customer->booking_count ?? 0 }} bookings</p>
+                    <div class="text-right ml-4">
+                        <p class="font-semibold text-green-600 text-lg">RM {{ number_format($customer->total_spent ?? 0, 2) }}</p>
+                        <p class="text-xs text-gray-500">{{ $customer->booking_count ?? 0 }} {{ ($customer->booking_count ?? 0) == 1 ? 'booking' : 'bookings' }}</p>
                     </div>
                 </div>
-                @endforeach
+                @empty
+                <div class="text-center py-8">
+                    <svg class="mx-auto h-12 w-12 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                    </svg>
+                    <p class="text-gray-500 text-sm">No customer data available yet</p>
+                    <p class="text-gray-400 text-xs mt-1">Customer rankings will appear here once bookings are made</p>
+                </div>
+                @endforelse
             </div>
         </div>
 
@@ -470,4 +478,5 @@ const predictionChart = new Chart(predictionCtx, {
 }
 </script>
 @endpush
+@endsection 
 @endsection 
