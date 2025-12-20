@@ -137,80 +137,82 @@
             @endif
 
             <!-- Shipping Management -->
-            <div class="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
-                <h2 class="text-xl font-bold text-gray-900 mb-4">Shipping Management</h2>
-                
-                @if($order->shipping)
-                    <div class="mb-4 p-4 bg-gray-50 rounded-lg">
-                        <div class="flex items-center justify-between mb-2">
-                            <span class="text-sm text-gray-600">Current Shipping Status</span>
-                            <span class="px-3 py-1 rounded-full text-xs font-semibold {{ $order->shipping->status_badge_class }}">
-                                {{ $order->shipping->status_label }}
-                            </span>
+            @if($order->delivery_method !== 'pickup')
+                <div class="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
+                    <h2 class="text-xl font-bold text-gray-900 mb-4">Shipping Management</h2>
+                    
+                    @if($order->shipping)
+                        <div class="mb-4 p-4 bg-gray-50 rounded-lg">
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-sm text-gray-600">Current Shipping Status</span>
+                                <span class="px-3 py-1 rounded-full text-xs font-semibold {{ $order->shipping->status_badge_class }}">
+                                    {{ $order->shipping->status_label }}
+                                </span>
+                            </div>
+                            @if($order->shipping->tracking_number)
+                                <div class="text-sm">
+                                    <span class="text-gray-600">Tracking Number:</span>
+                                    <span class="font-bold text-gray-900">{{ $order->shipping->tracking_number }}</span>
+                                </div>
+                            @endif
+                            @if($order->shipping->carrier)
+                                <div class="text-sm mt-1">
+                                    <span class="text-gray-600">Carrier:</span>
+                                    <span class="font-semibold text-gray-900">{{ $order->shipping->carrier }}</span>
+                                </div>
+                            @endif
                         </div>
-                        @if($order->shipping->tracking_number)
-                            <div class="text-sm">
-                                <span class="text-gray-600">Tracking Number:</span>
-                                <span class="font-bold text-gray-900">{{ $order->shipping->tracking_number }}</span>
-                            </div>
-                        @endif
-                        @if($order->shipping->carrier)
-                            <div class="text-sm mt-1">
-                                <span class="text-gray-600">Carrier:</span>
-                                <span class="font-semibold text-gray-900">{{ $order->shipping->carrier }}</span>
-                            </div>
-                        @endif
-                    </div>
-                @endif
+                    @endif
 
-                <form action="{{ route('orders.update-shipping', $order, absolute: false) }}" method="POST" class="space-y-4">
-                    @csrf
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Shipping Status</label>
-                        <select name="status" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                            <option value="preparing" {{ $order->shipping && $order->shipping->status == 'preparing' ? 'selected' : '' }}>Preparing</option>
-                            <option value="out_for_delivery" {{ $order->shipping && $order->shipping->status == 'out_for_delivery' ? 'selected' : '' }}>Out for Delivery</option>
-                            <option value="delivered" {{ $order->shipping && $order->shipping->status == 'delivered' ? 'selected' : '' }}>Delivered</option>
-                            <option value="cancelled" {{ $order->shipping && $order->shipping->status == 'cancelled' ? 'selected' : '' }}>Cancelled</option>
-                        </select>
-                    </div>
+                    <form action="{{ route('orders.update-shipping', $order, absolute: false) }}" method="POST" class="space-y-4">
+                        @csrf
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Shipping Status</label>
+                            <select name="status" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                <option value="preparing" {{ $order->shipping && $order->shipping->status == 'preparing' ? 'selected' : '' }}>Preparing</option>
+                                <option value="out_for_delivery" {{ $order->shipping && $order->shipping->status == 'out_for_delivery' ? 'selected' : '' }}>Out for Delivery</option>
+                                <option value="delivered" {{ $order->shipping && $order->shipping->status == 'delivered' ? 'selected' : '' }}>Delivered</option>
+                                <option value="cancelled" {{ $order->shipping && $order->shipping->status == 'cancelled' ? 'selected' : '' }}>Cancelled</option>
+                            </select>
+                        </div>
 
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Carrier</label>
-                        <select name="carrier" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                            <option value="">Select Carrier</option>
-                            <option value="Self Pickup" {{ $order->shipping && $order->shipping->carrier == 'Self Pickup' ? 'selected' : '' }}>Self Pickup</option>
-                            <option value="PosLaju" {{ $order->shipping && $order->shipping->carrier == 'PosLaju' ? 'selected' : '' }}>PosLaju</option>
-                            <option value="J&T Express" {{ $order->shipping && $order->shipping->carrier == 'J&T Express' ? 'selected' : '' }}>J&T Express</option>
-                            <option value="DHL" {{ $order->shipping && $order->shipping->carrier == 'DHL' ? 'selected' : '' }}>DHL</option>
-                            <option value="GDEX" {{ $order->shipping && $order->shipping->carrier == 'GDEX' ? 'selected' : '' }}>GDEX</option>
-                            <option value="Ninja Van" {{ $order->shipping && $order->shipping->carrier == 'Ninja Van' ? 'selected' : '' }}>Ninja Van</option>
-                            <option value="Lalamove" {{ $order->shipping && $order->shipping->carrier == 'Lalamove' ? 'selected' : '' }}>Lalamove</option>
-                            <option value="Other" {{ $order->shipping && $order->shipping->carrier == 'Other' ? 'selected' : '' }}>Other</option>
-                        </select>
-                    </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Carrier</label>
+                            <select name="carrier" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                <option value="">Select Carrier</option>
+                                <option value="Self Pickup" {{ $order->shipping && $order->shipping->carrier == 'Self Pickup' ? 'selected' : '' }}>Self Pickup</option>
+                                <option value="PosLaju" {{ $order->shipping && $order->shipping->carrier == 'PosLaju' ? 'selected' : '' }}>PosLaju</option>
+                                <option value="J&T Express" {{ $order->shipping && $order->shipping->carrier == 'J&T Express' ? 'selected' : '' }}>J&T Express</option>
+                                <option value="DHL" {{ $order->shipping && $order->shipping->carrier == 'DHL' ? 'selected' : '' }}>DHL</option>
+                                <option value="GDEX" {{ $order->shipping && $order->shipping->carrier == 'GDEX' ? 'selected' : '' }}>GDEX</option>
+                                <option value="Ninja Van" {{ $order->shipping && $order->shipping->carrier == 'Ninja Van' ? 'selected' : '' }}>Ninja Van</option>
+                                <option value="Lalamove" {{ $order->shipping && $order->shipping->carrier == 'Lalamove' ? 'selected' : '' }}>Lalamove</option>
+                                <option value="Other" {{ $order->shipping && $order->shipping->carrier == 'Other' ? 'selected' : '' }}>Other</option>
+                            </select>
+                        </div>
 
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Tracking Number</label>
-                        <input type="text" name="tracking_number" 
-                               value="{{ $order->shipping ? $order->shipping->tracking_number : '' }}"
-                               placeholder="Leave empty to auto-generate"
-                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                        <p class="text-xs text-gray-500 mt-1">Leave empty to auto-generate when status changes to "Out for Delivery"</p>
-                    </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Tracking Number</label>
+                            <input type="text" name="tracking_number" 
+                                   value="{{ $order->shipping ? $order->shipping->tracking_number : '' }}"
+                                   placeholder="Leave empty to auto-generate"
+                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            <p class="text-xs text-gray-500 mt-1">Leave empty to auto-generate when status changes to "Out for Delivery"</p>
+                        </div>
 
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Notes</label>
-                        <textarea name="notes" rows="3" 
-                                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                  placeholder="Add shipping notes...">{{ $order->shipping ? $order->shipping->notes : '' }}</textarea>
-                    </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Notes</label>
+                            <textarea name="notes" rows="3" 
+                                      class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                      placeholder="Add shipping notes...">{{ $order->shipping ? $order->shipping->notes : '' }}</textarea>
+                        </div>
 
-                    <button type="submit" class="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-semibold">
-                        Update Shipping Status
-                    </button>
-                </form>
-            </div>
+                        <button type="submit" class="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-semibold">
+                            Update Shipping Status
+                        </button>
+                    </form>
+                </div>
+            @endif
 
             <!-- Order Items -->
             <div class="bg-white rounded-xl shadow-lg border border-gray-200 p-6">

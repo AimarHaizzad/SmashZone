@@ -81,7 +81,7 @@
                     </div>
                     <div class="ml-4">
                         <p class="text-sm font-medium text-gray-500">Recently Added</p>
-                        <p class="text-2xl font-bold text-gray-900">{{ $staff->where('created_at', '>=', now()->subDays(7))->count() }}</p>
+                        <p class="text-2xl font-bold text-gray-900">{{ $staff->where('created_at', '>=', now()->subDays(7))->whereNull('email_verified_at')->count() }}</p>
                     </div>
                 </div>
             </div>
@@ -154,17 +154,6 @@
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                     <div class="flex items-center justify-end space-x-2">
-                                        @if(!$member->email_verified_at)
-                                            <form action="{{ route('staff.activate', $member) }}" method="POST" class="inline">
-                                                @csrf
-                                                @method('PATCH')
-                                                <button type="submit" class="text-green-600 hover:text-green-900 transition-colors" title="Activate Staff">
-                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                                    </svg>
-                                                </button>
-                                            </form>
-                                        @endif
                                         <a href="{{ route('staff.edit', $member) }}" class="text-blue-600 hover:text-blue-900 transition-colors" title="Edit Staff">
                                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>

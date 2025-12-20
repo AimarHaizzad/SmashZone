@@ -184,6 +184,15 @@ php artisan migrate --force || {
     echo "⚠️ Migration failed! Check your database connection."
 }
 
+# Run PastDataSeeder if SEED_PAST_DATA is set to 'true'
+if [ "$SEED_PAST_DATA" = "true" ]; then
+    echo "🌱 Running PastDataSeeder to generate historical booking data..."
+    php artisan db:seed --class=PastDataSeeder || {
+        echo "⚠️ PastDataSeeder failed, continuing deployment..."
+    }
+    echo "💡 To prevent running this seeder again, set SEED_PAST_DATA to 'false' or remove it in Render dashboard."
+fi
+
 # Create owner account if it doesn't exist
 echo "👤 Ensuring owner account exists..."
 php -r "
