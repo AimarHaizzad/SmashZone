@@ -657,7 +657,7 @@ Route::middleware(['auth'])->group(function () {
     
     // Owner Bookings View
     Route::get('/owner/bookings', [OwnerDashboardController::class, 'bookings'])->name('owner.bookings');
-    
+
     // Seed Past Data (Owner only) - GET route for easy access
     Route::get('/owner/seed-past-data', [OwnerDashboardController::class, 'seedPastData'])
         ->middleware('auth')

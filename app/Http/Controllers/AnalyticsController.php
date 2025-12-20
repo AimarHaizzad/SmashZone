@@ -246,51 +246,20 @@ class AnalyticsController extends Controller
     private function getCustomerAnalytics($user)
     {
         try {
-            // Top customers by spending - ranked by total amount spent
-            // Use Eloquent relationships for better reliability
-            $courtIds = Court::where('owner_id', $user->id)->pluck('id');
-            
-            if ($courtIds->isEmpty()) {
-                return $this->getEmptyCustomerData();
-            }
-            
-            // Get all paid payments for bookings in owner's courts
-            $payments = Payment::whereHas('booking', function($query) use ($courtIds) {
-                $query->whereIn('court_id', $courtIds);
+            // Top customers by spending
+            $topCustomers = Payment::whereHas('booking', function($query) use ($user) {
+                $query->whereHas('court', function($q) use ($user) {
+                    $q->where('owner_id', $user->id);
+                });
             })
-            ->where('status', 'paid')
-            ->with(['booking.user', 'booking'])
+            ->where('payments.status', 'paid')
+            ->join('bookings', 'payments.booking_id', '=', 'bookings.id')
+            ->join('users', 'bookings.user_id', '=', 'users.id')
+            ->selectRaw('users.name, users.email, SUM(payments.amount) as total_spent, COUNT(*) as booking_count')
+            ->groupBy('users.id', 'users.name', 'users.email')
+            ->orderBy('total_spent', 'desc')
+            ->limit(10)
             ->get();
-            
-            // Group by user and calculate totals
-            $customerStats = $payments->filter(function($payment) {
-                return $payment->booking && $payment->booking->user;
-            })->groupBy(function($payment) {
-                return $payment->booking->user_id;
-            })->map(function($userPayments, $userId) {
-                $firstPayment = $userPayments->first();
-                $user = $firstPayment->booking->user;
-                
-                return (object)[
-                    'id' => $user->id,
-                    'name' => $user->name ?? 'Unknown',
-                    'email' => $user->email ?? 'No email',
-                    'total_spent' => $userPayments->sum('amount'),
-                    'booking_count' => $userPayments->unique('booking_id')->count()
-                ];
-            })->values();
-            
-            // Sort by total_spent descending, then by booking_count
-            $topCustomers = $customerStats->sortByDesc(function($customer) {
-                return [$customer->total_spent, $customer->booking_count];
-            })->take(10)->values();
-            
-            // Add rank to each customer
-            $rank = 1;
-            $topCustomers = $topCustomers->map(function($customer) use (&$rank) {
-                $customer->rank = $rank++;
-                return $customer;
-            });
 
             // Customer retention
             $customerRetention = Booking::whereHas('court', function($query) use ($user) {
@@ -304,9 +273,9 @@ class AnalyticsController extends Controller
             // New vs returning customers
             // New customers: customers who made their FIRST booking in the last month
             $allCustomerIds = Booking::whereHas('court', function($query) use ($user) {
-                $query->where('owner_id', $user->id);
-            })
-            ->where('date', '>=', now()->subMonths(1))
+                    $query->where('owner_id', $user->id);
+                })
+                ->where('date', '>=', now()->subMonths(1))
             ->distinct()
             ->pluck('user_id');
             
