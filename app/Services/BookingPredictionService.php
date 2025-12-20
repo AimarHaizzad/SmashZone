@@ -17,6 +17,11 @@ class BookingPredictionService
         // Get historical data for analysis
         $historicalData = $this->getHistoricalData($ownerId);
         
+        // Check if we have enough data (at least 7 days of booking data)
+        if ($historicalData['daily_bookings']->count() < 7) {
+            return $this->getEmptyPredictionData();
+        }
+        
         // Analyze patterns
         $patterns = $this->analyzePatterns($historicalData);
         
@@ -37,6 +42,49 @@ class BookingPredictionService
             'historical_data' => $historicalData
         ];
     }
+    
+    /**
+     * Get empty prediction data structure
+     */
+    private function getEmptyPredictionData()
+    {
+        $predictions = [];
+        for ($i = 0; $i < 7; $i++) {
+            $date = Carbon::now()->addDays($i + 1);
+            $predictions[] = [
+                'date' => $date->format('Y-m-d'),
+                'day_name' => $date->format('l'),
+                'day_of_week' => $date->dayOfWeek,
+                'predicted_bookings' => 0,
+                'revenue_estimate' => 0,
+                'confidence' => 0,
+                'is_peak_day' => false,
+                'is_low_day' => false,
+                'peak_hours' => [],
+                'recommendations' => []
+            ];
+        }
+
+        return [
+            'predictions' => $predictions,
+            'confidence' => [
+                'overall' => 0,
+                'data_quality' => 0,
+                'pattern_consistency' => 0,
+                'data_points' => 0
+            ],
+            'recommendations' => [
+                [
+                    'type' => 'info',
+                    'title' => 'No Data Available',
+                    'description' => 'Insufficient historical data to generate predictions.',
+                    'actions' => ['Continue booking courts to build prediction data']
+                ]
+            ],
+            'patterns' => [],
+            'historical_data' => []
+        ];
+    }
 
     /**
      * Get historical booking data for analysis
@@ -45,13 +93,28 @@ class BookingPredictionService
     {
         // Get data from last 3 months
         $startDate = Carbon::now()->subMonths(3);
+        $driver = DB::getDriverName();
+        
+        // Database-specific functions
+        $dateFunction = $driver === 'pgsql' 
+            ? 'bookings.date::date' 
+            : 'DATE(bookings.date)';
+        $dayOfWeekFunction = $driver === 'pgsql' 
+            ? 'EXTRACT(DOW FROM bookings.date) + 1' 
+            : 'DAYOFWEEK(bookings.date)';
+        $hourFunction = $driver === 'pgsql' 
+            ? 'EXTRACT(HOUR FROM bookings.start_time::time)' 
+            : 'HOUR(bookings.start_time)';
+        $paymentDateFunction = $driver === 'pgsql' 
+            ? 'payments.payment_date::date' 
+            : 'DATE(payments.payment_date)';
         
         // Daily booking counts
         $dailyBookings = Booking::whereHas('court', function($query) use ($ownerId) {
             $query->where('owner_id', $ownerId);
         })
         ->where('date', '>=', $startDate)
-        ->selectRaw('DATE(date) as booking_date, COUNT(*) as booking_count, DAYOFWEEK(date) as day_of_week')
+        ->selectRaw("{$dateFunction} as booking_date, COUNT(*) as booking_count, {$dayOfWeekFunction} as day_of_week")
         ->groupBy('booking_date', 'day_of_week')
         ->orderBy('booking_date')
         ->get();
@@ -64,7 +127,7 @@ class BookingPredictionService
         })
         ->where('payment_date', '>=', $startDate)
         ->where('status', 'paid')
-        ->selectRaw('DATE(payment_date) as payment_date, SUM(amount) as total_revenue')
+        ->selectRaw("{$paymentDateFunction} as payment_date, SUM(amount) as total_revenue")
         ->groupBy('payment_date')
         ->orderBy('payment_date')
         ->get();
@@ -74,7 +137,7 @@ class BookingPredictionService
             $query->where('owner_id', $ownerId);
         })
         ->where('date', '>=', $startDate)
-        ->selectRaw('HOUR(start_time) as hour, COUNT(*) as booking_count, DAYOFWEEK(date) as day_of_week')
+        ->selectRaw("{$hourFunction} as hour, COUNT(*) as booking_count, {$dayOfWeekFunction} as day_of_week")
         ->groupBy('hour', 'day_of_week')
         ->orderBy('hour')
         ->get();

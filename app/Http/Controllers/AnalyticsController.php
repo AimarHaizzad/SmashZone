@@ -271,24 +271,32 @@ class AnalyticsController extends Controller
             ->get();
 
             // New vs returning customers
-            $driver = DB::getDriverName();
-            if ($driver === 'pgsql') {
-                $newCustomers = Booking::whereHas('court', function($query) use ($user) {
+            // New customers: customers who made their FIRST booking in the last month
+            $allCustomerIds = Booking::whereHas('court', function($query) use ($user) {
+                $query->where('owner_id', $user->id);
+            })
+            ->where('date', '>=', now()->subMonths(1))
+            ->distinct()
+            ->pluck('user_id');
+            
+            $newCustomers = 0;
+            $returningCustomers = 0;
+            
+            foreach ($allCustomerIds as $customerId) {
+                // Check if this customer had any bookings before the last month
+                $hasPreviousBookings = Booking::whereHas('court', function($query) use ($user) {
                     $query->where('owner_id', $user->id);
                 })
-                ->where('date', '>=', now()->subMonths(1))
-                ->distinct('user_id')
-                ->count('user_id');
-            } else {
-                $newCustomers = Booking::whereHas('court', function($query) use ($user) {
-                    $query->where('owner_id', $user->id);
-                })
-                ->where('date', '>=', now()->subMonths(1))
-                ->distinct()
-                ->count('user_id');
+                ->where('user_id', $customerId)
+                ->where('date', '<', now()->subMonths(1))
+                ->exists();
+                
+                if ($hasPreviousBookings) {
+                    $returningCustomers++;
+                } else {
+                    $newCustomers++;
+                }
             }
-
-            $returningCustomers = $customerRetention->count();
 
             // Customer booking frequency
             $bookingFrequency = Booking::whereHas('court', function($query) use ($user) {
