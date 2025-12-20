@@ -149,7 +149,19 @@
                 </h3>
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     @foreach(($predictionData['recommendations'] ?? []) as $recommendation)
-                    <div class="p-4 rounded-lg border {{ $recommendation['type'] === 'peak_days' ? 'bg-green-50 border-green-200' : ($recommendation['type'] === 'low_days' ? 'bg-yellow-50 border-yellow-200' : 'bg-blue-50 border-blue-200') }}">
+                    @php
+                        $bgColor = match($recommendation['type'] ?? 'overall') {
+                            'peak_days' => 'bg-green-50 border-green-200',
+                            'low_days' => 'bg-yellow-50 border-yellow-200',
+                            'peak_hours' => 'bg-indigo-50 border-indigo-200',
+                            'capacity' => 'bg-orange-50 border-orange-200',
+                            'revenue' => 'bg-purple-50 border-purple-200',
+                            'growth' => 'bg-emerald-50 border-emerald-200',
+                            'decline' => 'bg-red-50 border-red-200',
+                            default => 'bg-blue-50 border-blue-200'
+                        };
+                    @endphp
+                    <div class="p-4 rounded-lg border {{ $bgColor }}">
                         <h4 class="font-semibold text-gray-900 mb-2">{{ $recommendation['title'] }}</h4>
                         <p class="text-sm text-gray-600 mb-3">{{ $recommendation['description'] }}</p>
                         <ul class="space-y-1">

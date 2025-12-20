@@ -312,10 +312,88 @@ class BookingPredictionService
             ];
         }
         
-        // Overall recommendations
-        $avgBookings = collect($predictions)->avg('predicted_bookings');
-        $totalRevenue = collect($predictions)->sum('revenue_estimate');
+        // Peak Hours Optimization
+        $peakHours = $this->getOverallPeakHours($patterns);
+        if (!empty($peakHours)) {
+            $peakHoursStr = implode(', ', array_map(function($h) { return $h . ':00'; }, array_slice($peakHours, 0, 3)));
+            $recommendations[] = [
+                'type' => 'peak_hours',
+                'title' => 'Peak Hours Optimization',
+                'description' => 'Focus on these high-demand hours: ' . $peakHoursStr,
+                'actions' => [
+                    'Prepare extra equipment for peak hours',
+                    'Consider dynamic pricing during ' . $peakHours[0] . ':00-' . ($peakHours[0] + 2) . ':00',
+                    'Pre-book popular slots in advance',
+                    'Ensure quick turnaround between bookings'
+                ]
+            ];
+        }
         
+        // Capacity Management
+        $avgBookings = collect($predictions)->avg('predicted_bookings');
+        $maxBookings = collect($predictions)->max('predicted_bookings');
+        if ($maxBookings > $avgBookings * 1.5) {
+            $recommendations[] = [
+                'type' => 'capacity',
+                'title' => 'Capacity Management',
+                'description' => 'High demand variation detected - optimize capacity',
+                'actions' => [
+                    'Consider adding temporary courts for peak days',
+                    'Implement waitlist system for popular slots',
+                    'Offer early bird discounts to spread demand',
+                    'Cross-train staff for flexible scheduling'
+                ]
+            ];
+        }
+        
+        // Revenue Optimization
+        $totalRevenue = collect($predictions)->sum('revenue_estimate');
+        $avgRevenue = $totalRevenue / 7;
+        $bestDay = collect($predictions)->sortByDesc('revenue_estimate')->first();
+        
+        if ($bestDay && $bestDay['revenue_estimate'] > $avgRevenue * 1.3) {
+            $recommendations[] = [
+                'type' => 'revenue',
+                'title' => 'Revenue Optimization',
+                'description' => $bestDay['day_name'] . ' shows highest revenue potential',
+                'actions' => [
+                    'Maximize availability on ' . $bestDay['day_name'],
+                    'Promote premium packages for this day',
+                    'Create special event packages',
+                    'Target marketing campaigns for this day'
+                ]
+            ];
+        }
+        
+        // Growth Opportunities
+        $growthTrend = $patterns['growth_trend'] ?? 0;
+        if ($growthTrend > 0) {
+            $recommendations[] = [
+                'type' => 'growth',
+                'title' => 'Growth Opportunity',
+                'description' => 'Positive booking trend detected - capitalize on growth',
+                'actions' => [
+                    'Consider expanding court availability',
+                    'Invest in marketing to accelerate growth',
+                    'Build customer loyalty programs',
+                    'Explore partnership opportunities'
+                ]
+            ];
+        } elseif ($growthTrend < -5) {
+            $recommendations[] = [
+                'type' => 'decline',
+                'title' => 'Declining Trend Alert',
+                'description' => 'Booking trend is declining - take action',
+                'actions' => [
+                    'Review and improve customer experience',
+                    'Launch promotional campaigns',
+                    'Analyze competitor pricing',
+                    'Gather customer feedback'
+                ]
+            ];
+        }
+        
+        // Overall recommendations
         $recommendations[] = [
             'type' => 'overall',
             'title' => 'Weekly Overview',
@@ -329,6 +407,30 @@ class BookingPredictionService
         ];
         
         return $recommendations;
+    }
+    
+    /**
+     * Get overall peak hours from patterns
+     */
+    private function getOverallPeakHours($patterns)
+    {
+        $hourlyCounts = [];
+        
+        // Aggregate peak hours across all days
+        for ($day = 1; $day <= 7; $day++) {
+            if (isset($patterns['hourly_by_day'][$day])) {
+                foreach ($patterns['hourly_by_day'][$day] as $hour => $data) {
+                    if (!isset($hourlyCounts[$hour])) {
+                        $hourlyCounts[$hour] = 0;
+                    }
+                    $hourlyCounts[$hour] += $data['avg_bookings'] ?? 0;
+                }
+            }
+        }
+        
+        // Sort by booking count and return top hours
+        arsort($hourlyCounts);
+        return array_keys(array_slice($hourlyCounts, 0, 5, true));
     }
 
     /**
