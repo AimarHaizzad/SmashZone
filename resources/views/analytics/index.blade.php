@@ -231,60 +231,6 @@
         </div>
     </div>
 
-    <!-- Customer Analytics -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-        <!-- Top Customers -->
-        <div class="bg-white rounded-xl shadow-lg p-6 border border-gray-200">
-            <h3 class="text-lg font-semibold text-gray-900 mb-4">Top Customers</h3>
-            <div class="space-y-3">
-                @foreach(($customerData['top_customers'] ?? []) as $index => $customer)
-                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                    <div class="flex items-center">
-                        <div class="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white text-sm font-bold mr-3">
-                            {{ $index + 1 }}
-                        </div>
-                        <div>
-                            <p class="font-medium text-gray-900">{{ $customer->name ?? 'Unknown Customer' }}</p>
-                            <p class="text-sm text-gray-600">{{ $customer->email ?? 'No email' }}</p>
-                        </div>
-                    </div>
-                    <div class="text-right">
-                        <p class="font-semibold text-green-600">RM {{ number_format($customer->total_spent ?? 0, 2) }}</p>
-                        <p class="text-xs text-gray-500">{{ $customer->booking_count ?? 0 }} bookings</p>
-                    </div>
-                </div>
-                @endforeach
-            </div>
-        </div>
-
-        <!-- Customer Metrics -->
-        <div class="bg-white rounded-xl shadow-lg p-6 border border-gray-200">
-            <h3 class="text-lg font-semibold text-gray-900 mb-4">Customer Insights</h3>
-            <div class="grid grid-cols-2 gap-4">
-                <div class="text-center p-4 bg-blue-50 rounded-lg">
-                    <p class="text-2xl font-bold text-blue-600">{{ $customerData['new_customers'] ?? 0 }}</p>
-                    <p class="text-sm text-blue-600">New Customers</p>
-                    <p class="text-xs text-gray-500">This Month</p>
-                </div>
-                <div class="text-center p-4 bg-green-50 rounded-lg">
-                    <p class="text-2xl font-bold text-green-600">{{ $customerData['returning_customers'] ?? 0 }}</p>
-                    <p class="text-sm text-green-600">Returning</p>
-                    <p class="text-xs text-gray-500">Loyal Customers</p>
-                </div>
-                <div class="text-center p-4 bg-purple-50 rounded-lg">
-                    <p class="text-2xl font-bold text-purple-600">{{ number_format($customerData['avg_bookings_per_customer'] ?? 0, 1) }}</p>
-                    <p class="text-sm text-purple-600">Avg Bookings</p>
-                    <p class="text-xs text-gray-500">Per Customer</p>
-                </div>
-                <div class="text-center p-4 bg-orange-50 rounded-lg">
-                    <p class="text-2xl font-bold text-orange-600">{{ ($customerData['top_customers'] ?? collect())->count() }}</p>
-                    <p class="text-sm text-orange-600">VIP Customers</p>
-                    <p class="text-xs text-gray-500">Top Spenders</p>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <!-- Performance Metrics -->
     <div class="bg-white rounded-xl shadow-lg p-6 border border-gray-200 mb-8">
         <h3 class="text-lg font-semibold text-gray-900 mb-4">Performance Metrics</h3>
