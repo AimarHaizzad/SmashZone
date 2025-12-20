@@ -31,7 +31,7 @@ class OwnerDashboardController extends Controller
         }
 
         try {
-            Artisan::call('db:seed', ['--class' => 'PastDataSeeder']);
+            Artisan::call('db:seed', ['--class' => 'PastDataSeeder', '--force' => true]);
             $output = Artisan::output();
             
             return redirect()->back()->with('success', 'Past data seeder completed successfully! ' . trim($output));
