@@ -221,7 +221,7 @@ echo '✅ Owner account ready: AimarHaizzad@gmail.com / Aimar123' . PHP_EOL;
 echo "🔗 Creating storage link..."
 php artisan storage:link || echo "⚠️ Storage link already exists"
 
-# Build frontend assets (Vite)
+# Build frontend assets (Vite) BEFORE config cache
 echo "🎨 Building frontend assets..."
 if [ -f package.json ]; then
     # Check if Node.js is available, install if needed
@@ -241,6 +241,7 @@ if [ -f package.json ]; then
         # Ensure build directory exists and is writable
         mkdir -p public/build
         chmod -R 775 public/build || true
+        # Build assets (Laravel Vite plugin will use APP_URL from .env)
         npm run build || echo "⚠️ Asset build failed, continuing..."
         # Ensure built assets are readable
         chmod -R 755 public/build || true
@@ -251,7 +252,7 @@ else
     echo "⚠️ package.json not found. Skipping asset build."
 fi
 
-# Cache configuration for better performance
+# Cache configuration for better performance (AFTER assets are built)
 echo "⚡ Optimizing application..."
 php artisan config:cache || true
 php artisan route:cache || true
