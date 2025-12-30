@@ -28,9 +28,18 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        $appUrl = config('app.url');
+        // Force APP_URL to prevent localhost issues in production
+        $appUrl = config('app.url', env('APP_URL'));
+        
+        // If still localhost in production, try to detect from request
+        if (($appUrl === 'http://localhost' || !$appUrl) && app()->environment('production')) {
+            $request = request();
+            if ($request) {
+                $appUrl = $request->getSchemeAndHttpHost();
+            }
+        }
 
-        if ($appUrl) {
+        if ($appUrl && $appUrl !== 'http://localhost') {
             URL::forceRootUrl($appUrl);
 
             if (Str::startsWith($appUrl, 'https://')) {
