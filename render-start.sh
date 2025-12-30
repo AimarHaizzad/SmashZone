@@ -43,7 +43,23 @@ echo "📝 Setting up .env file from environment variables..."
 [ ! -z "$APP_NAME" ] && set_env_var "APP_NAME" "$APP_NAME"
 [ ! -z "$APP_ENV" ] && set_env_var "APP_ENV" "$APP_ENV"
 [ ! -z "$APP_DEBUG" ] && set_env_var "APP_DEBUG" "$APP_DEBUG"
-[ ! -z "$APP_URL" ] && set_env_var "APP_URL" "$APP_URL"
+
+# Ensure APP_URL is set (critical for asset URLs)
+if [ ! -z "$APP_URL" ]; then
+    set_env_var "APP_URL" "$APP_URL"
+    echo "✅ APP_URL set from environment: $APP_URL"
+else
+    # Try to get URL from Render's RENDER_EXTERNAL_URL or use default
+    if [ ! -z "$RENDER_EXTERNAL_URL" ]; then
+        set_env_var "APP_URL" "$RENDER_EXTERNAL_URL"
+        echo "✅ APP_URL set from RENDER_EXTERNAL_URL: $RENDER_EXTERNAL_URL"
+    else
+        # Fallback: use the service URL pattern (you may need to adjust this)
+        set_env_var "APP_URL" "https://smashzone-lji9.onrender.com"
+        echo "⚠️ APP_URL not set, using fallback: https://smashzone-lji9.onrender.com"
+        echo "   Please set APP_URL in Render environment variables!"
+    fi
+fi
 
 # Handle database connection
 # Render provides PostgreSQL by default, but we support MySQL too
@@ -153,10 +169,12 @@ echo "   DB_PORT: $(grep "^DB_PORT=" .env | cut -d '=' -f2 || echo 'not set')"
 echo "   DB_DATABASE: $(grep "^DB_DATABASE=" .env | cut -d '=' -f2 || echo 'not set')"
 echo "   DB_USERNAME: $(grep "^DB_USERNAME=" .env | cut -d '=' -f2 || echo 'not set')"
 
-# Clear config cache (IMPORTANT: must clear before migrations to pick up new DB_CONNECTION)
+# Clear config cache (IMPORTANT: must clear after APP_URL is set, before migrations and asset building)
 echo "🔄 Clearing configuration cache..."
 php artisan config:clear || true
 php artisan cache:clear || true
+php artisan view:clear || true
+echo "   APP_URL in .env: $(grep "^APP_URL=" .env | cut -d '=' -f2 || echo 'not set')"
 
 # Verify DB_CONNECTION is set correctly
 echo "🔍 Verifying database connection type..."
