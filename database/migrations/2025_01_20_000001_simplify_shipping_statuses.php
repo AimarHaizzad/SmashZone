@@ -12,6 +12,11 @@ return new class extends Migration
      */
     public function up(): void
     {
+        // Skip if table doesn't exist (fresh database)
+        if (!Schema::hasTable('shippings')) {
+            return;
+        }
+
         // Update existing statuses to new simplified statuses
         DB::table('shippings')->whereIn('status', ['pending', 'ready_for_pickup', 'picked_up', 'in_transit'])
             ->update(['status' => 'preparing']);
@@ -56,6 +61,11 @@ return new class extends Migration
      */
     public function down(): void
     {
+        // Skip if table doesn't exist
+        if (!Schema::hasTable('shippings')) {
+            return;
+        }
+
         // Revert to old statuses (approximate mapping)
         DB::table('shippings')->where('status', 'preparing')
             ->update(['status' => 'pending']);
