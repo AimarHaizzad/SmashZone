@@ -543,19 +543,25 @@
                 );
             }
             
-            // Helper function to scroll element into view
-            function scrollToElement(selector) {
-                const element = document.querySelector(selector);
-                if (element) {
-                    element.scrollIntoView({
-                        behavior: 'smooth',
-                        block: 'center',
-                        inline: 'nearest'
-                    });
-                    // Wait for scroll to complete
-                    return new Promise(resolve => setTimeout(resolve, 300));
+            // Helper function to verify element is still valid
+            function verifyElement(element) {
+                if (!element) return false;
+                
+                try {
+                    const rect = element.getBoundingClientRect();
+                    const style = window.getComputedStyle(element);
+                    
+                    return (
+                        rect.width > 0 &&
+                        rect.height > 0 &&
+                        style.display !== 'none' &&
+                        style.visibility !== 'hidden' &&
+                        style.opacity !== '0' &&
+                        element.offsetParent !== null
+                    );
+                } catch (e) {
+                    return false;
                 }
-                return Promise.resolve();
             }
             
             // Define all possible tutorial steps
@@ -623,11 +629,25 @@
                 if (step.element === '[data-tutorial="product-card"]') {
                     const productCards = document.querySelectorAll('[data-tutorial="product-card"]');
                     if (productCards.length > 0) {
-                        // Use the first product card
-                        validSteps.push({
-                            ...step,
-                            element: '[data-tutorial="product-card"]:first-of-type'
-                        });
+                        // Find the first visible product card
+                        let firstVisibleCard = null;
+                        for (let j = 0; j < productCards.length; j++) {
+                            if (verifyElement(productCards[j])) {
+                                firstVisibleCard = productCards[j];
+                                break;
+                            }
+                        }
+                        
+                        if (firstVisibleCard) {
+                            // Add a unique ID to the first card for targeting
+                            if (!firstVisibleCard.id) {
+                                firstVisibleCard.id = 'tutorial-product-card-first';
+                            }
+                            validSteps.push({
+                                ...step,
+                                element: '#tutorial-product-card-first'
+                            });
+                        }
                     }
                 } else if (elementExists(step.element)) {
                     validSteps.push(step);
@@ -665,19 +685,54 @@
             });
             
             // Ensure overlay is clickable to exit
-            intro.onbeforechange(function() {
+            intro.onbeforechange(function(targetElement) {
                 const overlay = document.querySelector('.introjs-overlay');
                 if (overlay) {
                     overlay.style.pointerEvents = 'auto';
                     overlay.style.cursor = 'pointer';
                 }
+                
+                // Verify element exists before proceeding
+                if (targetElement) {
+                    const rect = targetElement.getBoundingClientRect();
+                    const style = window.getComputedStyle(targetElement);
+                    
+                    // If element is not visible, try to scroll it into view
+                    if (rect.width === 0 || rect.height === 0 || style.display === 'none' || style.visibility === 'hidden') {
+                        setTimeout(function() {
+                            targetElement.scrollIntoView({
+                                behavior: 'smooth',
+                                block: 'center',
+                                inline: 'nearest'
+                            });
+                        }, 100);
+                    }
+                }
             });
             
-            // Handle step change - scroll element into view
+            // Handle step change - ensure element is visible
             intro.onchange(function(targetElement) {
-                if (targetElement) {
-                    scrollToElement(targetElement);
+                try {
+                    if (targetElement) {
+                        // Wait a bit for intro.js to position the tooltip
+                        setTimeout(function() {
+                            targetElement.scrollIntoView({
+                                behavior: 'smooth',
+                                block: 'center',
+                                inline: 'nearest'
+                            });
+                        }, 200);
+                    }
+                } catch (error) {
+                    console.warn('Error in tutorial step change:', error);
+                    // Don't exit tutorial on error, just log it
                 }
+            });
+            
+            // Handle errors during step navigation
+            intro.onbeforeexit(function() {
+                // This is called before exit, we can prevent it if needed
+                return true; // Allow exit
             });
             
             // Mark tutorial as completed
@@ -726,7 +781,48 @@
             // Start tutorial after a short delay to ensure page is ready
             setTimeout(function() {
                 try {
+                    // Double-check all steps have valid elements before starting
+                    const finalValidSteps = [];
+                    for (let i = 0; i < validSteps.length; i++) {
+                        const step = validSteps[i];
+                        let element;
+                        
+                        try {
+                            element = document.querySelector(step.element);
+                        } catch (e) {
+                            console.warn('Invalid selector:', step.element, e);
+                            continue;
+                        }
+                        
+                        if (element && verifyElement(element)) {
+                            finalValidSteps.push(step);
+                        } else {
+                            console.warn('Skipping step - element not valid:', step.element);
+                        }
+                    }
+                    
+                    if (finalValidSteps.length === 0) {
+                        console.warn('No valid tutorial elements found after final check');
+                        return;
+                    }
+                    
+                    // Update steps if some were filtered out
+                    if (finalValidSteps.length !== validSteps.length) {
+                        console.log('Filtered out invalid steps:', validSteps.length - finalValidSteps.length);
+                        intro.setOptions({ steps: finalValidSteps });
+                    }
+                    
+                    console.log('Starting tutorial with', finalValidSteps.length, 'valid steps');
+                    
                     intro.start();
+                    
+                    // Add error handler for step navigation
+                    window.addEventListener('error', function(e) {
+                        if (e.message && e.message.includes('introjs')) {
+                            console.error('Tutorial error detected:', e);
+                            // Don't exit, just log
+                        }
+                    }, true);
                     
                     // Safety mechanism: If tutorial overlay is stuck, allow emergency exit
                     setTimeout(function() {
@@ -748,7 +844,7 @@
                     // If tutorial fails to start, mark as completed to prevent blocking
                     markTutorialComplete();
                 }
-            }, 800);
+            }, 1000); // Increased delay to ensure page is fully loaded
         }
         
         // Initialize when DOM is ready
