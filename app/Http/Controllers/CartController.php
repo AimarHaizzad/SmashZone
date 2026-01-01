@@ -11,7 +11,15 @@ class CartController extends Controller
     {
         $cart = session('cart', []);
         $products = Product::whereIn('id', array_keys($cart))->get();
-        return view('cart.index', compact('cart', 'products'));
+        
+        // Check if user should see cart page tutorial (first time on this page)
+        $user = auth()->user();
+        $showTutorial = $user && $user->isCustomer() && !session('cart_tutorial_shown', false) && count($cart) > 0;
+        if ($showTutorial) {
+            session(['cart_tutorial_shown' => true]);
+        }
+        
+        return view('cart.index', compact('cart', 'products', 'showTutorial'));
     }
 
     public function add(Request $request)

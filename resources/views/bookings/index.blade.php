@@ -29,7 +29,7 @@
 
 <div class="max-w-7xl mx-auto py-4 md:py-8 px-2 md:px-4">
     <!-- Enhanced Date Navigation -->
-    <div class="bg-white rounded-xl md:rounded-2xl shadow-lg p-3 md:p-6 mb-4 md:mb-8 border border-gray-100">
+    <div class="bg-white rounded-xl md:rounded-2xl shadow-lg p-3 md:p-6 mb-4 md:mb-8 border border-gray-100" data-tutorial="date-navigation">
         <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 md:gap-4">
             <div class="flex items-center gap-2 md:gap-3 w-full md:w-auto">
                 <button onclick="changeDate(-1)" class="p-2 md:p-3 rounded-lg md:rounded-xl hover:bg-blue-50 transition-colors border border-gray-200 flex-shrink-0"
@@ -46,7 +46,8 @@
                                class="border-2 border-blue-200 rounded-lg md:rounded-xl px-2 md:px-4 py-2 md:py-3 shadow-sm focus:ring-2 focus:ring-blue-300 text-sm md:text-lg font-semibold bg-white w-full" 
                                onchange="this.form.submit()"
                                title="Select booking date"
-                               aria-label="Select booking date">
+                               aria-label="Select booking date"
+                               data-tutorial="date-input">
                         <div class="absolute inset-y-0 right-0 flex items-center pr-2 md:pr-3 pointer-events-none">
                             <svg class="h-4 w-4 md:h-5 md:w-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -78,7 +79,7 @@
 
 
     <!-- Responsive Table View (works on both mobile and desktop) -->
-    <div class="bg-white rounded-xl md:rounded-3xl shadow-xl border border-gray-100 overflow-hidden">
+    <div class="bg-white rounded-xl md:rounded-3xl shadow-xl border border-gray-100 overflow-hidden" data-tutorial="booking-table">
         <div class="overflow-x-auto">
             <table class="min-w-full">
                 <thead class="sticky top-0 z-20">
@@ -1374,4 +1375,79 @@
     }
 }
 </style>
+
+@if(isset($showTutorial) && $showTutorial)
+    @push('scripts')
+    <script>
+    (function() {
+        'use strict';
+        
+        function initBookingTutorial() {
+            if (typeof introJs === 'undefined') {
+                console.error('Intro.js library not loaded');
+                return;
+            }
+            
+            function elementExists(selector) {
+                const element = document.querySelector(selector);
+                if (!element) return false;
+                const rect = element.getBoundingClientRect();
+                const style = window.getComputedStyle(element);
+                return rect.width > 0 && rect.height > 0 && style.display !== 'none' && style.visibility !== 'hidden';
+            }
+            
+            const steps = [
+                {
+                    element: '[data-tutorial="date-navigation"]',
+                    intro: '<div style="text-align: center;"><h3 style="margin: 0 0 10px 0; font-size: 20px; font-weight: 600; color: #1f2937;">📅 Select Your Date</h3><p style="margin: 0; color: #6b7280; line-height: 1.6;">Use the date picker to choose when you want to book. Click the arrows to navigate days or use the "Today" button to jump to today.</p></div>',
+                    position: 'bottom'
+                },
+                {
+                    element: '[data-tutorial="date-input"]',
+                    intro: '<div><h4 style="margin: 0 0 8px 0; font-size: 16px; font-weight: 600; color: #1f2937;">📆 Date Selection</h4><p style="margin: 0; color: #6b7280; line-height: 1.6;">Click here to open the calendar and select your preferred date. The system shows real-time availability for each date.</p></div>',
+                    position: 'top'
+                },
+                {
+                    element: '[data-tutorial="booking-table"]',
+                    intro: '<div><h4 style="margin: 0 0 8px 0; font-size: 16px; font-weight: 600; color: #1f2937;">🏟️ Court Availability</h4><p style="margin: 0; color: #6b7280; line-height: 1.6;">This table shows all available courts and time slots. Green slots are available, red are booked, and blue are your bookings. Click on a green slot to book!</p></div>',
+                    position: 'top'
+                }
+            ];
+            
+            const validSteps = steps.filter(step => elementExists(step.element));
+            
+            if (validSteps.length === 0) return;
+            
+            const intro = introJs();
+            intro.setOptions({
+                steps: validSteps,
+                showProgress: true,
+                showBullets: true,
+                exitOnOverlayClick: false,
+                exitOnEsc: true,
+                keyboardNavigation: true,
+                scrollToElement: true,
+                scrollPadding: 20,
+                nextLabel: 'Next →',
+                prevLabel: '← Previous',
+                skipLabel: 'Skip Tutorial',
+                doneLabel: 'Got it! 🎉',
+                tooltipClass: 'customTooltip',
+                highlightClass: 'customHighlight',
+                buttonClass: 'introjs-button'
+            });
+            
+            setTimeout(() => intro.start(), 800);
+        }
+        
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initBookingTutorial);
+        } else {
+            setTimeout(initBookingTutorial, 100);
+        }
+    })();
+    </script>
+    @endpush
+@endif
+
 @endsection 

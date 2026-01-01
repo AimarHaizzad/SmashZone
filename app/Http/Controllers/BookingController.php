@@ -49,7 +49,14 @@ class BookingController extends Controller
         for ($h = 8; $h <= 23; $h++) {
             $timeSlots[] = sprintf('%02d:00', $h);
         }
-        return view('bookings.index', compact('courts', 'timeSlots', 'bookings', 'selectedDate'));
+        
+        // Check if user should see booking page tutorial (first time on this page)
+        $showTutorial = $user->isCustomer() && !session('booking_tutorial_shown', false);
+        if ($showTutorial) {
+            session(['booking_tutorial_shown' => true]);
+        }
+        
+        return view('bookings.index', compact('courts', 'timeSlots', 'bookings', 'selectedDate', 'showTutorial'));
     }
 
     /**

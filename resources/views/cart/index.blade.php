@@ -48,7 +48,7 @@
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
             <!-- Cart Items -->
             <div class="lg:col-span-2">
-                <div class="bg-white rounded-2xl lg:rounded-3xl shadow-xl border border-gray-100 overflow-hidden">
+                <div class="bg-white rounded-2xl lg:rounded-3xl shadow-xl border border-gray-100 overflow-hidden" data-tutorial="cart-items">
                     <div class="bg-gradient-to-r from-blue-50 to-green-50 px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-100">
                         <h2 class="text-lg sm:text-xl font-bold text-gray-800 flex items-center gap-2">
                             <svg class="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -157,7 +157,7 @@
             
             <!-- Order Summary -->
             <div class="lg:col-span-1">
-                <div class="bg-white rounded-3xl shadow-xl border border-gray-100 overflow-hidden sticky top-8">
+                <div class="bg-white rounded-3xl shadow-xl border border-gray-100 overflow-hidden sticky top-8" data-tutorial="order-summary">
                     <div class="bg-gradient-to-r from-green-50 to-blue-50 px-6 py-4 border-b border-gray-100">
                         <h2 class="text-xl font-bold text-gray-800 flex items-center gap-2">
                             <svg class="w-6 h-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -194,7 +194,8 @@
                         
                         <!-- Checkout Button -->
                         <a href="{{ route('cart.checkout') }}" 
-                           class="block w-full bg-gradient-to-r from-green-600 to-green-700 text-white py-4 rounded-xl font-bold hover:from-green-700 hover:to-green-800 transition-all transform hover:scale-105 shadow-lg text-lg text-center">
+                           class="block w-full bg-gradient-to-r from-green-600 to-green-700 text-white py-4 rounded-xl font-bold hover:from-green-700 hover:to-green-800 transition-all transform hover:scale-105 shadow-lg text-lg text-center"
+                           data-tutorial="checkout-button">
                             <div class="flex items-center justify-center gap-2">
                                 <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
@@ -262,4 +263,79 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 </script>
+
+@if(isset($showTutorial) && $showTutorial)
+    @push('scripts')
+    <script>
+    (function() {
+        'use strict';
+        
+        function initCartTutorial() {
+            if (typeof introJs === 'undefined') {
+                console.error('Intro.js library not loaded');
+                return;
+            }
+            
+            function elementExists(selector) {
+                const element = document.querySelector(selector);
+                if (!element) return false;
+                const rect = element.getBoundingClientRect();
+                const style = window.getComputedStyle(element);
+                return rect.width > 0 && rect.height > 0 && style.display !== 'none' && style.visibility !== 'hidden';
+            }
+            
+            const steps = [
+                {
+                    element: '[data-tutorial="cart-items"]',
+                    intro: '<div style="text-align: center;"><h3 style="margin: 0 0 10px 0; font-size: 20px; font-weight: 600; color: #1f2937;">🛒 Your Cart Items</h3><p style="margin: 0; color: #6b7280; line-height: 1.6;">Here are all the items in your cart. You can update quantities or remove items. Click "Update Cart" to save changes.</p></div>',
+                    position: 'bottom'
+                },
+                {
+                    element: '[data-tutorial="order-summary"]',
+                    intro: '<div><h4 style="margin: 0 0 8px 0; font-size: 16px; font-weight: 600; color: #1f2937;">💰 Order Summary</h4><p style="margin: 0; color: #6b7280; line-height: 1.6;">Review your order total here. This shows the breakdown of all items and the final amount you\'ll pay.</p></div>',
+                    position: 'left'
+                },
+                {
+                    element: '[data-tutorial="checkout-button"]',
+                    intro: '<div><h4 style="margin: 0 0 8px 0; font-size: 16px; font-weight: 600; color: #1f2937;">💳 Proceed to Checkout</h4><p style="margin: 0; color: #6b7280; line-height: 1.6;">Ready to purchase? Click this button to proceed to secure checkout. We use Stripe for safe and secure payments.</p></div>',
+                    position: 'top'
+                }
+            ];
+            
+            const validSteps = steps.filter(step => elementExists(step.element));
+            
+            if (validSteps.length === 0) return;
+            
+            const intro = introJs();
+            intro.setOptions({
+                steps: validSteps,
+                showProgress: true,
+                showBullets: true,
+                exitOnOverlayClick: false,
+                exitOnEsc: true,
+                keyboardNavigation: true,
+                scrollToElement: true,
+                scrollPadding: 20,
+                nextLabel: 'Next →',
+                prevLabel: '← Previous',
+                skipLabel: 'Skip Tutorial',
+                doneLabel: 'Got it! 🎉',
+                tooltipClass: 'customTooltip',
+                highlightClass: 'customHighlight',
+                buttonClass: 'introjs-button'
+            });
+            
+            setTimeout(() => intro.start(), 800);
+        }
+        
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initCartTutorial);
+        } else {
+            setTimeout(initCartTutorial, 100);
+        }
+    })();
+    </script>
+    @endpush
+@endif
+
 @endsection 

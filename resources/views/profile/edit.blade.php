@@ -79,6 +79,34 @@ use Illuminate\Support\Facades\Storage;
             </div>
         </div>
 
+        <!-- Tutorial Settings Card -->
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-8 mb-8">
+            <div class="flex items-center justify-between mb-6">
+                <div>
+                    <h3 class="text-xl font-semibold text-gray-900 flex items-center">
+                        <svg class="w-5 h-5 mr-2 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+                        </svg>
+                        {{ __('Tutorial Settings') }}
+                    </h3>
+                    <p class="text-gray-600 mt-1">{{ __('Restart the onboarding tutorial to learn how to use SmashZone features.') }}</p>
+                </div>
+            </div>
+            <div class="flex items-center justify-between p-4 bg-gradient-to-r from-blue-50 to-green-50 rounded-xl">
+                <div>
+                    <p class="font-semibold text-gray-900">Restart Tutorial</p>
+                    <p class="text-sm text-gray-600 mt-1">Show the tutorial again on your next visit to the dashboard</p>
+                </div>
+                <button onclick="restartTutorial()" 
+                        class="px-6 py-3 bg-gradient-to-r from-blue-600 to-green-600 text-white rounded-xl font-semibold hover:from-blue-700 hover:to-green-700 transition-all transform hover:scale-105 shadow-lg flex items-center gap-2">
+                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                    Restart Tutorial
+                </button>
+            </div>
+        </div>
+
         <!-- Profile Information Card -->
         <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-8 mb-8">
             <div class="flex items-center justify-between mb-6">
@@ -131,6 +159,45 @@ use Illuminate\Support\Facades\Storage;
 
 @push('scripts')
 <script>
+function restartTutorial() {
+    if (!confirm('Are you sure you want to restart the tutorial? You will see it again on your next visit to the dashboard.')) {
+        return;
+    }
+    
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+    if (!csrfToken) {
+        alert('Error: CSRF token not found');
+        return;
+    }
+    
+    fetch('{{ route("tutorial.restart") }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': csrfToken,
+            'Accept': 'application/json'
+        },
+        body: JSON.stringify({})
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.success) {
+            alert('✅ Tutorial reset successfully! You will see the tutorial again on your next visit to the dashboard.');
+        } else {
+            alert('❌ Error: ' + (data.message || 'Failed to reset tutorial'));
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('❌ An error occurred while resetting the tutorial. Please try again.');
+    });
+}
+
 function previewProfilePicture(input) {
     if (input.files && input.files[0]) {
         const reader = new FileReader();

@@ -515,142 +515,386 @@
 @if(isset($showTutorial) && $showTutorial)
     @push('scripts')
     <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Wait a bit for page to fully load
-        setTimeout(function() {
+    (function() {
+        'use strict';
+        
+        // Wait for page to fully load
+        function initTutorial() {
+            // Check if introJs is available
+            if (typeof introJs === 'undefined') {
+                console.error('Intro.js library not loaded');
+                return;
+            }
+            
+            // Helper function to check if element exists and is visible
+            function elementExists(selector) {
+                const element = document.querySelector(selector);
+                if (!element) return false;
+                
+                const rect = element.getBoundingClientRect();
+                const style = window.getComputedStyle(element);
+                
+                return (
+                    rect.width > 0 &&
+                    rect.height > 0 &&
+                    style.display !== 'none' &&
+                    style.visibility !== 'hidden' &&
+                    style.opacity !== '0'
+                );
+            }
+            
+            // Helper function to scroll element into view
+            function scrollToElement(selector) {
+                const element = document.querySelector(selector);
+                if (element) {
+                    element.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'center',
+                        inline: 'nearest'
+                    });
+                    // Wait for scroll to complete
+                    return new Promise(resolve => setTimeout(resolve, 300));
+                }
+                return Promise.resolve();
+            }
+            
+            // Define all possible tutorial steps
+            const allSteps = [
+                {
+                    element: '[data-tutorial="welcome-card"]',
+                    intro: '<div style="text-align: center;"><h3 style="margin: 0 0 10px 0; font-size: 20px; font-weight: 600; color: #1f2937;">Welcome to SmashZone! 👋</h3><p style="margin: 0; color: #6b7280; line-height: 1.6;">This is your dashboard where you can manage your bookings and shop for badminton gear. Let\'s take a quick tour!</p></div>',
+                    position: 'bottom',
+                    tooltipClass: 'introjs-tooltip-custom'
+                },
+                {
+                    element: '[data-tutorial="book-court-btn"]',
+                    intro: '<div><h4 style="margin: 0 0 8px 0; font-size: 16px; font-weight: 600; color: #1f2937;">📅 Book a Court</h4><p style="margin: 0; color: #6b7280; line-height: 1.6;">Click this button to book a court. You can select a date, time, and court to make your reservation. The system shows real-time availability!</p></div>',
+                    position: 'top'
+                },
+                {
+                    element: '[data-tutorial="my-bookings-btn"]',
+                    intro: '<div><h4 style="margin: 0 0 8px 0; font-size: 16px; font-weight: 600; color: #1f2937;">📋 My Bookings</h4><p style="margin: 0; color: #6b7280; line-height: 1.6;">View all your bookings here. You can see upcoming bookings, past bookings, and manage them. Cancel or modify reservations easily.</p></div>',
+                    position: 'top'
+                },
+                {
+                    element: '[data-tutorial="shop-products-btn"]',
+                    intro: '<div><h4 style="margin: 0 0 8px 0; font-size: 16px; font-weight: 600; color: #1f2937;">🛒 Shop Products</h4><p style="margin: 0; color: #6b7280; line-height: 1.6;">Shop for badminton equipment and gear. Browse products, add them to your cart, and checkout securely.</p></div>',
+                    position: 'top'
+                },
+                {
+                    element: '[data-tutorial="upcoming-bookings"]',
+                    intro: '<div><h4 style="margin: 0 0 8px 0; font-size: 16px; font-weight: 600; color: #1f2937;">📊 Upcoming Bookings</h4><p style="margin: 0; color: #6b7280; line-height: 1.6;">This section shows your upcoming court bookings. You can see the date, time, court name, and status of each booking at a glance.</p></div>',
+                    position: 'top'
+                },
+                {
+                    element: '[data-tutorial="shop-section"]',
+                    intro: '<div><h4 style="margin: 0 0 8px 0; font-size: 16px; font-weight: 600; color: #1f2937;">🏸 Shop Badminton Gear</h4><p style="margin: 0; color: #6b7280; line-height: 1.6;">Browse and purchase badminton gear. Add items to your cart and checkout when ready. We offer quality equipment for all your needs.</p></div>',
+                    position: 'bottom'
+                },
+                {
+                    element: '[data-tutorial="product-card"]',
+                    intro: '<div><h4 style="margin: 0 0 8px 0; font-size: 16px; font-weight: 600; color: #1f2937;">🛍️ Product Cards</h4><p style="margin: 0; color: #6b7280; line-height: 1.6;">Each product card shows the item details and price. Select quantity and click "Add to Cart" to purchase. View more products by clicking "Shop Products".</p></div>',
+                    position: 'top'
+                },
+                {
+                    element: '[data-tutorial="nav-courts"]',
+                    intro: '<div><h4 style="margin: 0 0 8px 0; font-size: 16px; font-weight: 600; color: #1f2937;">🏟️ Navigation: Courts</h4><p style="margin: 0; color: #6b7280; line-height: 1.6;">Click "Courts" in the navigation menu to view all available courts and make bookings. This is the main way to access the booking system.</p></div>',
+                    position: 'bottom'
+                },
+                {
+                    element: '[data-tutorial="nav-bookings"]',
+                    intro: '<div><h4 style="margin: 0 0 8px 0; font-size: 16px; font-weight: 600; color: #1f2937;">📅 Navigation: Bookings</h4><p style="margin: 0; color: #6b7280; line-height: 1.6;">The "Bookings" menu shows all your reservations. Manage them here - view details, cancel, or check status.</p></div>',
+                    position: 'bottom'
+                },
+                {
+                    element: '[data-tutorial="nav-shop"]',
+                    intro: '<div><h4 style="margin: 0 0 8px 0; font-size: 16px; font-weight: 600; color: #1f2937;">🛒 Navigation: Shop</h4><p style="margin: 0; color: #6b7280; line-height: 1.6;">The "Shop" menu lets you browse products and view your orders. Access your cart and order history from here.</p></div>',
+                    position: 'bottom'
+                }
+            ];
+            
+            // Filter steps to only include elements that exist
+            const validSteps = [];
+            
+            for (let i = 0; i < allSteps.length; i++) {
+                const step = allSteps[i];
+                
+                // For product-card, check if at least one exists
+                if (step.element === '[data-tutorial="product-card"]') {
+                    const productCards = document.querySelectorAll('[data-tutorial="product-card"]');
+                    if (productCards.length > 0) {
+                        // Use the first product card
+                        validSteps.push({
+                            ...step,
+                            element: '[data-tutorial="product-card"]:first-of-type'
+                        });
+                    }
+                } else if (elementExists(step.element)) {
+                    validSteps.push(step);
+                }
+            }
+            
+            // If no valid steps, don't start tutorial
+            if (validSteps.length === 0) {
+                console.warn('No valid tutorial elements found');
+                return;
+            }
+            
+            // Initialize intro.js
             const intro = introJs();
             
             intro.setOptions({
-                steps: [
-                    {
-                        element: '[data-tutorial="welcome-card"]',
-                        intro: 'Welcome to SmashZone! 👋 This is your dashboard where you can manage your bookings and shop for badminton gear.',
-                        position: 'bottom'
-                    },
-                    {
-                        element: '[data-tutorial="book-court-btn"]',
-                        intro: 'Click here to book a court. You can select a date, time, and court to make your reservation.',
-                        position: 'top'
-                    },
-                    {
-                        element: '[data-tutorial="my-bookings-btn"]',
-                        intro: 'View all your bookings here. You can see upcoming bookings, past bookings, and manage them.',
-                        position: 'top'
-                    },
-                    {
-                        element: '[data-tutorial="shop-products-btn"]',
-                        intro: 'Shop for badminton equipment and gear. Browse products and add them to your cart.',
-                        position: 'top'
-                    },
-                    {
-                        element: '[data-tutorial="upcoming-bookings"]',
-                        intro: 'This section shows your upcoming court bookings. You can see the date, time, and status of each booking.',
-                        position: 'top'
-                    },
-                    {
-                        element: '[data-tutorial="shop-section"]',
-                        intro: 'Browse and purchase badminton gear. Add items to your cart and checkout when ready.',
-                        position: 'bottom'
-                    },
-                    {
-                        element: '[data-tutorial="product-card"]',
-                        intro: 'Each product card shows the item details and price. Click "Add to Cart" to purchase.',
-                        position: 'top'
-                    },
-                    {
-                        element: '[data-tutorial="nav-courts"]',
-                        intro: 'Click "Courts" in the navigation to view available courts and make bookings.',
-                        position: 'bottom'
-                    },
-                    {
-                        element: '[data-tutorial="nav-bookings"]',
-                        intro: 'The "Bookings" menu shows all your reservations. Manage them here.',
-                        position: 'bottom'
-                    },
-                    {
-                        element: '[data-tutorial="nav-shop"]',
-                        intro: 'The "Shop" menu lets you browse products and view your orders.',
-                        position: 'bottom'
-                    }
-                ],
+                steps: validSteps,
                 showProgress: true,
                 showBullets: true,
                 exitOnOverlayClick: false,
                 exitOnEsc: true,
+                keyboardNavigation: true,
+                disableInteraction: false,
+                scrollToElement: true,
+                scrollPadding: 20,
                 nextLabel: 'Next →',
                 prevLabel: '← Previous',
                 skipLabel: 'Skip Tutorial',
-                doneLabel: 'Got it!',
+                doneLabel: 'Got it! 🎉',
                 tooltipClass: 'customTooltip',
                 highlightClass: 'customHighlight',
-                buttonClass: 'introjs-button'
+                buttonClass: 'introjs-button',
+                hidePrev: false,
+                hideNext: false
             });
             
+            // Handle step change - scroll element into view
+            intro.onchange(function(targetElement) {
+                if (targetElement) {
+                    scrollToElement(targetElement);
+                }
+            });
+            
+            // Mark tutorial as completed
+            function markTutorialComplete() {
+                const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+                if (!csrfToken) {
+                    console.error('CSRF token not found');
+                    return;
+                }
+                
+                fetch('{{ route("tutorial.complete") }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken,
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({})
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.success) {
+                        console.log('✅ Tutorial completed successfully!');
+                    }
+                })
+                .catch(error => {
+                    console.error('❌ Error marking tutorial as completed:', error);
+                });
+            }
+            
+            // On tutorial completion
             intro.oncomplete(function() {
-                // Mark tutorial as completed
-                fetch('{{ route("tutorial.complete") }}', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                    },
-                    body: JSON.stringify({})
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        console.log('Tutorial completed!');
-                    }
-                })
-                .catch(error => {
-                    console.error('Error marking tutorial as completed:', error);
-                });
+                markTutorialComplete();
             });
             
+            // On tutorial exit (skip)
             intro.onexit(function() {
-                // Also mark as completed if user exits
-                fetch('{{ route("tutorial.complete") }}', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                    },
-                    body: JSON.stringify({})
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        console.log('Tutorial marked as completed.');
-                    }
-                })
-                .catch(error => {
-                    console.error('Error marking tutorial as completed:', error);
-                });
+                markTutorialComplete();
             });
             
-            // Start the tutorial
-            intro.start();
-        }, 500);
-    });
+            // Start tutorial after a short delay to ensure page is ready
+            setTimeout(function() {
+                try {
+                    intro.start();
+                } catch (error) {
+                    console.error('Error starting tutorial:', error);
+                }
+            }, 800);
+        }
+        
+        // Initialize when DOM is ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initTutorial);
+        } else {
+            // DOM is already ready
+            setTimeout(initTutorial, 100);
+        }
+    })();
     </script>
     <style>
+    /* Professional Tutorial Styling */
     .customTooltip {
-        border-radius: 12px;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+        border-radius: 16px !important;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2) !important;
+        border: none !important;
+        max-width: 400px !important;
+        padding: 0 !important;
+        background: white !important;
     }
+    
+    .introjs-tooltip-header {
+        padding: 20px 20px 12px 20px !important;
+        border-bottom: 1px solid #e5e7eb !important;
+    }
+    
+    .introjs-tooltipcontent {
+        padding: 16px 20px !important;
+        font-size: 14px !important;
+        line-height: 1.6 !important;
+        color: #374151 !important;
+    }
+    
+    .introjs-tooltipbuttons {
+        padding: 12px 20px 20px 20px !important;
+        border-top: 1px solid #e5e7eb !important;
+        text-align: right !important;
+    }
+    
     .customHighlight {
-        border-radius: 8px;
+        border-radius: 12px !important;
+        box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.3) !important;
     }
+    
+    .introjs-overlay {
+        background: rgba(0, 0, 0, 0.7) !important;
+        backdrop-filter: blur(2px) !important;
+    }
+    
     .introjs-button {
-        border-radius: 6px;
-        padding: 8px 16px;
-        font-weight: 600;
+        border-radius: 8px !important;
+        padding: 10px 20px !important;
+        font-weight: 600 !important;
+        font-size: 14px !important;
+        transition: all 0.2s ease !important;
+        border: none !important;
+        cursor: pointer !important;
     }
+    
+    .introjs-button.introjs-nextbutton {
+        background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%) !important;
+        color: white !important;
+        border: none !important;
+    }
+    
+    .introjs-button.introjs-nextbutton:hover {
+        background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%) !important;
+        transform: translateY(-1px) !important;
+        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4) !important;
+    }
+    
+    .introjs-button.introjs-prevbutton {
+        background: #f3f4f6 !important;
+        color: #374151 !important;
+        margin-right: 8px !important;
+        border: 1px solid #e5e7eb !important;
+    }
+    
+    .introjs-button.introjs-prevbutton:hover {
+        background: #e5e7eb !important;
+        border-color: #d1d5db !important;
+    }
+    
+    .introjs-button.introjs-donebutton {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+        color: white !important;
+        border: none !important;
+    }
+    
+    .introjs-button.introjs-donebutton:hover {
+        background: linear-gradient(135deg, #059669 0%, #047857 100%) !important;
+        transform: translateY(-1px) !important;
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4) !important;
+    }
+    
     .introjs-skipbutton {
-        color: #6b7280;
+        color: #6b7280 !important;
+        font-size: 14px !important;
+        padding: 8px 12px !important;
+        border-radius: 6px !important;
+        transition: all 0.2s ease !important;
     }
+    
     .introjs-skipbutton:hover {
-        color: #374151;
+        color: #374151 !important;
+        background: #f3f4f6 !important;
+    }
+    
+    .introjs-progress {
+        background: #e5e7eb !important;
+        height: 4px !important;
+        border-radius: 2px !important;
+    }
+    
+    .introjs-progressbar {
+        background: linear-gradient(90deg, #3b82f6 0%, #10b981 100%) !important;
+        height: 4px !important;
+        border-radius: 2px !important;
+        transition: width 0.3s ease !important;
+    }
+    
+    .introjs-bullets {
+        text-align: center !important;
+        padding: 12px 0 0 0 !important;
+    }
+    
+    .introjs-bullets ul li a {
+        background: #d1d5db !important;
+        width: 8px !important;
+        height: 8px !important;
+        border-radius: 50% !important;
+        transition: all 0.3s ease !important;
+    }
+    
+    .introjs-bullets ul li a.active {
+        background: linear-gradient(135deg, #3b82f6 0%, #10b981 100%) !important;
+        width: 24px !important;
+        border-radius: 4px !important;
+    }
+    
+    /* Ensure highlighted elements are visible with brand colors */
+    .introjs-helperLayer {
+        border-radius: 12px !important;
+        box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.2), 0 0 0 8px rgba(16, 185, 129, 0.1) !important;
+    }
+    
+    /* Custom tooltip header with brand gradient */
+    .customTooltip .introjs-tooltip-header {
+        background: linear-gradient(135deg, #3b82f6 0%, #10b981 100%) !important;
+        color: white !important;
+        padding: 16px 20px !important;
+        border-radius: 16px 16px 0 0 !important;
+    }
+    
+    .customTooltip .introjs-tooltipcontent {
+        background: white !important;
+    }
+    
+    /* Smooth transitions */
+    .introjs-tooltip {
+        animation: fadeIn 0.3s ease-in-out !important;
+    }
+    
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
     }
     </style>
     @endpush
