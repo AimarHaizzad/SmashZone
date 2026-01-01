@@ -564,58 +564,73 @@
                 }
             }
             
-            // Define all possible tutorial steps
+            // Define comprehensive tutorial steps - starting with navigation
             const allSteps = [
                 {
-                    element: '[data-tutorial="welcome-card"]',
-                    intro: '<div style="text-align: center;"><h3 style="margin: 0 0 10px 0; font-size: 20px; font-weight: 600; color: #1f2937;">Welcome to SmashZone! 👋</h3><p style="margin: 0; color: #6b7280; line-height: 1.6;">This is your dashboard where you can manage your bookings and shop for badminton gear. Let\'s take a quick tour!</p></div>',
+                    element: '[data-tutorial="nav-dashboard"]',
+                    intro: '<div style="text-align: center;"><h3 style="margin: 0 0 10px 0; font-size: 20px; font-weight: 600; color: #1f2937;">🎯 Navigation Bar</h3><p style="margin: 0; color: #6b7280; line-height: 1.6;">This is your main navigation bar at the top. It gives you quick access to all features. Let\'s learn about each menu item!</p></div>',
                     position: 'bottom',
                     tooltipClass: 'introjs-tooltip-custom'
                 },
                 {
-                    element: '[data-tutorial="book-court-btn"]',
-                    intro: '<div><h4 style="margin: 0 0 8px 0; font-size: 16px; font-weight: 600; color: #1f2937;">📅 Book a Court</h4><p style="margin: 0; color: #6b7280; line-height: 1.6;">Click this button to book a court. You can select a date, time, and court to make your reservation. The system shows real-time availability!</p></div>',
-                    position: 'top'
-                },
-                {
-                    element: '[data-tutorial="my-bookings-btn"]',
-                    intro: '<div><h4 style="margin: 0 0 8px 0; font-size: 16px; font-weight: 600; color: #1f2937;">📋 My Bookings</h4><p style="margin: 0; color: #6b7280; line-height: 1.6;">View all your bookings here. You can see upcoming bookings, past bookings, and manage them. Cancel or modify reservations easily.</p></div>',
-                    position: 'top'
-                },
-                {
-                    element: '[data-tutorial="shop-products-btn"]',
-                    intro: '<div><h4 style="margin: 0 0 8px 0; font-size: 16px; font-weight: 600; color: #1f2937;">🛒 Shop Products</h4><p style="margin: 0; color: #6b7280; line-height: 1.6;">Shop for badminton equipment and gear. Browse products, add them to your cart, and checkout securely.</p></div>',
-                    position: 'top'
-                },
-                {
-                    element: '[data-tutorial="upcoming-bookings"]',
-                    intro: '<div><h4 style="margin: 0 0 8px 0; font-size: 16px; font-weight: 600; color: #1f2937;">📊 Upcoming Bookings</h4><p style="margin: 0; color: #6b7280; line-height: 1.6;">This section shows your upcoming court bookings. You can see the date, time, court name, and status of each booking at a glance.</p></div>',
-                    position: 'top'
-                },
-                {
-                    element: '[data-tutorial="shop-section"]',
-                    intro: '<div><h4 style="margin: 0 0 8px 0; font-size: 16px; font-weight: 600; color: #1f2937;">🏸 Shop Badminton Gear</h4><p style="margin: 0; color: #6b7280; line-height: 1.6;">Browse and purchase badminton gear. Add items to your cart and checkout when ready. We offer quality equipment for all your needs.</p></div>',
+                    element: '[data-tutorial="nav-dashboard"]',
+                    intro: '<div><h4 style="margin: 0 0 8px 0; font-size: 16px; font-weight: 600; color: #1f2937;">📊 Dashboard</h4><p style="margin: 0; color: #6b7280; line-height: 1.6;">Click here to return to your dashboard anytime. The dashboard shows your overview, upcoming bookings, and featured products.</p></div>',
                     position: 'bottom'
                 },
                 {
-                    element: '[data-tutorial="product-card"]',
-                    intro: '<div><h4 style="margin: 0 0 8px 0; font-size: 16px; font-weight: 600; color: #1f2937;">🛍️ Product Cards</h4><p style="margin: 0; color: #6b7280; line-height: 1.6;">Each product card shows the item details and price. Select quantity and click "Add to Cart" to purchase. View more products by clicking "Shop Products".</p></div>',
-                    position: 'top'
-                },
-                {
                     element: '[data-tutorial="nav-courts"]',
-                    intro: '<div><h4 style="margin: 0 0 8px 0; font-size: 16px; font-weight: 600; color: #1f2937;">🏟️ Navigation: Courts</h4><p style="margin: 0; color: #6b7280; line-height: 1.6;">Click "Courts" in the navigation menu to view all available courts and make bookings. This is the main way to access the booking system.</p></div>',
+                    intro: '<div><h4 style="margin: 0 0 8px 0; font-size: 16px; font-weight: 600; color: #1f2937;">🏟️ Courts</h4><p style="margin: 0; color: #6b7280; line-height: 1.6;">Click "Courts" to view all available courts and make bookings. You\'ll see a calendar view with real-time availability for each court.</p></div>',
                     position: 'bottom'
                 },
                 {
                     element: '[data-tutorial="nav-bookings"]',
-                    intro: '<div><h4 style="margin: 0 0 8px 0; font-size: 16px; font-weight: 600; color: #1f2937;">📅 Navigation: Bookings</h4><p style="margin: 0; color: #6b7280; line-height: 1.6;">The "Bookings" menu shows all your reservations. Manage them here - view details, cancel, or check status.</p></div>',
+                    intro: '<div><h4 style="margin: 0 0 8px 0; font-size: 16px; font-weight: 600; color: #1f2937;">📅 Bookings</h4><p style="margin: 0; color: #6b7280; line-height: 1.6;">View all your reservations here. You can see upcoming bookings, past bookings, cancel reservations, and check booking status.</p></div>',
                     position: 'bottom'
                 },
                 {
                     element: '[data-tutorial="nav-shop"]',
-                    intro: '<div><h4 style="margin: 0 0 8px 0; font-size: 16px; font-weight: 600; color: #1f2937;">🛒 Navigation: Shop</h4><p style="margin: 0; color: #6b7280; line-height: 1.6;">The "Shop" menu lets you browse products and view your orders. Access your cart and order history from here.</p></div>',
+                    intro: '<div><h4 style="margin: 0 0 8px 0; font-size: 16px; font-weight: 600; color: #1f2937;">🛒 Shop Menu</h4><p style="margin: 0; color: #6b7280; line-height: 1.6;">Hover over "Shop" to see a dropdown menu. You can browse Products or view your Orders. This is where you\'ll shop for badminton gear!</p></div>',
                     position: 'bottom'
+                },
+                {
+                    element: '[data-tutorial="nav-payments"]',
+                    intro: '<div><h4 style="margin: 0 0 8px 0; font-size: 16px; font-weight: 600; color: #1f2937;">💳 Payments</h4><p style="margin: 0; color: #6b7280; line-height: 1.6;">View your payment history and transaction details. All your payments for bookings and purchases are tracked here.</p></div>',
+                    position: 'bottom'
+                },
+                {
+                    element: '[data-tutorial="welcome-card"]',
+                    intro: '<div style="text-align: center;"><h3 style="margin: 0 0 10px 0; font-size: 20px; font-weight: 600; color: #1f2937;">Welcome to SmashZone! 👋</h3><p style="margin: 0; color: #6b7280; line-height: 1.6;">This is your dashboard - your home base! From here you can quickly access all features. Let\'s explore what you can do!</p></div>',
+                    position: 'bottom'
+                },
+                {
+                    element: '[data-tutorial="book-court-btn"]',
+                    intro: '<div><h4 style="margin: 0 0 8px 0; font-size: 16px; font-weight: 600; color: #1f2937;">📅 Book a Court</h4><p style="margin: 0; color: #6b7280; line-height: 1.6;">Click this button to start booking a court. You\'ll be taken to the booking page where you can select a date, time slot, and court. The system shows real-time availability!</p></div>',
+                    position: 'top'
+                },
+                {
+                    element: '[data-tutorial="my-bookings-btn"]',
+                    intro: '<div><h4 style="margin: 0 0 8px 0; font-size: 16px; font-weight: 600; color: #1f2937;">📋 My Bookings</h4><p style="margin: 0; color: #6b7280; line-height: 1.6;">View all your bookings in one place. You can see upcoming bookings, past bookings, cancel reservations, and check the status of each booking.</p></div>',
+                    position: 'top'
+                },
+                {
+                    element: '[data-tutorial="shop-products-btn"]',
+                    intro: '<div><h4 style="margin: 0 0 8px 0; font-size: 16px; font-weight: 600; color: #1f2937;">🛒 Shop Products</h4><p style="margin: 0; color: #6b7280; line-height: 1.6;">Browse our full catalog of badminton equipment! You\'ll see all products with prices, descriptions, and can add items directly to your cart.</p></div>',
+                    position: 'top'
+                },
+                {
+                    element: '[data-tutorial="upcoming-bookings"]',
+                    intro: '<div><h4 style="margin: 0 0 8px 0; font-size: 16px; font-weight: 600; color: #1f2937;">📊 Upcoming Bookings</h4><p style="margin: 0; color: #6b7280; line-height: 1.6;">This section shows your upcoming court bookings at a glance. You can see the date, time, court name, and payment status. Click "My Bookings" to manage them.</p></div>',
+                    position: 'top'
+                },
+                {
+                    element: '[data-tutorial="shop-section"]',
+                    intro: '<div><h4 style="margin: 0 0 8px 0; font-size: 16px; font-weight: 600; color: #1f2937;">🏸 Shop Badminton Gear</h4><p style="margin: 0; color: #6b7280; line-height: 1.6;">Browse featured products right from your dashboard. We offer premium badminton equipment including rackets, shoes, clothing, and accessories.</p></div>',
+                    position: 'bottom'
+                },
+                {
+                    element: '[data-tutorial="product-card"]',
+                    intro: '<div><h4 style="margin: 0 0 8px 0; font-size: 16px; font-weight: 600; color: #1f2937;">🛍️ How to Shop</h4><p style="margin: 0; color: #6b7280; line-height: 1.6;">Each product card shows the item name, image, and price. Select the quantity you want, then click "Add to Cart". To see more products, click "Shop Products" button above or use the Shop menu in navigation.</p></div>',
+                    position: 'top'
                 }
             ];
             
