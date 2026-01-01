@@ -41,6 +41,7 @@ class RegisteredUserController extends Controller
             'email' => $request->email,
             'password' => Hash::make($request->password),
             'role' => 'customer', // All public registrations are customers
+            'tutorial_completed' => false, // New users should see the tutorial
         ]);
 
         event(new Registered($user));

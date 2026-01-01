@@ -424,7 +424,7 @@
 @else
     <div class="mb-12">
         <!-- Welcome Card -->
-        <div class="bg-gradient-to-br from-green-50 to-blue-50 rounded-2xl shadow-lg p-8 flex items-center mb-10 border-t-4 border-green-200 animate-fade-in">
+        <div class="bg-gradient-to-br from-green-50 to-blue-50 rounded-2xl shadow-lg p-8 flex items-center mb-10 border-t-4 border-green-200 animate-fade-in" data-tutorial="welcome-card">
             <div class="flex-shrink-0 mr-6">
                 @if($user->profile_picture)
                     <img src="{{ Storage::url($user->profile_picture) }}" 
@@ -440,15 +440,15 @@
                 <h1 class="text-2xl font-bold text-gray-900 mb-1">Welcome, {{ $user->name }}!</h1>
                 <p class="text-gray-600 mb-2">Ready to play? Book your next court or shop for new gear below.</p>
                 <div class="flex flex-wrap gap-3 mt-2">
-                    <a href="{{ route('bookings.index') }}" class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-xl font-semibold shadow hover:bg-blue-700 transition">
+                    <a href="{{ route('bookings.index') }}" class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-xl font-semibold shadow hover:bg-blue-700 transition" data-tutorial="book-court-btn">
                         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 17l4-4 4 4m0 0V3m0 14a4 4 0 01-8 0"/></svg>
                         Book a Court
                     </a>
-                    <a href="{{ route('bookings.index') }}" class="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-xl font-semibold shadow hover:bg-green-700 transition">
+                    <a href="{{ route('bookings.index') }}" class="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-xl font-semibold shadow hover:bg-green-700 transition" data-tutorial="my-bookings-btn">
                         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-6a2 2 0 012-2h2a2 2 0 012 2v6"/></svg>
                         My Bookings
                     </a>
-                    <a href="{{ route('products.index') }}" class="inline-flex items-center px-4 py-2 bg-yellow-500 text-white rounded-xl font-semibold shadow hover:bg-yellow-600 transition">
+                    <a href="{{ route('products.index') }}" class="inline-flex items-center px-4 py-2 bg-yellow-500 text-white rounded-xl font-semibold shadow hover:bg-yellow-600 transition" data-tutorial="shop-products-btn">
                         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13l-1.35 2.7A2 2 0 007.52 19h8.96a2 2 0 001.87-2.3L17 13M7 13V6a1 1 0 011-1h5a1 1 0 011 1v7"/></svg>
                         Shop Products
                     </a>
@@ -456,7 +456,7 @@
             </div>
         </div>
         <!-- Upcoming Bookings -->
-        <div class="bg-white rounded-2xl shadow-lg p-6 mb-8 border-t-4 border-blue-100">
+        <div class="bg-white rounded-2xl shadow-lg p-6 mb-8 border-t-4 border-blue-100" data-tutorial="upcoming-bookings">
             <h2 class="text-xl font-bold mb-4 flex items-center">
                 <svg class="w-5 h-5 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 17l4-4 4 4m0 0V3m0 14a4 4 0 01-8 0"/></svg>
                 Your Upcoming Bookings
@@ -487,13 +487,13 @@
         </div>
         </div>
         <!-- Shop Badminton Gear -->
-        <h2 class="text-xl font-bold mb-4 flex items-center">
+        <h2 class="text-xl font-bold mb-4 flex items-center" data-tutorial="shop-section">
             <svg class="w-5 h-5 mr-2 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13l-1.35 2.7A2 2 0 007.52 19h8.96a2 2 0 001.87-2.3L17 13M7 13V6a1 1 0 011-1h5a1 1 0 011 1v7"/></svg>
             Shop Badminton Gear
         </h2>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
             @foreach(\App\Models\Product::take(3)->get() as $product)
-                <div class="bg-white rounded-2xl shadow-lg p-6 flex flex-col items-center border-t-4 border-green-200 hover:shadow-xl transition">
+                <div class="bg-white rounded-2xl shadow-lg p-6 flex flex-col items-center border-t-4 border-green-200 hover:shadow-xl transition" data-tutorial="product-card">
                     <img src="{{ $product->image ? asset('storage/'.$product->image) : '/images/default-badminton-court.jpg' }}" class="h-24 w-24 object-cover rounded-xl border border-green-100 mb-4" alt="Product">
                     <div class="text-lg font-bold text-green-700 mb-2">{{ $product->name }}</div>
                     <div class="text-gray-500 mb-2">RM {{ number_format($product->price, 2) }}</div>
@@ -510,6 +510,150 @@
             @endforeach
         </div>
     </div>
+@endif
+
+@if(isset($showTutorial) && $showTutorial)
+    @push('scripts')
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Wait a bit for page to fully load
+        setTimeout(function() {
+            const intro = introJs();
+            
+            intro.setOptions({
+                steps: [
+                    {
+                        element: '[data-tutorial="welcome-card"]',
+                        intro: 'Welcome to SmashZone! 👋 This is your dashboard where you can manage your bookings and shop for badminton gear.',
+                        position: 'bottom'
+                    },
+                    {
+                        element: '[data-tutorial="book-court-btn"]',
+                        intro: 'Click here to book a court. You can select a date, time, and court to make your reservation.',
+                        position: 'top'
+                    },
+                    {
+                        element: '[data-tutorial="my-bookings-btn"]',
+                        intro: 'View all your bookings here. You can see upcoming bookings, past bookings, and manage them.',
+                        position: 'top'
+                    },
+                    {
+                        element: '[data-tutorial="shop-products-btn"]',
+                        intro: 'Shop for badminton equipment and gear. Browse products and add them to your cart.',
+                        position: 'top'
+                    },
+                    {
+                        element: '[data-tutorial="upcoming-bookings"]',
+                        intro: 'This section shows your upcoming court bookings. You can see the date, time, and status of each booking.',
+                        position: 'top'
+                    },
+                    {
+                        element: '[data-tutorial="shop-section"]',
+                        intro: 'Browse and purchase badminton gear. Add items to your cart and checkout when ready.',
+                        position: 'bottom'
+                    },
+                    {
+                        element: '[data-tutorial="product-card"]',
+                        intro: 'Each product card shows the item details and price. Click "Add to Cart" to purchase.',
+                        position: 'top'
+                    },
+                    {
+                        element: '[data-tutorial="nav-courts"]',
+                        intro: 'Click "Courts" in the navigation to view available courts and make bookings.',
+                        position: 'bottom'
+                    },
+                    {
+                        element: '[data-tutorial="nav-bookings"]',
+                        intro: 'The "Bookings" menu shows all your reservations. Manage them here.',
+                        position: 'bottom'
+                    },
+                    {
+                        element: '[data-tutorial="nav-shop"]',
+                        intro: 'The "Shop" menu lets you browse products and view your orders.',
+                        position: 'bottom'
+                    }
+                ],
+                showProgress: true,
+                showBullets: true,
+                exitOnOverlayClick: false,
+                exitOnEsc: true,
+                nextLabel: 'Next →',
+                prevLabel: '← Previous',
+                skipLabel: 'Skip Tutorial',
+                doneLabel: 'Got it!',
+                tooltipClass: 'customTooltip',
+                highlightClass: 'customHighlight',
+                buttonClass: 'introjs-button'
+            });
+            
+            intro.oncomplete(function() {
+                // Mark tutorial as completed
+                fetch('{{ route("tutorial.complete") }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                    },
+                    body: JSON.stringify({})
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        console.log('Tutorial completed!');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error marking tutorial as completed:', error);
+                });
+            });
+            
+            intro.onexit(function() {
+                // Also mark as completed if user exits
+                fetch('{{ route("tutorial.complete") }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                    },
+                    body: JSON.stringify({})
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        console.log('Tutorial marked as completed.');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error marking tutorial as completed:', error);
+                });
+            });
+            
+            // Start the tutorial
+            intro.start();
+        }, 500);
+    });
+    </script>
+    <style>
+    .customTooltip {
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    }
+    .customHighlight {
+        border-radius: 8px;
+    }
+    .introjs-button {
+        border-radius: 6px;
+        padding: 8px 16px;
+        font-weight: 600;
+    }
+    .introjs-skipbutton {
+        color: #6b7280;
+    }
+    .introjs-skipbutton:hover {
+        color: #374151;
+    }
+    </style>
+    @endpush
 @endif
 
 <!-- Live Badminton News Section -->

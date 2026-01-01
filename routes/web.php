@@ -619,6 +619,9 @@ Route::get('/create-test-data', function() {
 */
 
 Route::middleware(['auth', 'mobile.auth'])->group(function () {
+    // Tutorial
+    Route::post('/tutorial/complete', [App\Http\Controllers\TutorialController::class, 'complete'])->name('tutorial.complete');
+    
     // Profile
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');

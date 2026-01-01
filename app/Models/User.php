@@ -26,6 +26,7 @@ class User extends Authenticatable
         'phone',
         'position',
         'profile_picture',
+        'tutorial_completed',
     ];
 
     /**
@@ -48,6 +49,7 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'tutorial_completed' => 'boolean',
         ];
     }
 

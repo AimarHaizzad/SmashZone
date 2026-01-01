@@ -93,6 +93,8 @@ class DashboardController extends Controller
             $totalRevenue = 0;
         }
         
-        return view('dashboard', compact('user', 'badmintonNews', 'newsStatus', 'allBookings', 'totalRevenue'));
+        $showTutorial = $user->isCustomer() && !$user->tutorial_completed;
+        
+        return view('dashboard', compact('user', 'badmintonNews', 'newsStatus', 'allBookings', 'totalRevenue', 'showTutorial'));
     }
 }
