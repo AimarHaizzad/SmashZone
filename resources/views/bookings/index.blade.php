@@ -1396,6 +1396,21 @@
                 return rect.width > 0 && rect.height > 0 && style.display !== 'none' && style.visibility !== 'hidden';
             }
             
+            // Find the first available slot button for tutorial
+            function findFirstAvailableSlot() {
+                const availableSlots = document.querySelectorAll('.select-slot-btn');
+                if (availableSlots.length > 0) {
+                    // Use the first available slot
+                    const firstSlot = availableSlots[0];
+                    // Add a unique ID or data attribute for targeting
+                    if (!firstSlot.id) {
+                        firstSlot.id = 'tutorial-first-slot';
+                    }
+                    return '#tutorial-first-slot';
+                }
+                return null;
+            }
+            
             const steps = [
                 {
                     element: '[data-tutorial="date-navigation"]',
@@ -1409,12 +1424,26 @@
                 },
                 {
                     element: '[data-tutorial="booking-table"]',
-                    intro: '<div><h4 style="margin: 0 0 8px 0; font-size: 16px; font-weight: 600; color: #1f2937;">🏟️ Court Availability</h4><p style="margin: 0; color: #6b7280; line-height: 1.6;">This table shows all available courts and time slots. Green slots are available, red are booked, and blue are your bookings. Click on a green slot to book!</p></div>',
+                    intro: '<div><h4 style="margin: 0 0 8px 0; font-size: 16px; font-weight: 600; color: #1f2937;">🏟️ Court Availability Table</h4><p style="margin: 0; color: #6b7280; line-height: 1.6;">This table shows all available courts and time slots. <strong>Green buttons</strong> are available slots, <strong>red</strong> are booked by others, and <strong>blue</strong> are your bookings. Now let\'s learn how to select a slot!</p></div>',
                     position: 'top'
                 }
             ];
             
+            // Add slot selection step - will be added dynamically after table loads
+            // We'll add it to validSteps after checking
+            
+            // Filter valid steps
             const validSteps = steps.filter(step => elementExists(step.element));
+            
+            // Add slot selection step if available slots exist
+            const slotSelector = findFirstAvailableSlot();
+            if (slotSelector && elementExists(slotSelector)) {
+                validSteps.push({
+                    element: slotSelector,
+                    intro: '<div><h4 style="margin: 0 0 8px 0; font-size: 16px; font-weight: 600; color: #1f2937;">✅ How to Pick a Slot</h4><p style="margin: 0; color: #6b7280; line-height: 1.6;">Click on any <strong>green "Select" button</strong> to book that time slot! Each button shows the price per hour (e.g., RM 20.00/hr). You can select multiple consecutive slots for the same court to book longer sessions. After clicking, you\'ll see a confirmation dialog to complete your booking.</p></div>',
+                    position: 'top'
+                });
+            }
             
             if (validSteps.length === 0) return;
             
@@ -1443,7 +1472,17 @@
                 console.log('Tutorial exited');
             });
             
-            setTimeout(() => intro.start(), 800);
+            // Wait a bit longer to ensure table is fully rendered
+            setTimeout(() => {
+                // Re-check for slot button before starting
+                const slotSelector = findFirstAvailableSlot();
+                if (slotSelector && !elementExists(slotSelector)) {
+                    // Try again after a short delay
+                    setTimeout(() => intro.start(), 500);
+                } else {
+                    intro.start();
+                }
+            }, 1200);
         }
         
         if (document.readyState === 'loading') {

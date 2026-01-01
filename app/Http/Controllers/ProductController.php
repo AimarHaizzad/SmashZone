@@ -22,7 +22,15 @@ class ProductController extends Controller
             }
             
             $products = $query->get();
-            return view('products.index', compact('products'));
+            
+            // Check if user should see products page tutorial (first time on this page)
+            $user = auth()->user();
+            $showTutorial = $user && $user->isCustomer() && !session('products_tutorial_shown', false);
+            if ($showTutorial) {
+                session(['products_tutorial_shown' => true]);
+            }
+            
+            return view('products.index', compact('products', 'showTutorial'));
         } catch (\Exception $e) {
             \Log::error('Product index failed', [
                 'error' => $e->getMessage(),

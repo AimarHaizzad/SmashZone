@@ -63,12 +63,13 @@
     @endif
 
     <!-- Enhanced Category Filters -->
-    <div class="bg-white rounded-2xl shadow-lg p-6 mb-8 border border-gray-100">
+    <div class="bg-white rounded-2xl shadow-lg p-6 mb-8 border border-gray-100" data-tutorial="category-filters">
         <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div class="flex flex-wrap gap-3">
             @foreach(['Shoes','Clothing','Shuttlecocks','Rackets','Bags','Accessories'] as $cat)
                     <a href="?category={{ strtolower($cat) }}" 
-                       class="px-6 py-3 border-2 rounded-xl font-semibold text-base transition-all transform hover:scale-105 {{ request('category') === strtolower($cat) ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white border-blue-600 shadow-lg' : 'bg-white text-gray-700 border-gray-200 hover:bg-blue-50 hover:border-blue-300' }}">
+                       class="px-6 py-3 border-2 rounded-xl font-semibold text-base transition-all transform hover:scale-105 {{ request('category') === strtolower($cat) ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white border-blue-600 shadow-lg' : 'bg-white text-gray-700 border-gray-200 hover:bg-blue-50 hover:border-blue-300' }}"
+                       data-tutorial="category-{{ strtolower($cat) }}">
                         <div class="flex items-center gap-2">
                             @if(strtolower($cat) === 'shoes')
                                 <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -100,7 +101,8 @@
                     </a>
             @endforeach
                 <a href="?" 
-                   class="px-6 py-3 border-2 rounded-xl font-semibold text-base transition-all transform hover:scale-105 {{ !request('category') ? 'bg-gradient-to-r from-green-600 to-green-700 text-white border-green-600 shadow-lg' : 'bg-white text-gray-700 border-gray-200 hover:bg-green-50 hover:border-green-300' }}">
+                   class="px-6 py-3 border-2 rounded-xl font-semibold text-base transition-all transform hover:scale-105 {{ !request('category') ? 'bg-gradient-to-r from-green-600 to-green-700 text-white border-green-600 shadow-lg' : 'bg-white text-gray-700 border-gray-200 hover:bg-green-50 hover:border-green-300' }}"
+                   data-tutorial="all-products-btn">
                     <div class="flex items-center gap-2">
                         <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16" />
@@ -122,9 +124,9 @@
     </div>
 
     <!-- Enhanced Product Grid -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
+    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8" data-tutorial="product-grid">
         @forelse($products as $product)
-            <div class="bg-white rounded-3xl shadow-lg border border-gray-100 overflow-hidden group hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2">
+            <div class="bg-white rounded-3xl shadow-lg border border-gray-100 overflow-hidden group hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2" {{ $loop->first ? 'data-tutorial="product-card-example"' : '' }}>
                 <!-- Product Image -->
                 <div class="relative overflow-hidden">
                     @if($product->image)
@@ -208,7 +210,8 @@
                             </div>
                             <button type="submit" 
                                     {{ $product->quantity <= 0 ? 'disabled' : '' }}
-                                    class="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-3 rounded-xl font-semibold hover:from-blue-700 hover:to-blue-800 transition-all transform hover:scale-105 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed">
+                                    class="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-3 rounded-xl font-semibold hover:from-blue-700 hover:to-blue-800 transition-all transform hover:scale-105 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                                    {{ $loop->first ? 'data-tutorial="add-to-cart-btn"' : '' }}>
                                 <div class="flex items-center justify-center gap-2">
                                     <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13l-1.35 2.7A2 2 0 007.52 19h8.96a2 2 0 001.87-2.3L17 13M7 13V6a1 1 0 011-1h5a1 1 0 011 1v7" />
@@ -271,4 +274,147 @@
         @endforelse
     </div>
 </div>
+
+@if(isset($showTutorial) && $showTutorial)
+    @push('scripts')
+    <script>
+    (function() {
+        'use strict';
+        
+        function initProductsTutorial() {
+            if (typeof introJs === 'undefined') {
+                console.error('Intro.js library not loaded');
+                return;
+            }
+            
+            function elementExists(selector) {
+                const element = document.querySelector(selector);
+                if (!element) return false;
+                const rect = element.getBoundingClientRect();
+                const style = window.getComputedStyle(element);
+                return rect.width > 0 && rect.height > 0 && style.display !== 'none' && style.visibility !== 'hidden';
+            }
+            
+            // Find first product card for tutorial
+            function findFirstProductCard() {
+                const productCards = document.querySelectorAll('[data-tutorial="product-card-example"]');
+                if (productCards.length > 0) {
+                    const firstCard = productCards[0];
+                    if (!firstCard.id) {
+                        firstCard.id = 'tutorial-product-card';
+                    }
+                    return '#tutorial-product-card';
+                }
+                // Fallback: find any product card
+                const anyCard = document.querySelector('.grid > div');
+                if (anyCard && !anyCard.id) {
+                    anyCard.id = 'tutorial-product-card';
+                    return '#tutorial-product-card';
+                }
+                return null;
+            }
+            
+            // Find first add to cart button
+            function findAddToCartButton() {
+                const addButtons = document.querySelectorAll('[data-tutorial="add-to-cart-btn"]');
+                if (addButtons.length > 0) {
+                    return '[data-tutorial="add-to-cart-btn"]';
+                }
+                // Fallback: find any add to cart button
+                const anyButton = document.querySelector('button[type="submit"]');
+                if (anyButton) {
+                    if (!anyButton.id) {
+                        anyButton.id = 'tutorial-add-cart-btn';
+                    }
+                    return '#tutorial-add-cart-btn';
+                }
+                return null;
+            }
+            
+            const steps = [
+                {
+                    element: '[data-tutorial="category-filters"]',
+                    intro: '<div style="text-align: center;"><h3 style="margin: 0 0 10px 0; font-size: 20px; font-weight: 600; color: #1f2937;">🛍️ Browse Products</h3><p style="margin: 0; color: #6b7280; line-height: 1.6;">Welcome to our product catalog! Use the category filters below to find what you\'re looking for. Let\'s learn how to shop!</p></div>',
+                    position: 'bottom',
+                    tooltipClass: 'introjs-tooltip-custom'
+                },
+                {
+                    element: '[data-tutorial="category-rackets"]',
+                    intro: '<div><h4 style="margin: 0 0 8px 0; font-size: 16px; font-weight: 600; color: #1f2937;">🏸 Category Filters</h4><p style="margin: 0; color: #6b7280; line-height: 1.6;">Click on any category button (Shoes, Clothing, Rackets, etc.) to filter products. The selected category will be highlighted in blue. Try clicking different categories to see how filtering works!</p></div>',
+                    position: 'bottom'
+                },
+                {
+                    element: '[data-tutorial="all-products-btn"]',
+                    intro: '<div><h4 style="margin: 0 0 8px 0; font-size: 16px; font-weight: 600; color: #1f2937;">📦 All Products</h4><p style="margin: 0; color: #6b7280; line-height: 1.6;">Click "All Products" to remove filters and see everything we have. This is useful when you want to browse all available items.</p></div>',
+                    position: 'bottom'
+                },
+                {
+                    element: '[data-tutorial="product-grid"]',
+                    intro: '<div><h4 style="margin: 0 0 8px 0; font-size: 16px; font-weight: 600; color: #1f2937;">📋 Product Grid</h4><p style="margin: 0; color: #6b7280; line-height: 1.6;">Here are all the products matching your filter. Each product card shows the image, name, brand, price, and stock availability. Scroll down to see more products!</p></div>',
+                    position: 'top'
+                }
+            ];
+            
+            // Add product card step if products exist
+            const productCardSelector = findFirstProductCard();
+            if (productCardSelector && elementExists(productCardSelector)) {
+                steps.push({
+                    element: productCardSelector,
+                    intro: '<div><h4 style="margin: 0 0 8px 0; font-size: 16px; font-weight: 600; color: #1f2937;">🛍️ Product Card</h4><p style="margin: 0; color: #6b7280; line-height: 1.6;">Each product card shows: <strong>Category badge</strong> (top left), <strong>Product image</strong>, <strong>Brand and name</strong>, <strong>Price</strong>, <strong>Stock status</strong>, and <strong>Quantity selector</strong>. Hover over the card to see quick action buttons!</p></div>',
+                    position: 'top'
+                });
+            }
+            
+            // Add add to cart step if button exists
+            const addCartSelector = findAddToCartButton();
+            if (addCartSelector && elementExists(addCartSelector)) {
+                steps.push({
+                    element: addCartSelector,
+                    intro: '<div><h4 style="margin: 0 0 8px 0; font-size: 16px; font-weight: 600; color: #1f2937;">🛒 Add to Cart</h4><p style="margin: 0; color: #6b7280; line-height: 1.6;">Select the quantity you want (using the number input above), then click <strong>"Add to Cart"</strong> to add the product to your shopping cart. The item will be saved and you can continue shopping or proceed to checkout!</p></div>',
+                    position: 'top'
+                });
+            }
+            
+            // Filter valid steps
+            const validSteps = steps.filter(step => elementExists(step.element));
+            
+            if (validSteps.length === 0) return;
+            
+            const intro = introJs();
+            intro.setOptions({
+                steps: validSteps,
+                showProgress: true,
+                showBullets: true,
+                exitOnOverlayClick: true,
+                exitOnEsc: true,
+                keyboardNavigation: true,
+                disableInteraction: false,
+                scrollToElement: true,
+                scrollPadding: 20,
+                nextLabel: 'Next →',
+                prevLabel: '← Previous',
+                skipLabel: 'Skip Tutorial',
+                doneLabel: 'Got it! 🎉',
+                tooltipClass: 'customTooltip',
+                highlightClass: 'customHighlight',
+                buttonClass: 'introjs-button'
+            });
+            
+            intro.onexit(function() {
+                console.log('Products tutorial exited');
+            });
+            
+            setTimeout(() => intro.start(), 1000);
+        }
+        
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initProductsTutorial);
+        } else {
+            setTimeout(initProductsTutorial, 100);
+        }
+    })();
+    </script>
+    @endpush
+@endif
+
 @endsection 
