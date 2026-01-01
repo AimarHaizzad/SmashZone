@@ -44,16 +44,6 @@ echo "📝 Setting up .env file from environment variables..."
 [ ! -z "$APP_ENV" ] && set_env_var "APP_ENV" "$APP_ENV"
 [ ! -z "$APP_DEBUG" ] && set_env_var "APP_DEBUG" "$APP_DEBUG"
 
-# Sync mail environment variables
-[ ! -z "$MAIL_MAILER" ] && set_env_var "MAIL_MAILER" "$MAIL_MAILER"
-[ ! -z "$MAIL_HOST" ] && set_env_var "MAIL_HOST" "$MAIL_HOST"
-[ ! -z "$MAIL_PORT" ] && set_env_var "MAIL_PORT" "$MAIL_PORT"
-[ ! -z "$MAIL_USERNAME" ] && set_env_var "MAIL_USERNAME" "$MAIL_USERNAME"
-[ ! -z "$MAIL_PASSWORD" ] && set_env_var "MAIL_PASSWORD" "$MAIL_PASSWORD"
-[ ! -z "$MAIL_ENCRYPTION" ] && set_env_var "MAIL_ENCRYPTION" "$MAIL_ENCRYPTION"
-[ ! -z "$MAIL_FROM_ADDRESS" ] && set_env_var "MAIL_FROM_ADDRESS" "$MAIL_FROM_ADDRESS"
-[ ! -z "$MAIL_FROM_NAME" ] && set_env_var "MAIL_FROM_NAME" "$MAIL_FROM_NAME"
-
 # Ensure APP_URL is set (critical for asset URLs)
 if [ ! -z "$APP_URL" ]; then
     set_env_var "APP_URL" "$APP_URL"
@@ -279,14 +269,6 @@ if [ -f package.json ]; then
 else
     echo "⚠️ package.json not found. Skipping asset build."
 fi
-
-# Display mail configuration (without password)
-echo "📧 Mail configuration:"
-echo "   MAIL_MAILER: $(grep "^MAIL_MAILER=" .env | cut -d '=' -f2 || echo 'not set')"
-echo "   MAIL_HOST: $(grep "^MAIL_HOST=" .env | cut -d '=' -f2 || echo 'not set')"
-echo "   MAIL_PORT: $(grep "^MAIL_PORT=" .env | cut -d '=' -f2 || echo 'not set')"
-echo "   MAIL_USERNAME: $(grep "^MAIL_USERNAME=" .env | cut -d '=' -f2 || echo 'not set')"
-echo "   MAIL_FROM_ADDRESS: $(grep "^MAIL_FROM_ADDRESS=" .env | cut -d '=' -f2 || echo 'not set')"
 
 # Cache configuration for better performance (AFTER assets are built)
 echo "⚡ Optimizing application..."

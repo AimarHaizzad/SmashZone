@@ -946,25 +946,10 @@ Route::get('/test-email/{type}', function($type) {
     $user = auth()->user();
 
     try {
-        // Get mail configuration for debugging
-        $mailConfig = [
-            'mailer' => config('mail.default'),
-            'host' => config('mail.mailers.smtp.host'),
-            'port' => config('mail.mailers.smtp.port'),
-            'encryption' => config('mail.mailers.smtp.encryption'),
-            'username' => config('mail.mailers.smtp.username'),
-            'from_address' => config('mail.from.address'),
-            'queue_connection' => config('queue.default'),
-        ];
-
         switch ($type) {
             case 'welcome':
                 $user->notify(new \App\Notifications\WelcomeEmail($user));
-                return response()->json([
-                    'message' => 'Welcome email queued successfully',
-                    'config' => $mailConfig,
-                    'note' => 'Check Brevo logs. If using sync queue, email should send immediately.'
-                ]);
+                return response()->json(['message' => 'Welcome email sent successfully']);
                 
             case 'booking-confirmation':
                 $booking = \App\Models\Booking::first();
@@ -972,10 +957,7 @@ Route::get('/test-email/{type}', function($type) {
                     return response()->json(['error' => 'No bookings found'], 404);
                 }
                 $user->notify(new \App\Notifications\BookingConfirmation($booking));
-                return response()->json([
-                    'message' => 'Booking confirmation email queued successfully',
-                    'config' => $mailConfig
-                ]);
+                return response()->json(['message' => 'Booking confirmation email sent successfully']);
                 
             case 'payment-confirmation':
                 $payment = \App\Models\Payment::first();
@@ -983,10 +965,7 @@ Route::get('/test-email/{type}', function($type) {
                     return response()->json(['error' => 'No payments found'], 404);
                 }
                 $user->notify(new \App\Notifications\PaymentConfirmation($payment));
-                return response()->json([
-                    'message' => 'Payment confirmation email queued successfully',
-                    'config' => $mailConfig
-                ]);
+                return response()->json(['message' => 'Payment confirmation email sent successfully']);
                 
             case 'booking-reminder':
                 $booking = \App\Models\Booking::first();
@@ -994,10 +973,7 @@ Route::get('/test-email/{type}', function($type) {
                     return response()->json(['error' => 'No bookings found'], 404);
                 }
                 $user->notify(new \App\Notifications\BookingReminder($booking));
-                return response()->json([
-                    'message' => 'Booking reminder email queued successfully',
-                    'config' => $mailConfig
-                ]);
+                return response()->json(['message' => 'Booking reminder email sent successfully']);
                 
             case 'booking-cancellation':
                 $booking = \App\Models\Booking::first();
@@ -1005,28 +981,12 @@ Route::get('/test-email/{type}', function($type) {
                     return response()->json(['error' => 'No bookings found'], 404);
                 }
                 $user->notify(new \App\Notifications\BookingCancellation($booking, 'Test cancellation'));
-                return response()->json([
-                    'message' => 'Booking cancellation email queued successfully',
-                    'config' => $mailConfig
-                ]);
+                return response()->json(['message' => 'Booking cancellation email sent successfully']);
                 
             default:
                 return response()->json(['error' => 'Invalid email type'], 400);
         }
     } catch (\Exception $e) {
-        \Log::error('Email test error', [
-            'type' => $type,
-            'error' => $e->getMessage(),
-            'trace' => $e->getTraceAsString()
-        ]);
-        
-        return response()->json([
-            'error' => 'Failed to send email',
-            'message' => $e->getMessage(),
-            'file' => $e->getFile(),
-            'line' => $e->getLine(),
-            'config' => $mailConfig ?? null
-        ], 500);
         return response()->json(['error' => 'Failed to send email: ' . $e->getMessage()], 500);
     }
 })->middleware('auth');
