@@ -1423,9 +1423,10 @@
                 steps: validSteps,
                 showProgress: true,
                 showBullets: true,
-                exitOnOverlayClick: false,
+                exitOnOverlayClick: true, // Allow clicking outside to exit
                 exitOnEsc: true,
                 keyboardNavigation: true,
+                disableInteraction: false, // Allow interactions
                 scrollToElement: true,
                 scrollPadding: 20,
                 nextLabel: 'Next →',
@@ -1435,6 +1436,11 @@
                 tooltipClass: 'customTooltip',
                 highlightClass: 'customHighlight',
                 buttonClass: 'introjs-button'
+            });
+            
+            // Ensure tutorial can be exited
+            intro.onexit(function() {
+                console.log('Tutorial exited');
             });
             
             setTimeout(() => intro.start(), 800);

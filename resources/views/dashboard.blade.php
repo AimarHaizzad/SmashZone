@@ -647,10 +647,10 @@
                 steps: validSteps,
                 showProgress: true,
                 showBullets: true,
-                exitOnOverlayClick: false,
+                exitOnOverlayClick: true, // Allow clicking outside to exit
                 exitOnEsc: true,
                 keyboardNavigation: true,
-                disableInteraction: false,
+                disableInteraction: false, // Allow interactions with highlighted elements
                 scrollToElement: true,
                 scrollPadding: 20,
                 nextLabel: 'Next →',
@@ -662,6 +662,15 @@
                 buttonClass: 'introjs-button',
                 hidePrev: false,
                 hideNext: false
+            });
+            
+            // Ensure overlay is clickable to exit
+            intro.onbeforechange(function() {
+                const overlay = document.querySelector('.introjs-overlay');
+                if (overlay) {
+                    overlay.style.pointerEvents = 'auto';
+                    overlay.style.cursor = 'pointer';
+                }
             });
             
             // Handle step change - scroll element into view
@@ -718,8 +727,26 @@
             setTimeout(function() {
                 try {
                     intro.start();
+                    
+                    // Safety mechanism: If tutorial overlay is stuck, allow emergency exit
+                    setTimeout(function() {
+                        const overlay = document.querySelector('.introjs-overlay');
+                        if (overlay && overlay.style.display !== 'none') {
+                            // Add emergency exit message
+                            overlay.setAttribute('title', 'Double-click to exit tutorial');
+                            overlay.style.cursor = 'pointer';
+                            
+                            // Double-click to force exit
+                            overlay.addEventListener('dblclick', function() {
+                                intro.exit();
+                                markTutorialComplete();
+                            }, { once: true });
+                        }
+                    }, 2000);
                 } catch (error) {
                     console.error('Error starting tutorial:', error);
+                    // If tutorial fails to start, mark as completed to prevent blocking
+                    markTutorialComplete();
                 }
             }, 800);
         }
@@ -770,6 +797,18 @@
     .introjs-overlay {
         background: rgba(0, 0, 0, 0.7) !important;
         backdrop-filter: blur(2px) !important;
+        cursor: pointer !important;
+    }
+    
+    /* Ensure highlighted elements are clickable */
+    .introjs-helperLayer + * {
+        pointer-events: auto !important;
+    }
+    
+    /* Make sure tutorial buttons are always clickable */
+    .introjs-tooltip,
+    .introjs-tooltip * {
+        pointer-events: auto !important;
     }
     
     .introjs-button {
