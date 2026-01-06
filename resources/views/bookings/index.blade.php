@@ -9,7 +9,7 @@
         <div class="bg-white/10 backdrop-blur-sm rounded-xl md:rounded-2xl p-4 md:p-8 border border-white/20">
             <h1 class="text-2xl md:text-5xl font-extrabold text-white drop-shadow-lg mb-2 md:mb-4">Book Your Court</h1>
             <p class="text-sm md:text-xl text-blue-100 font-medium drop-shadow mb-3 md:mb-6">Real-time availability • Instant booking • Professional courts</p>
-            <div class="flex flex-wrap items-center justify-center gap-3 md:gap-6 text-white/90">
+            <div class="flex flex-wrap items-center justify-center gap-3 md:gap-6 text-white/90" data-tutorial="legend">
                 <div class="flex items-center gap-1 md:gap-2">
                     <div class="w-2 h-2 md:w-3 md:h-3 bg-green-400 rounded-full"></div>
                     <span class="text-xs md:text-sm font-medium">Available</span>
@@ -34,7 +34,8 @@
             <div class="flex items-center gap-2 md:gap-3 w-full md:w-auto">
                 <button onclick="changeDate(-1)" class="p-2 md:p-3 rounded-lg md:rounded-xl hover:bg-blue-50 transition-colors border border-gray-200 flex-shrink-0"
                         title="Previous day"
-                        aria-label="Go to previous day">
+                        aria-label="Go to previous day"
+                        data-tutorial="prev-day-btn">
                     <svg class="h-4 w-4 md:h-5 md:w-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
                     </svg>
@@ -59,13 +60,15 @@
                     <button type="button" onclick="setToday()" 
                             class="px-3 md:px-4 py-2 bg-blue-50 text-blue-700 rounded-lg md:rounded-xl border border-blue-200 hover:bg-blue-100 transition font-medium text-sm md:text-base whitespace-nowrap flex-shrink-0"
                             title="Go to today"
-                            aria-label="Go to today's date">
+                            aria-label="Go to today's date"
+                            data-tutorial="today-btn">
                         Today
                     </button>
                 </form>
                 <button onclick="changeDate(1)" class="p-2 md:p-3 rounded-lg md:rounded-xl hover:bg-blue-50 transition-colors border border-gray-200 flex-shrink-0"
                         title="Next day"
-                        aria-label="Go to next day">
+                        aria-label="Go to next day"
+                        data-tutorial="next-day-btn">
                     <svg class="h-4 w-4 md:h-5 md:w-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
                     </svg>
@@ -84,9 +87,9 @@
             <table class="min-w-full">
                 <thead class="sticky top-0 z-20">
                     <tr class="bg-gradient-to-r from-blue-50 to-green-50">
-                        <th class="px-2 sm:px-4 md:px-6 py-2 sm:py-3 md:py-4 border-b border-gray-200 text-center text-blue-700 text-xs sm:text-sm md:text-lg font-bold w-20 sm:w-28 md:w-32 bg-white"></th>
+                        <th class="px-2 sm:px-4 md:px-6 py-2 sm:py-3 md:py-4 border-b border-gray-200 text-center text-blue-700 text-xs sm:text-sm md:text-lg font-bold w-20 sm:w-28 md:w-32 bg-white" data-tutorial="time-column-header"></th>
                         @foreach($courts as $court)
-                            <th class="px-2 sm:px-4 md:px-6 py-2 sm:py-3 md:py-4 border-b border-gray-200 text-center text-blue-700 text-xs sm:text-sm md:text-lg font-bold whitespace-nowrap shadow-sm min-w-[100px] sm:min-w-[120px]" data-court-id="{{ $court->id }}">
+                            <th class="px-2 sm:px-4 md:px-6 py-2 sm:py-3 md:py-4 border-b border-gray-200 text-center text-blue-700 text-xs sm:text-sm md:text-lg font-bold whitespace-nowrap shadow-sm min-w-[100px] sm:min-w-[120px]" data-court-id="{{ $court->id }}" data-tutorial="court-column-header">
                                 <div class="flex flex-col items-center">
                                     <span class="font-bold text-xs sm:text-sm md:text-base">{{ $court->name }}</span>
                                     <span class="text-xs sm:text-sm font-normal text-gray-600 hidden sm:inline">Court {{ $loop->iteration }}</span>
@@ -268,7 +271,7 @@
     </div>
 
     <!-- Multi-Slot Selection Panel -->
-    <div id="multi-slot-panel" class="fixed bottom-0 left-0 right-0 transform translate-y-full transition-transform duration-300 z-[99999] pb-safe" style="display: none;">
+    <div id="multi-slot-panel" class="fixed bottom-0 left-0 right-0 transform translate-y-full transition-transform duration-300 z-[99999] pb-safe" style="display: none;" data-tutorial="multi-slot-panel">
         <div class="max-w-6xl mx-auto px-2 md:px-4 py-2 md:py-3">
             <div class="max-w-4xl mx-auto">
                 <!-- Clean rounded container like date navigation -->
@@ -1413,19 +1416,49 @@
             
             const steps = [
                 {
-                    element: '[data-tutorial="date-navigation"]',
-                    intro: '<div style="text-align: center;"><h3 style="margin: 0 0 10px 0; font-size: 20px; font-weight: 600; color: #1f2937;">📅 Select Your Date</h3><p style="margin: 0; color: #6b7280; line-height: 1.6;">Use the date picker to choose when you want to book. Click the arrows to navigate days or use the "Today" button to jump to today.</p></div>',
+                    element: '[data-tutorial="legend"]',
+                    intro: '<div style="text-align: center;"><h3 style="margin: 0 0 10px 0; font-size: 20px; font-weight: 600; color: #1f2937;">🎯 Step 1: Understand the Color Legend</h3><p style="margin: 0; color: #6b7280; line-height: 1.6;">Before booking, let\'s understand what the colors mean:<br><strong style="color: #10b981;">🟢 Green</strong> = Available slots you can book<br><strong style="color: #ef4444;">🔴 Red</strong> = Already booked by others<br><strong style="color: #3b82f6;">🔵 Blue</strong> = Your own bookings</p></div>',
                     position: 'bottom'
                 },
                 {
+                    element: '[data-tutorial="date-navigation"]',
+                    intro: '<div style="text-align: center;"><h3 style="margin: 0 0 10px 0; font-size: 20px; font-weight: 600; color: #1f2937;">📅 Step 2: Navigate Dates</h3><p style="margin: 0; color: #6b7280; line-height: 1.6;">This is the date navigation bar. You can move between dates using the arrow buttons or select a specific date. Let\'s explore each option!</p></div>',
+                    position: 'bottom'
+                },
+                {
+                    element: '[data-tutorial="prev-day-btn"]',
+                    intro: '<div><h4 style="margin: 0 0 8px 0; font-size: 16px; font-weight: 600; color: #1f2937;">⬅️ Previous Day Button</h4><p style="margin: 0; color: #6b7280; line-height: 1.6;">Click this <strong>left arrow</strong> button to go back to the previous day. This helps you check availability for earlier dates.</p></div>',
+                    position: 'right'
+                },
+                {
                     element: '[data-tutorial="date-input"]',
-                    intro: '<div><h4 style="margin: 0 0 8px 0; font-size: 16px; font-weight: 600; color: #1f2937;">📆 Date Selection</h4><p style="margin: 0; color: #6b7280; line-height: 1.6;">Click here to open the calendar and select your preferred date. The system shows real-time availability for each date.</p></div>',
+                    intro: '<div><h4 style="margin: 0 0 8px 0; font-size: 16px; font-weight: 600; color: #1f2937;">📆 Step 3: Select a Date</h4><p style="margin: 0; color: #6b7280; line-height: 1.6;">Click on this <strong>date field</strong> to open a calendar popup. You can then click any date to jump directly to that day. The system will automatically load availability for your selected date.</p></div>',
                     position: 'top'
                 },
                 {
-                    element: '[data-tutorial="booking-table"]',
-                    intro: '<div><h4 style="margin: 0 0 8px 0; font-size: 16px; font-weight: 600; color: #1f2937;">🏟️ Court Availability Table</h4><p style="margin: 0; color: #6b7280; line-height: 1.6;">This table shows all available courts and time slots. <strong>Green buttons</strong> are available slots, <strong>red</strong> are booked by others, and <strong>blue</strong> are your bookings. Now let\'s learn how to select a slot!</p></div>',
+                    element: '[data-tutorial="today-btn"]',
+                    intro: '<div><h4 style="margin: 0 0 8px 0; font-size: 16px; font-weight: 600; color: #1f2937;">📌 Today Button</h4><p style="margin: 0; color: #6b7280; line-height: 1.6;">Click the <strong>"Today"</strong> button to quickly jump back to today\'s date. This is useful if you\'ve navigated to a future date and want to return to today.</p></div>',
                     position: 'top'
+                },
+                {
+                    element: '[data-tutorial="next-day-btn"]',
+                    intro: '<div><h4 style="margin: 0 0 8px 0; font-size: 16px; font-weight: 600; color: #1f2937;">➡️ Next Day Button</h4><p style="margin: 0; color: #6b7280; line-height: 1.6;">Click this <strong>right arrow</strong> button to move forward to the next day. Use this to check availability for future dates.</p></div>',
+                    position: 'left'
+                },
+                {
+                    element: '[data-tutorial="booking-table"]',
+                    intro: '<div><h4 style="margin: 0 0 8px 0; font-size: 16px; font-weight: 600; color: #1f2937;">🏟️ Step 4: Understanding the Booking Table</h4><p style="margin: 0; color: #6b7280; line-height: 1.6;">This table shows all courts and their time slots. Each row is a time slot (like 8:00 AM, 9:00 AM), and each column is a different court. Let\'s learn how to read it!</p></div>',
+                    position: 'top'
+                },
+                {
+                    element: '[data-tutorial="time-column-header"]',
+                    intro: '<div><h4 style="margin: 0 0 8px 0; font-size: 16px; font-weight: 600; color: #1f2937;">⏰ Time Slots Column</h4><p style="margin: 0; color: #6b7280; line-height: 1.6;">This left column shows all available <strong>time slots</strong> throughout the day. Each row represents one hour (e.g., 8:00 AM - 9:00 AM). Scroll down to see more time slots!</p></div>',
+                    position: 'right'
+                },
+                {
+                    element: '[data-tutorial="court-column-header"]',
+                    intro: '<div><h4 style="margin: 0 0 8px 0; font-size: 16px; font-weight: 600; color: #1f2937;">🏸 Court Columns</h4><p style="margin: 0; color: #6b7280; line-height: 1.6;">Each column represents a different <strong>court</strong>. The court name is shown at the top. Scroll horizontally on mobile to see more courts. Now let\'s see how to select a slot!</p></div>',
+                    position: 'bottom'
                 }
             ];
             
@@ -1435,12 +1468,33 @@
             // Filter valid steps
             const validSteps = steps.filter(step => elementExists(step.element));
             
-            // Add slot selection step if available slots exist
+            // Add slot selection steps if available slots exist
             const slotSelector = findFirstAvailableSlot();
             if (slotSelector && elementExists(slotSelector)) {
                 validSteps.push({
                     element: slotSelector,
-                    intro: '<div><h4 style="margin: 0 0 8px 0; font-size: 16px; font-weight: 600; color: #1f2937;">✅ How to Pick a Slot</h4><p style="margin: 0; color: #6b7280; line-height: 1.6;">Click on any <strong>green "Select" button</strong> to book that time slot! Each button shows the price per hour (e.g., RM 20.00/hr). You can select multiple consecutive slots for the same court to book longer sessions. After clicking, you\'ll see a confirmation dialog to complete your booking.</p></div>',
+                    intro: '<div><h4 style="margin: 0 0 8px 0; font-size: 16px; font-weight: 600; color: #1f2937;">✅ Step 5: Select Your Time Slot</h4><p style="margin: 0; color: #6b7280; line-height: 1.6;">Look for <strong style="color: #10b981;">green "Select" buttons</strong> - these are available slots you can book! Each button shows:<br>• The price per hour (e.g., RM 20.00/hr)<br>• The time slot for that court<br><br>Click on any green button to select that slot. You\'ll see it highlighted when selected!</p></div>',
+                    position: 'top'
+                });
+                
+                // Add additional helpful step about multiple slots
+                validSteps.push({
+                    element: '[data-tutorial="booking-table"]',
+                    intro: '<div><h4 style="margin: 0 0 8px 0; font-size: 16px; font-weight: 600; color: #1f2937;">🎯 Step 6: Booking Multiple Slots</h4><p style="margin: 0; color: #6b7280; line-height: 1.6;"><strong>Tip:</strong> You can select multiple consecutive time slots for the same court to book longer sessions! For example, if you want to play for 2 hours, click two consecutive green buttons (like 8:00 AM and 9:00 AM) for the same court.<br><br>Each time you click a green button, it will be highlighted to show it\'s selected. You can click it again to deselect it.</p></div>',
+                    position: 'top'
+                });
+                
+                // Add step about the confirmation panel (will show when slots are selected)
+                validSteps.push({
+                    element: '[data-tutorial="booking-table"]',
+                    intro: '<div><h4 style="margin: 0 0 8px 0; font-size: 16px; font-weight: 600; color: #1f2937;">✅ Step 7: Complete Your Booking</h4><p style="margin: 0; color: #6b7280; line-height: 1.6;">After selecting your slots, a <strong>confirmation panel</strong> will appear at the bottom of the screen showing:<br>• All your selected slots<br>• Total number of slots<br>• Total price<br><br>Click <strong>"Confirm Booking"</strong> to proceed to payment, or <strong>"Clear"</strong> to start over. That\'s it! You\'re ready to book! 🎉</p></div>',
+                    position: 'top'
+                });
+            } else {
+                // If no slots available, still add a helpful final step
+                validSteps.push({
+                    element: '[data-tutorial="booking-table"]',
+                    intro: '<div><h4 style="margin: 0 0 8px 0; font-size: 16px; font-weight: 600; color: #1f2937;">✅ Step 5: How to Select a Slot</h4><p style="margin: 0; color: #6b7280; line-height: 1.6;">When slots are available, you\'ll see <strong style="color: #10b981;">green "Select" buttons</strong> in the table. Click any green button to select that time slot for booking. You can select multiple consecutive slots for longer sessions!<br><br>After selecting, a confirmation panel will appear at the bottom. Click "Confirm Booking" to complete your reservation!</p></div>',
                     position: 'top'
                 });
             }

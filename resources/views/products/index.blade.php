@@ -201,12 +201,13 @@
                         <form action="{{ route('cart.add', absolute: false) }}" method="POST" class="space-y-3">
                             @csrf
                             <input type="hidden" name="product_id" value="{{ $product->id }}">
-                            <div class="flex items-center gap-2">
+                            <div class="flex items-center gap-2" {{ $loop->first ? 'data-tutorial="quantity-selector"' : '' }}>
                                 <label for="qty-{{ $product->id }}" class="text-sm font-medium text-gray-700">Quantity:</label>
                                 <input id="qty-{{ $product->id }}" name="quantity" type="number" min="1" value="1" 
                                        max="{{ max(1, $product->quantity ?? 0) }}"
                                        {{ ($product->quantity ?? 0) <= 0 ? 'disabled' : '' }}
-                                       class="w-20 border-2 border-gray-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-300 focus:border-blue-500 transition-colors {{ $product->quantity <= 0 ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : '' }}">
+                                       class="w-20 border-2 border-gray-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-300 focus:border-blue-500 transition-colors {{ $product->quantity <= 0 ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : '' }}"
+                                       {{ $loop->first ? 'data-tutorial="quantity-input"' : '' }}>
                             </div>
                             <button type="submit" 
                                     {{ $product->quantity <= 0 ? 'disabled' : '' }}
@@ -331,26 +332,52 @@
                 return null;
             }
             
+            // Find quantity input
+            function findQuantityInput() {
+                const quantityInput = document.querySelector('[data-tutorial="quantity-input"]');
+                if (quantityInput) {
+                    return '[data-tutorial="quantity-input"]';
+                }
+                // Fallback: find first quantity input
+                const anyInput = document.querySelector('input[type="number"][name="quantity"]');
+                if (anyInput) {
+                    if (!anyInput.id) {
+                        anyInput.id = 'tutorial-quantity-input';
+                    }
+                    return '#tutorial-quantity-input';
+                }
+                return null;
+            }
+            
+            // Find quantity selector container
+            function findQuantitySelector() {
+                const quantitySelector = document.querySelector('[data-tutorial="quantity-selector"]');
+                if (quantitySelector) {
+                    return '[data-tutorial="quantity-selector"]';
+                }
+                return null;
+            }
+            
             const steps = [
                 {
                     element: '[data-tutorial="category-filters"]',
-                    intro: '<div style="text-align: center;"><h3 style="margin: 0 0 10px 0; font-size: 20px; font-weight: 600; color: #1f2937;">🛍️ Browse Products</h3><p style="margin: 0; color: #6b7280; line-height: 1.6;">Welcome to our product catalog! Use the category filters below to find what you\'re looking for. Let\'s learn how to shop!</p></div>',
+                    intro: '<div style="text-align: center;"><h3 style="margin: 0 0 10px 0; font-size: 20px; font-weight: 600; color: #1f2937;">🛍️ Step 1: Welcome to Our Shop!</h3><p style="margin: 0; color: #6b7280; line-height: 1.6;">Welcome to SmashZone\'s product catalog! Here you can browse and purchase premium badminton equipment. Let\'s learn how to shop step by step!</p></div>',
                     position: 'bottom',
                     tooltipClass: 'introjs-tooltip-custom'
                 },
                 {
                     element: '[data-tutorial="category-rackets"]',
-                    intro: '<div><h4 style="margin: 0 0 8px 0; font-size: 16px; font-weight: 600; color: #1f2937;">🏸 Category Filters</h4><p style="margin: 0; color: #6b7280; line-height: 1.6;">Click on any category button (Shoes, Clothing, Rackets, etc.) to filter products. The selected category will be highlighted in blue. Try clicking different categories to see how filtering works!</p></div>',
+                    intro: '<div><h4 style="margin: 0 0 8px 0; font-size: 16px; font-weight: 600; color: #1f2937;">🏸 Step 2: Category Filters</h4><p style="margin: 0; color: #6b7280; line-height: 1.6;">Use these category buttons to filter products by type:<br>• <strong>Shoes</strong> - Badminton footwear<br>• <strong>Clothing</strong> - Sports apparel<br>• <strong>Rackets</strong> - Badminton rackets<br>• <strong>Shuttlecocks</strong> - Game equipment<br>• <strong>Bags</strong> - Sports bags<br>• <strong>Accessories</strong> - Other gear<br><br>Click any category to see only those products. The selected category will be highlighted in blue!</p></div>',
                     position: 'bottom'
                 },
                 {
                     element: '[data-tutorial="all-products-btn"]',
-                    intro: '<div><h4 style="margin: 0 0 8px 0; font-size: 16px; font-weight: 600; color: #1f2937;">📦 All Products</h4><p style="margin: 0; color: #6b7280; line-height: 1.6;">Click "All Products" to remove filters and see everything we have. This is useful when you want to browse all available items.</p></div>',
+                    intro: '<div><h4 style="margin: 0 0 8px 0; font-size: 16px; font-weight: 600; color: #1f2937;">📦 Step 3: View All Products</h4><p style="margin: 0; color: #6b7280; line-height: 1.6;">Click the <strong>"All Products"</strong> button (green button on the right) to remove any filters and see everything we have in stock. This is useful when you want to browse all available items without restrictions!</p></div>',
                     position: 'bottom'
                 },
                 {
                     element: '[data-tutorial="product-grid"]',
-                    intro: '<div><h4 style="margin: 0 0 8px 0; font-size: 16px; font-weight: 600; color: #1f2937;">📋 Product Grid</h4><p style="margin: 0; color: #6b7280; line-height: 1.6;">Here are all the products matching your filter. Each product card shows the image, name, brand, price, and stock availability. Scroll down to see more products!</p></div>',
+                    intro: '<div><h4 style="margin: 0 0 8px 0; font-size: 16px; font-weight: 600; color: #1f2937;">📋 Step 4: Product Grid</h4><p style="margin: 0; color: #6b7280; line-height: 1.6;">This grid displays all products matching your current filter. Each card shows:<br>• Product image<br>• Brand and name<br>• Price<br>• Stock availability<br>• Category badge<br><br>Scroll down to see more products. Let\'s look at a product card in detail!</p></div>',
                     position: 'top'
                 }
             ];
@@ -360,7 +387,19 @@
             if (productCardSelector && elementExists(productCardSelector)) {
                 steps.push({
                     element: productCardSelector,
-                    intro: '<div><h4 style="margin: 0 0 8px 0; font-size: 16px; font-weight: 600; color: #1f2937;">🛍️ Product Card</h4><p style="margin: 0; color: #6b7280; line-height: 1.6;">Each product card shows: <strong>Category badge</strong> (top left), <strong>Product image</strong>, <strong>Brand and name</strong>, <strong>Price</strong>, <strong>Stock status</strong>, and <strong>Quantity selector</strong>. Hover over the card to see quick action buttons!</p></div>',
+                    intro: '<div><h4 style="margin: 0 0 8px 0; font-size: 16px; font-weight: 600; color: #1f2937;">🛍️ Step 5: Understanding Product Cards</h4><p style="margin: 0; color: #6b7280; line-height: 1.6;">Each product card displays:<br>• <strong>Category badge</strong> (top left) - Shows product category<br>• <strong>Product image</strong> - Visual preview<br>• <strong>Brand name</strong> - Manufacturer<br>• <strong>Product name</strong> - Full product title<br>• <strong>Price</strong> - Current price (red) with discount if available<br>• <strong>Stock status</strong> - Shows "In stock: X" or "Out of stock"<br><br>Hover over the card to see quick action buttons (like/filter)!</p></div>',
+                    position: 'top'
+                });
+            }
+            
+            // Add quantity selector step
+            const quantitySelector = findQuantitySelector();
+            const quantityInput = findQuantityInput();
+            if ((quantitySelector && elementExists(quantitySelector)) || (quantityInput && elementExists(quantityInput))) {
+                const selectorToUse = quantitySelector || quantityInput;
+                steps.push({
+                    element: selectorToUse,
+                    intro: '<div><h4 style="margin: 0 0 8px 0; font-size: 16px; font-weight: 600; color: #1f2937;">🔢 Step 6: Select Quantity</h4><p style="margin: 0; color: #6b7280; line-height: 1.6;">Before adding to cart, choose how many items you want using the <strong>quantity input field</strong>. You can:<br>• Type a number directly<br>• Use the up/down arrows on the input<br>• Maximum quantity is limited by stock availability<br><br>If the product is out of stock, the quantity field will be disabled (greyed out).</p></div>',
                     position: 'top'
                 });
             }
@@ -370,7 +409,14 @@
             if (addCartSelector && elementExists(addCartSelector)) {
                 steps.push({
                     element: addCartSelector,
-                    intro: '<div><h4 style="margin: 0 0 8px 0; font-size: 16px; font-weight: 600; color: #1f2937;">🛒 Add to Cart</h4><p style="margin: 0; color: #6b7280; line-height: 1.6;">Select the quantity you want (using the number input above), then click <strong>"Add to Cart"</strong> to add the product to your shopping cart. The item will be saved and you can continue shopping or proceed to checkout!</p></div>',
+                    intro: '<div><h4 style="margin: 0 0 8px 0; font-size: 16px; font-weight: 600; color: #1f2937;">🛒 Step 7: Add to Cart</h4><p style="margin: 0; color: #6b7280; line-height: 1.6;">Once you\'ve selected the quantity, click the <strong>"Add to Cart"</strong> button! This will:<br>• Add the product to your shopping cart<br>• Save your selection<br>• Allow you to continue shopping<br>• Show a confirmation message<br><br>You can add multiple products to your cart before checking out!</p></div>',
+                    position: 'top'
+                });
+                
+                // Add final step about what happens next
+                steps.push({
+                    element: addCartSelector,
+                    intro: '<div><h4 style="margin: 0 0 8px 0; font-size: 16px; font-weight: 600; color: #1f2937;">✅ Step 8: After Adding to Cart</h4><p style="margin: 0; color: #6b7280; line-height: 1.6;">After clicking "Add to Cart":<br>• The product is saved to your cart<br>• You\'ll see a success notification<br>• The cart icon in the navigation will update<br>• You can continue shopping or go to checkout<br><br>To view your cart, click the shopping cart icon in the top navigation bar. From there, you can review items, update quantities, or proceed to checkout! 🎉</p></div>',
                     position: 'top'
                 });
             }
