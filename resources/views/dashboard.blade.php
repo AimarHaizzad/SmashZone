@@ -696,7 +696,38 @@
                 highlightClass: 'customHighlight',
                 buttonClass: 'introjs-button',
                 hidePrev: false,
-                hideNext: false
+                hideNext: false,
+                tooltipPosition: 'auto' // Let intro.js decide the best position
+            });
+            
+            // Ensure tooltip is visible after each step
+            intro.onchange(function(targetElement) {
+                setTimeout(function() {
+                    const tooltip = document.querySelector('.introjs-tooltip');
+                    if (tooltip) {
+                        tooltip.style.display = 'block';
+                        tooltip.style.visibility = 'visible';
+                        tooltip.style.opacity = '1';
+                        tooltip.style.zIndex = '999999';
+                        
+                        // Also ensure content is visible
+                        const content = tooltip.querySelector('.introjs-tooltipcontent');
+                        if (content) {
+                            content.style.display = 'block';
+                            content.style.visibility = 'visible';
+                            content.style.opacity = '1';
+                        }
+                        
+                        console.log('Tooltip should be visible now', tooltip);
+                    } else {
+                        console.warn('Tooltip not found!');
+                    }
+                }, 100);
+            });
+            
+            // Debug: Log when tutorial starts
+            intro.onstart(function() {
+                console.log('Tutorial started with', validSteps.length, 'steps');
             });
             
             // Ensure overlay is clickable to exit
@@ -1033,7 +1064,33 @@
     
     /* Smooth transitions */
     .introjs-tooltip {
+        z-index: 999999 !important;
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        position: absolute !important;
         animation: fadeIn 0.3s ease-in-out !important;
+        max-width: 400px !important;
+        min-width: 300px !important;
+    }
+    
+    /* Ensure tooltip content is visible */
+    .introjs-tooltip .introjs-tooltipcontent {
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        color: #374151 !important;
+    }
+    
+    /* Ensure tooltip header is visible */
+    .introjs-tooltip .introjs-tooltipheader {
+        display: block !important;
+        visibility: visible !important;
+    }
+    
+    /* Ensure all tooltip inner elements are visible */
+    .introjs-tooltip * {
+        visibility: visible !important;
     }
     
     @keyframes fadeIn {
