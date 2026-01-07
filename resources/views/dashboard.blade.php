@@ -1005,11 +1005,28 @@
         padding: 8px 12px !important;
         border-radius: 6px !important;
         transition: all 0.2s ease !important;
+        position: absolute !important;
+        top: 12px !important;
+        right: 12px !important;
+        z-index: 10 !important;
+        margin: 0 !important;
     }
     
     .introjs-skipbutton:hover {
         color: #374151 !important;
         background: #f3f4f6 !important;
+    }
+    
+    /* Ensure tooltip header contains the skip button */
+    .introjs-tooltip-header {
+        position: relative !important;
+        padding-right: 100px !important;
+        overflow: visible !important;
+    }
+    
+    /* Ensure tooltip container doesn't clip the skip button */
+    .introjs-tooltip {
+        overflow: visible !important;
     }
     
     .introjs-progress {

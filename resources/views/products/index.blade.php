@@ -541,6 +541,37 @@
         border-radius: 12px !important;
         box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.3) !important;
     }
+    
+    /* Fix Skip Tutorial button positioning */
+    .introjs-skipbutton {
+        position: absolute !important;
+        top: 12px !important;
+        right: 12px !important;
+        z-index: 10 !important;
+        margin: 0 !important;
+        color: #6b7280 !important;
+        font-size: 14px !important;
+        padding: 8px 12px !important;
+        border-radius: 6px !important;
+        transition: all 0.2s ease !important;
+    }
+    
+    .introjs-skipbutton:hover {
+        color: #374151 !important;
+        background: #f3f4f6 !important;
+    }
+    
+    /* Ensure tooltip header contains the skip button */
+    .introjs-tooltip-header {
+        position: relative !important;
+        padding-right: 100px !important;
+        overflow: visible !important;
+    }
+    
+    /* Ensure tooltip container doesn't clip the skip button */
+    .introjs-tooltip {
+        overflow: visible !important;
+    }
     </style>
     @endpush
 @endif
