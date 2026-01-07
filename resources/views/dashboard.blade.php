@@ -903,7 +903,7 @@
     })();
     </script>
     <style>
-    /* Professional Tutorial Styling */
+    /* Professional Tutorial Styling - Matching First Image Style */
     .customTooltip {
         border-radius: 16px !important;
         box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2) !important;
@@ -911,24 +911,42 @@
         max-width: 400px !important;
         padding: 0 !important;
         background: white !important;
+        overflow: hidden !important;
     }
     
+    /* Gradient Header like first image */
     .introjs-tooltip-header {
-        padding: 20px 20px 12px 20px !important;
-        border-bottom: 1px solid #e5e7eb !important;
+        background: linear-gradient(135deg, #3b82f6 0%, #10b981 100%) !important;
+        padding: 20px 20px 16px 20px !important;
+        border-bottom: none !important;
+        color: white !important;
+        position: relative !important;
+    }
+    
+    .introjs-tooltip-header h3,
+    .introjs-tooltip-header h4 {
+        color: white !important;
+        margin: 0 !important;
+        font-weight: 600 !important;
     }
     
     .introjs-tooltipcontent {
-        padding: 16px 20px !important;
+        padding: 20px !important;
         font-size: 14px !important;
         line-height: 1.6 !important;
         color: #374151 !important;
+        background: white !important;
     }
     
     .introjs-tooltipbuttons {
-        padding: 12px 20px 20px 20px !important;
+        padding: 16px 20px 20px 20px !important;
         border-top: 1px solid #e5e7eb !important;
-        text-align: right !important;
+        text-align: center !important;
+        background: white !important;
+        display: flex !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+        gap: 12px !important;
     }
     
     .customHighlight {
@@ -967,6 +985,8 @@
         background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%) !important;
         color: white !important;
         border: none !important;
+        flex: 1 !important;
+        max-width: 48% !important;
     }
     
     .introjs-button.introjs-nextbutton:hover {
@@ -978,8 +998,9 @@
     .introjs-button.introjs-prevbutton {
         background: #f3f4f6 !important;
         color: #374151 !important;
-        margin-right: 8px !important;
         border: 1px solid #e5e7eb !important;
+        flex: 1 !important;
+        max-width: 48% !important;
     }
     
     .introjs-button.introjs-prevbutton:hover {
@@ -999,41 +1020,35 @@
         box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4) !important;
     }
     
+    /* Skip button styled like Next/Previous buttons */
     .introjs-skipbutton {
         position: absolute !important;
-        top: 8px !important;
-        right: 8px !important;
+        top: 12px !important;
+        right: 12px !important;
         z-index: 10 !important;
         margin: 0 !important;
-        color: #6b7280 !important;
+        color: white !important;
         font-size: 13px !important;
         font-weight: 500 !important;
-        padding: 6px 10px !important;
-        border-radius: 6px !important;
+        padding: 8px 16px !important;
+        border-radius: 8px !important;
         transition: all 0.2s ease !important;
-        background: transparent !important;
-        border: none !important;
+        background: rgba(255, 255, 255, 0.2) !important;
+        border: 1px solid rgba(255, 255, 255, 0.3) !important;
         cursor: pointer !important;
+        backdrop-filter: blur(4px) !important;
     }
     
     .introjs-skipbutton:hover {
-        color: #374151 !important;
-        background: #f3f4f6 !important;
+        background: rgba(255, 255, 255, 0.3) !important;
+        border-color: rgba(255, 255, 255, 0.5) !important;
+        transform: translateY(-1px) !important;
     }
     
     /* Ensure tooltip header contains the skip button properly */
     .introjs-tooltip-header {
         position: relative !important;
-        padding-right: 60px !important;
-        padding-top: 8px !important;
-        padding-bottom: 8px !important;
-        overflow: visible !important;
-    }
-    
-    /* Ensure tooltip container doesn't clip the skip button */
-    .introjs-tooltip {
-        overflow: visible !important;
-        padding: 0 !important;
+        padding-right: 100px !important;
     }
     
     .introjs-progress {
@@ -1074,17 +1089,6 @@
         box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.2), 0 0 0 8px rgba(16, 185, 129, 0.1) !important;
     }
     
-    /* Custom tooltip header with brand gradient */
-    .customTooltip .introjs-tooltip-header {
-        background: linear-gradient(135deg, #3b82f6 0%, #10b981 100%) !important;
-        color: white !important;
-        padding: 16px 20px !important;
-        border-radius: 16px 16px 0 0 !important;
-    }
-    
-    .customTooltip .introjs-tooltipcontent {
-        background: white !important;
-    }
     
     /* Smooth transitions */
     .introjs-tooltip {
