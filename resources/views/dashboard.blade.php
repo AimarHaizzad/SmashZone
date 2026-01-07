@@ -690,7 +690,7 @@
                 scrollPadding: 20,
                 nextLabel: 'Next →',
                 prevLabel: '← Previous',
-                skipLabel: 'Skip Tutorial',
+                skipLabel: 'Skip',
                 doneLabel: 'Got it! 🎉',
                 tooltipClass: 'customTooltip',
                 highlightClass: 'customHighlight',
@@ -1000,16 +1000,20 @@
     }
     
     .introjs-skipbutton {
-        color: #6b7280 !important;
-        font-size: 14px !important;
-        padding: 8px 12px !important;
-        border-radius: 6px !important;
-        transition: all 0.2s ease !important;
         position: absolute !important;
-        top: 12px !important;
-        right: 12px !important;
+        top: 8px !important;
+        right: 8px !important;
         z-index: 10 !important;
         margin: 0 !important;
+        color: #6b7280 !important;
+        font-size: 13px !important;
+        font-weight: 500 !important;
+        padding: 6px 10px !important;
+        border-radius: 6px !important;
+        transition: all 0.2s ease !important;
+        background: transparent !important;
+        border: none !important;
+        cursor: pointer !important;
     }
     
     .introjs-skipbutton:hover {
@@ -1017,16 +1021,19 @@
         background: #f3f4f6 !important;
     }
     
-    /* Ensure tooltip header contains the skip button */
+    /* Ensure tooltip header contains the skip button properly */
     .introjs-tooltip-header {
         position: relative !important;
-        padding-right: 100px !important;
+        padding-right: 60px !important;
+        padding-top: 8px !important;
+        padding-bottom: 8px !important;
         overflow: visible !important;
     }
     
     /* Ensure tooltip container doesn't clip the skip button */
     .introjs-tooltip {
         overflow: visible !important;
+        padding: 0 !important;
     }
     
     .introjs-progress {

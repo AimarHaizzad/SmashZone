@@ -319,11 +319,42 @@ document.addEventListener('DOMContentLoaded', function() {
                 scrollPadding: 20,
                 nextLabel: 'Next →',
                 prevLabel: '← Previous',
-                skipLabel: 'Skip Tutorial',
+                skipLabel: 'Skip',
                 doneLabel: 'Got it! 🎉',
                 tooltipClass: 'customTooltip',
                 highlightClass: 'customHighlight',
-                buttonClass: 'introjs-button'
+                buttonClass: 'introjs-button',
+                tooltipPosition: 'auto' // Let intro.js decide the best position
+            });
+            
+            // Ensure tooltip is visible after each step
+            intro.onchange(function(targetElement) {
+                setTimeout(function() {
+                    const tooltip = document.querySelector('.introjs-tooltip');
+                    if (tooltip) {
+                        tooltip.style.display = 'block';
+                        tooltip.style.visibility = 'visible';
+                        tooltip.style.opacity = '1';
+                        tooltip.style.zIndex = '999999';
+                        
+                        // Also ensure content is visible
+                        const content = tooltip.querySelector('.introjs-tooltipcontent');
+                        if (content) {
+                            content.style.display = 'block';
+                            content.style.visibility = 'visible';
+                            content.style.opacity = '1';
+                        }
+                        
+                        console.log('Tooltip should be visible now', tooltip);
+                    } else {
+                        console.warn('Tooltip not found!');
+                    }
+                }, 100);
+            });
+            
+            // Debug: Log when tutorial starts
+            intro.onstart(function() {
+                console.log('Cart tutorial started with', validSteps.length, 'steps');
             });
             
             // Ensure tutorial can be exited
@@ -341,6 +372,95 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     })();
     </script>
+    <style>
+    /* Tutorial Tooltip Visibility Fixes */
+    .introjs-tooltip {
+        z-index: 999999 !important;
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        position: absolute !important;
+        max-width: 400px !important;
+        min-width: 300px !important;
+    }
+
+    /* Ensure tooltip content is visible */
+    .introjs-tooltip .introjs-tooltipcontent {
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        color: #374151 !important;
+    }
+
+    /* Ensure tooltip header is visible */
+    .introjs-tooltip .introjs-tooltipheader {
+        display: block !important;
+        visibility: visible !important;
+    }
+
+    /* Ensure all tooltip inner elements are visible */
+    .introjs-tooltip * {
+        visibility: visible !important;
+    }
+
+    /* Custom tooltip styling */
+    .customTooltip {
+        border-radius: 16px !important;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2) !important;
+        border: none !important;
+        background: white !important;
+    }
+
+    .customTooltip .introjs-tooltipcontent {
+        padding: 16px 20px !important;
+        font-size: 14px !important;
+        line-height: 1.6 !important;
+        color: #374151 !important;
+    }
+
+    .customHighlight {
+        border-radius: 12px !important;
+        box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.3) !important;
+    }
+    
+    /* Professional Skip button styling */
+    .introjs-skipbutton {
+        position: absolute !important;
+        top: 8px !important;
+        right: 8px !important;
+        z-index: 10 !important;
+        margin: 0 !important;
+        color: #6b7280 !important;
+        font-size: 13px !important;
+        font-weight: 500 !important;
+        padding: 6px 10px !important;
+        border-radius: 6px !important;
+        transition: all 0.2s ease !important;
+        background: transparent !important;
+        border: none !important;
+        cursor: pointer !important;
+    }
+    
+    .introjs-skipbutton:hover {
+        color: #374151 !important;
+        background: #f3f4f6 !important;
+    }
+    
+    /* Ensure tooltip header contains the skip button properly */
+    .introjs-tooltip-header {
+        position: relative !important;
+        padding-right: 60px !important;
+        padding-top: 8px !important;
+        padding-bottom: 8px !important;
+        overflow: visible !important;
+    }
+    
+    /* Ensure tooltip container doesn't clip the skip button */
+    .introjs-tooltip {
+        overflow: visible !important;
+        padding: 0 !important;
+    }
+    </style>
     @endpush
 @endif
 
