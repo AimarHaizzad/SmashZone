@@ -494,7 +494,7 @@
         <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
             @foreach(\App\Models\Product::take(3)->get() as $product)
                 <div class="bg-white rounded-2xl shadow-lg p-6 flex flex-col items-center border-t-4 border-green-200 hover:shadow-xl transition" data-tutorial="product-card">
-                    <img src="{{ $product->image_url ?? ($product->image ? asset('storage/'.$product->image) : '/images/default-badminton-court.jpg') }}" class="h-24 w-24 object-cover rounded-xl border border-green-100 mb-4" alt="Product">
+                    <img src="{{ $product->image_url ?? asset('images/default-badminton-court.jpg') }}" class="h-24 w-24 object-cover rounded-xl border border-green-100 mb-4" alt="Product" onerror="this.onerror=null; this.src='{{ asset('images/default-badminton-court.jpg') }}';">
                     <div class="text-lg font-bold text-green-700 mb-2">{{ $product->name }}</div>
                     <div class="text-gray-500 mb-2">RM {{ number_format($product->price, 2) }}</div>
                     <form action="{{ route('cart.add') }}" method="POST" class="flex flex-col gap-2 mt-2">

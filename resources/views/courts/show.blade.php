@@ -4,7 +4,7 @@
 <div class="relative bg-gradient-to-br from-green-50 to-white pb-12">
     <div class="max-w-3xl mx-auto rounded-xl shadow-lg overflow-hidden mt-8">
         <div class="relative">
-            <img src="{{ $court->image ? asset('storage/' . $court->image) : asset('images/default-badminton-court.jpg') }}" alt="Court Image" class="w-full h-72 object-cover">
+            <img src="{{ $court->image_url ?? asset('images/default-badminton-court.jpg') }}" alt="Court Image" class="w-full h-72 object-cover" onerror="this.onerror=null; this.src='{{ asset('images/default-badminton-court.jpg') }}';">
             <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-6">
                 <h1 class="text-3xl font-extrabold text-white drop-shadow mb-2">{{ $court->name }}</h1>
             </div>

@@ -68,8 +68,9 @@
                                     <!-- Product Image -->
                                     <div class="flex-shrink-0">
                                         @if($product->image)
-                                            <img src="{{ $product->image_url ?? asset('storage/' . $product->image) }}" 
-                                                 alt="{{ $product->name }}" 
+                                            <img src="{{ $product->image_url ?? asset('images/default-badminton-court.jpg') }}" 
+                                                 alt="{{ $product->name }}"
+                                                 onerror="this.onerror=null; this.src='{{ asset('images/default-badminton-court.jpg') }}';" 
                                                  class="h-14 w-14 sm:h-18 sm:w-18 md:h-20 md:w-20 lg:h-24 lg:w-24 object-cover rounded-lg md:rounded-xl border-2 border-gray-200">
                                         @else
                                             <div class="h-14 w-14 sm:h-18 sm:w-18 md:h-20 md:w-20 lg:h-24 lg:w-24 bg-gradient-to-br from-gray-200 to-gray-300 rounded-lg md:rounded-xl flex items-center justify-center">

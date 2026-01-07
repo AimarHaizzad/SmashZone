@@ -85,7 +85,7 @@
                 
                 <!-- Court Image with Status Badge -->
                 <div class="relative">
-                    <img src="{{ $court->image_url ?? ($court->image ? asset('storage/' . $court->image) : asset('images/default-badminton-court.jpg')) }}" 
+                    <img src="{{ $court->image_url ?? asset('images/default-badminton-court.jpg') }}" 
                          alt="{{ $court->name ?? 'Court' }}" 
                          class="h-40 sm:h-48 w-full object-cover"
                          onerror="this.onerror=null; this.src='{{ asset('images/default-badminton-court.jpg') }}';">

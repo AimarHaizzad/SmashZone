@@ -215,9 +215,10 @@
                                 </svg>
                                 Current Image
                             </h4>
-                            <img src="{{ asset('storage/' . $court->image) }}" 
+                            <img src="{{ $court->image_url ?? asset('images/default-badminton-court.jpg') }}" 
                                  alt="{{ $court->name }}" 
-                                 class="h-32 w-32 object-cover rounded-lg border-2 border-purple-200">
+                                 class="h-32 w-32 object-cover rounded-lg border-2 border-purple-200"
+                                 onerror="this.onerror=null; this.src='{{ asset('images/default-badminton-court.jpg') }}';">
                         </div>
                     @endif
                     

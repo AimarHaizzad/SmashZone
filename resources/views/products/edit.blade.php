@@ -251,9 +251,10 @@
                                 Current Image
                             </h3>
                             <div class="flex items-center gap-4">
-                                <img src="{{ $product->image_url ?? asset('storage/' . $product->image) }}" 
+                                <img src="{{ $product->image_url ?? asset('images/default-badminton-court.jpg') }}" 
                                      alt="{{ $product->name }}" 
-                                     class="h-24 w-24 object-cover rounded-lg border-2 border-gray-200">
+                                     class="h-24 w-24 object-cover rounded-lg border-2 border-gray-200"
+                                     onerror="this.onerror=null; this.src='{{ asset('images/default-badminton-court.jpg') }}';">
                                 <div class="flex-1">
                                     <p class="text-sm text-gray-600">Current product image</p>
                                     <p class="text-xs text-gray-500">Upload a new image below to replace this one</p>
