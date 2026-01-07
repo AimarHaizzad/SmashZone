@@ -72,21 +72,41 @@ class CourtController extends Controller
                         // Store the Cloudinary secure URL
                         $validated['image'] = $uploadResult['secure_url'];
                     } else {
-                        // If Cloudinary fails, skip image upload but allow court creation
-                        \Log::warning('Cloudinary upload failed, court will be created without image', [
+                        // Fallback to local storage if Cloudinary is not available
+                        \Log::warning('Cloudinary upload failed, falling back to local storage', [
                             'error' => 'Cloudinary upload returned null or invalid response'
                         ]);
-                        // Don't set image - allow court to be created without image
-                        unset($validated['image']);
+                        
+                        try {
+                            $imagePath = $request->file('image')->store('courts', 'public');
+                            $validated['image'] = $imagePath;
+                            \Log::info('Court image saved to local storage', ['path' => $imagePath]);
+                        } catch (\Throwable $storageException) {
+                            \Log::error('Failed to save court image to local storage', [
+                                'error' => $storageException->getMessage(),
+                                'trace' => $storageException->getTraceAsString()
+                            ]);
+                            // Don't set image - allow court to be created without image
+                            unset($validated['image']);
+                        }
                     }
                 } catch (\Throwable $e) {
                     \Log::error('Failed to store court image', [
                         'error' => $e->getMessage(),
                         'trace' => $e->getTraceAsString()
                     ]);
-                    // If image upload fails, allow court creation without image
-                    // Don't block the entire operation
-                    unset($validated['image']);
+                    
+                    // Fallback to local storage
+                    try {
+                        $imagePath = $request->file('image')->store('courts', 'public');
+                        $validated['image'] = $imagePath;
+                        \Log::info('Court image saved to local storage (fallback)', ['path' => $imagePath]);
+                    } catch (\Throwable $storageException) {
+                        \Log::error('Failed to save court image to local storage', [
+                            'error' => $storageException->getMessage()
+                        ]);
+                        unset($validated['image']);
+                    }
                 }
             }
 
@@ -218,18 +238,54 @@ class CourtController extends Controller
                     // Upload new image
                     $uploadResult = $cloudinaryService->uploadImage($request->file('image'), 'courts');
                     
-                    if ($uploadResult) {
+                    if ($uploadResult && isset($uploadResult['secure_url'])) {
                         // Store the Cloudinary secure URL
                         $validated['image'] = $uploadResult['secure_url'];
                     } else {
-                        return back()->withErrors(['image' => 'Failed to upload image to Cloudinary'])->withInput();
+                        // Fallback to local storage if Cloudinary is not available
+                        \Log::warning('Cloudinary upload failed, falling back to local storage', [
+                            'court_id' => $court->id
+                        ]);
+                        
+                        // Delete old local image if exists
+                        if ($court->image && !filter_var($court->image, FILTER_VALIDATE_URL)) {
+                            Storage::disk('public')->delete($court->image);
+                        }
+                        
+                        try {
+                            $imagePath = $request->file('image')->store('courts', 'public');
+                            $validated['image'] = $imagePath;
+                            \Log::info('Court image saved to local storage', ['path' => $imagePath]);
+                        } catch (\Throwable $storageException) {
+                            \Log::error('Failed to save court image to local storage', [
+                                'error' => $storageException->getMessage()
+                            ]);
+                            return back()->withErrors(['image' => 'Failed to save image: ' . $storageException->getMessage()])->withInput();
+                        }
                     }
-                } catch (\Exception $e) {
+                } catch (\Throwable $e) {
                     \Log::error('Failed to update court image', [
                         'court_id' => $court->id,
-                        'error' => $e->getMessage()
+                        'error' => $e->getMessage(),
+                        'trace' => $e->getTraceAsString()
                     ]);
-                    return back()->withErrors(['image' => 'Failed to upload image: ' . $e->getMessage()])->withInput();
+                    
+                    // Fallback to local storage
+                    try {
+                        // Delete old local image if exists
+                        if ($court->image && !filter_var($court->image, FILTER_VALIDATE_URL)) {
+                            Storage::disk('public')->delete($court->image);
+                        }
+                        
+                        $imagePath = $request->file('image')->store('courts', 'public');
+                        $validated['image'] = $imagePath;
+                        \Log::info('Court image saved to local storage (fallback)', ['path' => $imagePath]);
+                    } catch (\Throwable $storageException) {
+                        \Log::error('Failed to save court image to local storage', [
+                            'error' => $storageException->getMessage()
+                        ]);
+                        return back()->withErrors(['image' => 'Failed to upload image: ' . $storageException->getMessage()])->withInput();
+                    }
                 }
             }
 

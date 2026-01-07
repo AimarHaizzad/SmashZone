@@ -82,12 +82,23 @@ class ProductController extends Controller
                         // Store the Cloudinary secure URL
                         $validated['image'] = $uploadResult['secure_url'];
                     } else {
-                        // If Cloudinary fails, skip image upload but allow product creation
-                        \Log::warning('Cloudinary upload failed, product will be created without image', [
+                        // Fallback to local storage if Cloudinary is not available
+                        \Log::warning('Cloudinary upload failed, falling back to local storage', [
                             'error' => 'Cloudinary upload returned null or invalid response'
                         ]);
-                        // Don't set image - allow product to be created without image
-                        unset($validated['image']);
+                        
+                        try {
+                            $imagePath = $request->file('image')->store('products', 'public');
+                            $validated['image'] = $imagePath;
+                            \Log::info('Product image saved to local storage', ['path' => $imagePath]);
+                        } catch (\Throwable $storageException) {
+                            \Log::error('Failed to save product image to local storage', [
+                                'error' => $storageException->getMessage(),
+                                'trace' => $storageException->getTraceAsString()
+                            ]);
+                            // Don't set image - allow product to be created without image
+                            unset($validated['image']);
+                        }
                     }
                 } catch (\Throwable $e) {
                     \Log::error('Failed to store product image', [
@@ -96,9 +107,18 @@ class ProductController extends Controller
                         'file' => $e->getFile(),
                         'line' => $e->getLine()
                     ]);
-                    // If image upload fails, allow product creation without image
-                    // Don't block the entire operation
-                    unset($validated['image']);
+                    
+                    // Fallback to local storage
+                    try {
+                        $imagePath = $request->file('image')->store('products', 'public');
+                        $validated['image'] = $imagePath;
+                        \Log::info('Product image saved to local storage (fallback)', ['path' => $imagePath]);
+                    } catch (\Throwable $storageException) {
+                        \Log::error('Failed to save product image to local storage', [
+                            'error' => $storageException->getMessage()
+                        ]);
+                        unset($validated['image']);
+                    }
                 }
             }
 
@@ -184,7 +204,26 @@ class ProductController extends Controller
                         // Store the Cloudinary secure URL
                         $validated['image'] = $uploadResult['secure_url'];
                     } else {
-                        return back()->withErrors(['image' => 'Failed to upload image to Cloudinary'])->withInput();
+                        // Fallback to local storage if Cloudinary is not available
+                        \Log::warning('Cloudinary upload failed, falling back to local storage', [
+                            'product_id' => $product->id
+                        ]);
+                        
+                        // Delete old local image if exists
+                        if ($product->image && !filter_var($product->image, FILTER_VALIDATE_URL)) {
+                            Storage::disk('public')->delete($product->image);
+                        }
+                        
+                        try {
+                            $imagePath = $request->file('image')->store('products', 'public');
+                            $validated['image'] = $imagePath;
+                            \Log::info('Product image saved to local storage', ['path' => $imagePath]);
+                        } catch (\Throwable $storageException) {
+                            \Log::error('Failed to save product image to local storage', [
+                                'error' => $storageException->getMessage()
+                            ]);
+                            return back()->withErrors(['image' => 'Failed to save image: ' . $storageException->getMessage()])->withInput();
+                        }
                     }
                 } catch (\Throwable $e) {
                     \Log::error('Failed to update product image', [
@@ -194,7 +233,23 @@ class ProductController extends Controller
                         'file' => $e->getFile(),
                         'line' => $e->getLine()
                     ]);
-                    return back()->withErrors(['image' => 'Failed to upload image: ' . $e->getMessage()])->withInput();
+                    
+                    // Fallback to local storage
+                    try {
+                        // Delete old local image if exists
+                        if ($product->image && !filter_var($product->image, FILTER_VALIDATE_URL)) {
+                            Storage::disk('public')->delete($product->image);
+                        }
+                        
+                        $imagePath = $request->file('image')->store('products', 'public');
+                        $validated['image'] = $imagePath;
+                        \Log::info('Product image saved to local storage (fallback)', ['path' => $imagePath]);
+                    } catch (\Throwable $storageException) {
+                        \Log::error('Failed to save product image to local storage', [
+                            'error' => $storageException->getMessage()
+                        ]);
+                        return back()->withErrors(['image' => 'Failed to upload image: ' . $storageException->getMessage()])->withInput();
+                    }
                 }
             }
 
