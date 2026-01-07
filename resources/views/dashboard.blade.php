@@ -494,7 +494,7 @@
         <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
             @foreach(\App\Models\Product::take(3)->get() as $product)
                 <div class="bg-white rounded-2xl shadow-lg p-6 flex flex-col items-center border-t-4 border-green-200 hover:shadow-xl transition" data-tutorial="product-card">
-                    <img src="{{ $product->image ? asset('storage/'.$product->image) : '/images/default-badminton-court.jpg' }}" class="h-24 w-24 object-cover rounded-xl border border-green-100 mb-4" alt="Product">
+                    <img src="{{ $product->image_url ?? ($product->image ? asset('storage/'.$product->image) : '/images/default-badminton-court.jpg') }}" class="h-24 w-24 object-cover rounded-xl border border-green-100 mb-4" alt="Product">
                     <div class="text-lg font-bold text-green-700 mb-2">{{ $product->name }}</div>
                     <div class="text-gray-500 mb-2">RM {{ number_format($product->price, 2) }}</div>
                     <form action="{{ route('cart.add') }}" method="POST" class="flex flex-col gap-2 mt-2">
@@ -700,7 +700,7 @@
                 tooltipPosition: 'auto' // Let intro.js decide the best position
             });
             
-            // Ensure tooltip is visible after each step
+            // Ensure tooltip is visible after each step and style properly
             intro.onchange(function(targetElement) {
                 setTimeout(function() {
                     const tooltip = document.querySelector('.introjs-tooltip');
@@ -710,6 +710,28 @@
                         tooltip.style.opacity = '1';
                         tooltip.style.zIndex = '999999';
                         
+                        // Ensure header has gradient and white text
+                        const header = tooltip.querySelector('.introjs-tooltip-header');
+                        if (header) {
+                            header.style.background = 'linear-gradient(135deg, #3b82f6 0%, #10b981 100%)';
+                            header.style.color = 'white';
+                            const headerText = header.querySelector('h3, h4');
+                            if (headerText) {
+                                headerText.style.color = 'white';
+                            }
+                        }
+                        
+                        // Ensure skip button is styled as button
+                        const skipButton = tooltip.querySelector('.introjs-skipbutton');
+                        if (skipButton) {
+                            skipButton.style.color = 'white';
+                            skipButton.style.background = 'rgba(255, 255, 255, 0.2)';
+                            skipButton.style.border = '1px solid rgba(255, 255, 255, 0.3)';
+                            skipButton.style.padding = '8px 16px';
+                            skipButton.style.borderRadius = '8px';
+                            skipButton.style.fontWeight = '500';
+                        }
+                        
                         // Also ensure content is visible
                         const content = tooltip.querySelector('.introjs-tooltipcontent');
                         if (content) {
@@ -717,10 +739,6 @@
                             content.style.visibility = 'visible';
                             content.style.opacity = '1';
                         }
-                        
-                        console.log('Tooltip should be visible now', tooltip);
-                    } else {
-                        console.warn('Tooltip not found!');
                     }
                 }, 100);
             });

@@ -75,7 +75,15 @@ class ProductController extends Controller
 
             if ($request->hasFile('image')) {
                 try {
-                    $validated['image'] = $request->file('image')->store('products', 'public');
+                    $cloudinaryService = new \App\Services\CloudinaryService();
+                    $uploadResult = $cloudinaryService->uploadImage($request->file('image'), 'products');
+                    
+                    if ($uploadResult) {
+                        // Store the Cloudinary secure URL
+                        $validated['image'] = $uploadResult['secure_url'];
+                    } else {
+                        return back()->withErrors(['image' => 'Failed to upload image to Cloudinary'])->withInput();
+                    }
                 } catch (\Exception $e) {
                     \Log::error('Failed to store product image', ['error' => $e->getMessage()]);
                     return back()->withErrors(['image' => 'Failed to upload image: ' . $e->getMessage()])->withInput();
@@ -145,11 +153,23 @@ class ProductController extends Controller
 
             if ($request->hasFile('image')) {
                 try {
-                    // Delete old image if exists
+                    $cloudinaryService = new \App\Services\CloudinaryService();
+                    
+                    // Delete old image from Cloudinary if exists
                     if ($product->image) {
-                        Storage::disk('public')->delete($product->image);
+                        $publicId = $cloudinaryService->extractPublicId($product->image);
+                        $cloudinaryService->deleteImage($publicId);
                     }
-                    $validated['image'] = $request->file('image')->store('products', 'public');
+                    
+                    // Upload new image
+                    $uploadResult = $cloudinaryService->uploadImage($request->file('image'), 'products');
+                    
+                    if ($uploadResult) {
+                        // Store the Cloudinary secure URL
+                        $validated['image'] = $uploadResult['secure_url'];
+                    } else {
+                        return back()->withErrors(['image' => 'Failed to upload image to Cloudinary'])->withInput();
+                    }
                 } catch (\Exception $e) {
                     \Log::error('Failed to update product image', [
                         'product_id' => $product->id,
@@ -185,7 +205,9 @@ class ProductController extends Controller
             
             if ($product->image) {
                 try {
-                    Storage::disk('public')->delete($product->image);
+                    $cloudinaryService = new \App\Services\CloudinaryService();
+                    $publicId = $cloudinaryService->extractPublicId($product->image);
+                    $cloudinaryService->deleteImage($publicId);
                 } catch (\Exception $e) {
                     \Log::error('Failed to delete product image', [
                         'product_id' => $product->id,

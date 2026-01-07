@@ -67,4 +67,38 @@ class Court extends Model
 
         return $total;
     }
+
+    /**
+     * Get the full URL for the court image
+     */
+    public function getImageUrlAttribute()
+    {
+        try {
+            if (!$this->image) {
+                return null;
+            }
+            
+            // If it's already a Cloudinary URL (starts with http/https), return it directly
+            if (filter_var($this->image, FILTER_VALIDATE_URL)) {
+                return $this->image;
+            }
+            
+            // Fallback for old local storage paths (for backward compatibility)
+            // If image path already includes 'courts/', use it as is
+            // Otherwise, prepend 'courts/' if it's just a filename
+            $imagePath = $this->image;
+            if (!str_starts_with($imagePath, 'courts/')) {
+                $imagePath = 'courts/' . $imagePath;
+            }
+            
+            return \Illuminate\Support\Facades\Storage::url($imagePath);
+        } catch (\Exception $e) {
+            \Log::error('Failed to get court image URL', [
+                'court_id' => $this->id,
+                'image' => $this->image,
+                'error' => $e->getMessage()
+            ]);
+            return null;
+        }
+    }
 }

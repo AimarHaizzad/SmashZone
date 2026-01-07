@@ -30,6 +30,12 @@ class Product extends Model
                 return null;
             }
             
+            // If it's already a Cloudinary URL (starts with http/https), return it directly
+            if (filter_var($this->image, FILTER_VALIDATE_URL)) {
+                return $this->image;
+            }
+            
+            // Fallback for old local storage paths (for backward compatibility)
             // If image path already includes 'products/', use it as is
             // Otherwise, prepend 'products/' if it's just a filename
             $imagePath = $this->image;

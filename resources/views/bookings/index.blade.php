@@ -1653,7 +1653,7 @@
                 tooltipPosition: 'auto' // Let intro.js decide the best position
             });
             
-            // Ensure tooltip is visible after each step
+            // Ensure tooltip is visible after each step and style properly
             intro.onchange(function(targetElement) {
                 setTimeout(function() {
                     const tooltip = document.querySelector('.introjs-tooltip');
@@ -1663,6 +1663,28 @@
                         tooltip.style.opacity = '1';
                         tooltip.style.zIndex = '999999';
                         
+                        // Ensure header has gradient and white text
+                        const header = tooltip.querySelector('.introjs-tooltip-header');
+                        if (header) {
+                            header.style.background = 'linear-gradient(135deg, #3b82f6 0%, #10b981 100%)';
+                            header.style.color = 'white';
+                            const headerText = header.querySelector('h3, h4');
+                            if (headerText) {
+                                headerText.style.color = 'white';
+                            }
+                        }
+                        
+                        // Ensure skip button is styled as button
+                        const skipButton = tooltip.querySelector('.introjs-skipbutton');
+                        if (skipButton) {
+                            skipButton.style.color = 'white';
+                            skipButton.style.background = 'rgba(255, 255, 255, 0.2)';
+                            skipButton.style.border = '1px solid rgba(255, 255, 255, 0.3)';
+                            skipButton.style.padding = '8px 16px';
+                            skipButton.style.borderRadius = '8px';
+                            skipButton.style.fontWeight = '500';
+                        }
+                        
                         // Also ensure content is visible
                         const content = tooltip.querySelector('.introjs-tooltipcontent');
                         if (content) {
@@ -1670,10 +1692,6 @@
                             content.style.visibility = 'visible';
                             content.style.opacity = '1';
                         }
-                        
-                        console.log('Tooltip should be visible now', tooltip);
-                    } else {
-                        console.warn('Tooltip not found!');
                     }
                 }, 100);
             });

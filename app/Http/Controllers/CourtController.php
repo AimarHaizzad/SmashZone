@@ -64,7 +64,20 @@ class CourtController extends Controller
             ]);
 
             if ($request->hasFile('image')) {
-                $validated['image'] = $request->file('image')->store('courts', 'public');
+                try {
+                    $cloudinaryService = new \App\Services\CloudinaryService();
+                    $uploadResult = $cloudinaryService->uploadImage($request->file('image'), 'courts');
+                    
+                    if ($uploadResult) {
+                        // Store the Cloudinary secure URL
+                        $validated['image'] = $uploadResult['secure_url'];
+                    } else {
+                        return back()->withErrors(['image' => 'Failed to upload image to Cloudinary'])->withInput();
+                    }
+                } catch (\Exception $e) {
+                    \Log::error('Failed to store court image', ['error' => $e->getMessage()]);
+                    return back()->withErrors(['image' => 'Failed to upload image: ' . $e->getMessage()])->withInput();
+                }
             }
 
             $validated['owner_id'] = auth()->id();
@@ -162,10 +175,31 @@ class CourtController extends Controller
             ]);
 
             if ($request->hasFile('image')) {
-                if ($court->image) {
-                    Storage::disk('public')->delete($court->image);
+                try {
+                    $cloudinaryService = new \App\Services\CloudinaryService();
+                    
+                    // Delete old image from Cloudinary if exists
+                    if ($court->image) {
+                        $publicId = $cloudinaryService->extractPublicId($court->image);
+                        $cloudinaryService->deleteImage($publicId);
+                    }
+                    
+                    // Upload new image
+                    $uploadResult = $cloudinaryService->uploadImage($request->file('image'), 'courts');
+                    
+                    if ($uploadResult) {
+                        // Store the Cloudinary secure URL
+                        $validated['image'] = $uploadResult['secure_url'];
+                    } else {
+                        return back()->withErrors(['image' => 'Failed to upload image to Cloudinary'])->withInput();
+                    }
+                } catch (\Exception $e) {
+                    \Log::error('Failed to update court image', [
+                        'court_id' => $court->id,
+                        'error' => $e->getMessage()
+                    ]);
+                    return back()->withErrors(['image' => 'Failed to upload image: ' . $e->getMessage()])->withInput();
                 }
-                $validated['image'] = $request->file('image')->store('courts', 'public');
             }
 
             // Validate and sync pricing rules

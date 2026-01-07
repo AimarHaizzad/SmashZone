@@ -327,7 +327,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 tooltipPosition: 'auto' // Let intro.js decide the best position
             });
             
-            // Ensure tooltip is visible after each step
+            // Ensure tooltip is visible after each step and style properly
             intro.onchange(function(targetElement) {
                 setTimeout(function() {
                     const tooltip = document.querySelector('.introjs-tooltip');
@@ -337,6 +337,28 @@ document.addEventListener('DOMContentLoaded', function() {
                         tooltip.style.opacity = '1';
                         tooltip.style.zIndex = '999999';
                         
+                        // Ensure header has gradient and white text
+                        const header = tooltip.querySelector('.introjs-tooltip-header');
+                        if (header) {
+                            header.style.background = 'linear-gradient(135deg, #3b82f6 0%, #10b981 100%)';
+                            header.style.color = 'white';
+                            const headerText = header.querySelector('h3, h4');
+                            if (headerText) {
+                                headerText.style.color = 'white';
+                            }
+                        }
+                        
+                        // Ensure skip button is styled as button
+                        const skipButton = tooltip.querySelector('.introjs-skipbutton');
+                        if (skipButton) {
+                            skipButton.style.color = 'white';
+                            skipButton.style.background = 'rgba(255, 255, 255, 0.2)';
+                            skipButton.style.border = '1px solid rgba(255, 255, 255, 0.3)';
+                            skipButton.style.padding = '8px 16px';
+                            skipButton.style.borderRadius = '8px';
+                            skipButton.style.fontWeight = '500';
+                        }
+                        
                         // Also ensure content is visible
                         const content = tooltip.querySelector('.introjs-tooltipcontent');
                         if (content) {
@@ -344,10 +366,6 @@ document.addEventListener('DOMContentLoaded', function() {
                             content.style.visibility = 'visible';
                             content.style.opacity = '1';
                         }
-                        
-                        console.log('Tooltip should be visible now', tooltip);
-                    } else {
-                        console.warn('Tooltip not found!');
                     }
                 }, 100);
             });
@@ -373,7 +391,55 @@ document.addEventListener('DOMContentLoaded', function() {
     })();
     </script>
     <style>
-    /* Tutorial Tooltip Visibility Fixes */
+    /* Professional Tutorial Styling - Matching First Image Style */
+    .customTooltip {
+        border-radius: 16px !important;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2) !important;
+        border: none !important;
+        max-width: 400px !important;
+        padding: 0 !important;
+        background: white !important;
+        overflow: hidden !important;
+    }
+
+    /* Gradient Header like first image */
+    .introjs-tooltip-header {
+        background: linear-gradient(135deg, #3b82f6 0%, #10b981 100%) !important;
+        padding: 20px 20px 16px 20px !important;
+        border-bottom: none !important;
+        color: white !important;
+        position: relative !important;
+    }
+
+    .introjs-tooltip-header h3,
+    .introjs-tooltip-header h4 {
+        color: white !important;
+        margin: 0 !important;
+        font-weight: 600 !important;
+    }
+
+    .introjs-tooltipcontent {
+        padding: 20px !important;
+        font-size: 14px !important;
+        line-height: 1.6 !important;
+        color: #374151 !important;
+        background: white !important;
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+    }
+
+    .introjs-tooltipbuttons {
+        padding: 16px 20px 20px 20px !important;
+        border-top: 1px solid #e5e7eb !important;
+        text-align: center !important;
+        background: white !important;
+        display: flex !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+        gap: 12px !important;
+    }
+
     .introjs-tooltip {
         z-index: 999999 !important;
         display: block !important;
@@ -384,81 +450,76 @@ document.addEventListener('DOMContentLoaded', function() {
         min-width: 300px !important;
     }
 
-    /* Ensure tooltip content is visible */
-    .introjs-tooltip .introjs-tooltipcontent {
-        display: block !important;
-        visibility: visible !important;
-        opacity: 1 !important;
-        color: #374151 !important;
-    }
-
-    /* Ensure tooltip header is visible */
-    .introjs-tooltip .introjs-tooltipheader {
-        display: block !important;
-        visibility: visible !important;
-    }
-
-    /* Ensure all tooltip inner elements are visible */
     .introjs-tooltip * {
         visibility: visible !important;
-    }
-
-    /* Custom tooltip styling */
-    .customTooltip {
-        border-radius: 16px !important;
-        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2) !important;
-        border: none !important;
-        background: white !important;
-    }
-
-    .customTooltip .introjs-tooltipcontent {
-        padding: 16px 20px !important;
-        font-size: 14px !important;
-        line-height: 1.6 !important;
-        color: #374151 !important;
     }
 
     .customHighlight {
         border-radius: 12px !important;
         box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.3) !important;
     }
-    
-    /* Professional Skip button styling */
+
+    /* Skip button styled like Next/Previous buttons */
     .introjs-skipbutton {
         position: absolute !important;
-        top: 8px !important;
-        right: 8px !important;
+        top: 12px !important;
+        right: 12px !important;
         z-index: 10 !important;
         margin: 0 !important;
-        color: #6b7280 !important;
+        color: white !important;
         font-size: 13px !important;
         font-weight: 500 !important;
-        padding: 6px 10px !important;
-        border-radius: 6px !important;
+        padding: 8px 16px !important;
+        border-radius: 8px !important;
         transition: all 0.2s ease !important;
-        background: transparent !important;
+        background: rgba(255, 255, 255, 0.2) !important;
+        border: 1px solid rgba(255, 255, 255, 0.3) !important;
+        cursor: pointer !important;
+        backdrop-filter: blur(4px) !important;
+    }
+
+    .introjs-skipbutton:hover {
+        background: rgba(255, 255, 255, 0.3) !important;
+        border-color: rgba(255, 255, 255, 0.5) !important;
+        transform: translateY(-1px) !important;
+    }
+
+    /* Button styling */
+    .introjs-button {
+        border-radius: 8px !important;
+        padding: 10px 20px !important;
+        font-weight: 600 !important;
+        font-size: 14px !important;
+        transition: all 0.2s ease !important;
         border: none !important;
         cursor: pointer !important;
     }
-    
-    .introjs-skipbutton:hover {
-        color: #374151 !important;
+
+    .introjs-button.introjs-prevbutton {
         background: #f3f4f6 !important;
+        color: #374151 !important;
+        border: 1px solid #e5e7eb !important;
+        flex: 1 !important;
+        max-width: 48% !important;
     }
-    
-    /* Ensure tooltip header contains the skip button properly */
-    .introjs-tooltip-header {
-        position: relative !important;
-        padding-right: 60px !important;
-        padding-top: 8px !important;
-        padding-bottom: 8px !important;
-        overflow: visible !important;
+
+    .introjs-button.introjs-prevbutton:hover {
+        background: #e5e7eb !important;
+        border-color: #d1d5db !important;
     }
-    
-    /* Ensure tooltip container doesn't clip the skip button */
-    .introjs-tooltip {
-        overflow: visible !important;
-        padding: 0 !important;
+
+    .introjs-button.introjs-nextbutton {
+        background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%) !important;
+        color: white !important;
+        border: none !important;
+        flex: 1 !important;
+        max-width: 48% !important;
+    }
+
+    .introjs-button.introjs-nextbutton:hover {
+        background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%) !important;
+        transform: translateY(-1px) !important;
+        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4) !important;
     }
     </style>
     @endpush
