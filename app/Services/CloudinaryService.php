@@ -47,6 +47,13 @@ class CloudinaryService
             $cloudinaryUrl = env('CLOUDINARY_URL');
             
             if ($cloudinaryUrl) {
+                // Fix common URL format issues - ensure @ symbol is present
+                if (strpos($cloudinaryUrl, '@') === false && preg_match('/cloudinary:\/\/(\d+):([^@]+)([a-z0-9]+)/', $cloudinaryUrl, $matches)) {
+                    // Fix missing @ symbol: cloudinary://key:secretcloudname -> cloudinary://key:secret@cloudname
+                    $cloudinaryUrl = 'cloudinary://' . $matches[1] . ':' . $matches[2] . '@' . $matches[3];
+                    Log::warning('Fixed Cloudinary URL format - added missing @ symbol');
+                }
+                
                 // Parse CLOUDINARY_URL format
                 Configuration::instance([
                     'url' => $cloudinaryUrl
@@ -67,7 +74,10 @@ class CloudinaryService
 
             $this->cloudinary = new Cloudinary();
         } catch (\Exception $e) {
-            Log::error('Failed to initialize Cloudinary', ['error' => $e->getMessage()]);
+            Log::error('Failed to initialize Cloudinary', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
             throw $e;
         }
     }

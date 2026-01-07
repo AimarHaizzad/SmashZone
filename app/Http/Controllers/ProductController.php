@@ -78,22 +78,25 @@ class ProductController extends Controller
                     $cloudinaryService = new \App\Services\CloudinaryService();
                     $uploadResult = $cloudinaryService->uploadImage($request->file('image'), 'products');
                     
-                    if ($uploadResult) {
+                    if ($uploadResult && isset($uploadResult['secure_url'])) {
                         // Store the Cloudinary secure URL
                         $validated['image'] = $uploadResult['secure_url'];
                     } else {
-                        // Fallback to local storage if Cloudinary is not configured
-                        \Log::warning('Cloudinary upload failed, falling back to local storage');
-                        $validated['image'] = $request->file('image')->store('products', 'public');
+                        // If Cloudinary fails, skip image upload but allow product creation
+                        \Log::warning('Cloudinary upload failed, product will be created without image', [
+                            'error' => 'Cloudinary upload returned null or invalid response'
+                        ]);
+                        // Don't set image - allow product to be created without image
+                        unset($validated['image']);
                     }
                 } catch (\Exception $e) {
-                    \Log::error('Failed to store product image', ['error' => $e->getMessage()]);
-                    // Fallback to local storage on error
-                    try {
-                        $validated['image'] = $request->file('image')->store('products', 'public');
-                    } catch (\Exception $fallbackError) {
-                        return back()->withErrors(['image' => 'Failed to upload image: ' . $e->getMessage()])->withInput();
-                    }
+                    \Log::error('Failed to store product image', [
+                        'error' => $e->getMessage(),
+                        'trace' => $e->getTraceAsString()
+                    ]);
+                    // If image upload fails, allow product creation without image
+                    // Don't block the entire operation
+                    unset($validated['image']);
                 }
             }
 
