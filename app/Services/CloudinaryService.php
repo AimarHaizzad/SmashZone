@@ -10,32 +10,66 @@ use Illuminate\Support\Facades\Log;
 class CloudinaryService
 {
     private $cloudinary;
+    private $isConfigured = false;
 
     public function __construct()
     {
-        // Support CLOUDINARY_URL format (cloudinary://api_key:api_secret@cloud_name)
+        // Don't initialize Cloudinary in constructor - do it lazily when needed
+        $this->isConfigured = $this->checkConfiguration();
+    }
+
+    /**
+     * Check if Cloudinary is configured
+     */
+    private function checkConfiguration(): bool
+    {
         $cloudinaryUrl = env('CLOUDINARY_URL');
+        $hasIndividualCreds = env('CLOUDINARY_CLOUD_NAME') && env('CLOUDINARY_API_KEY') && env('CLOUDINARY_API_SECRET');
         
-        if ($cloudinaryUrl) {
-            // Parse CLOUDINARY_URL format
-            Configuration::instance([
-                'url' => $cloudinaryUrl
-            ]);
-        } else {
-            // Fallback to individual environment variables
-            Configuration::instance([
-                'cloud' => [
-                    'cloud_name' => env('CLOUDINARY_CLOUD_NAME'),
-                    'api_key' => env('CLOUDINARY_API_KEY'),
-                    'api_secret' => env('CLOUDINARY_API_SECRET'),
-                ],
-                'url' => [
-                    'secure' => true
-                ]
-            ]);
+        return !empty($cloudinaryUrl) || $hasIndividualCreds;
+    }
+
+    /**
+     * Initialize Cloudinary connection
+     */
+    private function initializeCloudinary(): void
+    {
+        if ($this->cloudinary !== null) {
+            return; // Already initialized
         }
 
-        $this->cloudinary = new Cloudinary();
+        if (!$this->isConfigured) {
+            throw new \Exception('Cloudinary is not configured. Please set CLOUDINARY_URL or individual credentials in your .env file.');
+        }
+
+        try {
+            // Support CLOUDINARY_URL format (cloudinary://api_key:api_secret@cloud_name)
+            $cloudinaryUrl = env('CLOUDINARY_URL');
+            
+            if ($cloudinaryUrl) {
+                // Parse CLOUDINARY_URL format
+                Configuration::instance([
+                    'url' => $cloudinaryUrl
+                ]);
+            } else {
+                // Fallback to individual environment variables
+                Configuration::instance([
+                    'cloud' => [
+                        'cloud_name' => env('CLOUDINARY_CLOUD_NAME'),
+                        'api_key' => env('CLOUDINARY_API_KEY'),
+                        'api_secret' => env('CLOUDINARY_API_SECRET'),
+                    ],
+                    'url' => [
+                        'secure' => true
+                    ]
+                ]);
+            }
+
+            $this->cloudinary = new Cloudinary();
+        } catch (\Exception $e) {
+            Log::error('Failed to initialize Cloudinary', ['error' => $e->getMessage()]);
+            throw $e;
+        }
     }
 
     /**
@@ -49,14 +83,14 @@ class CloudinaryService
     public function uploadImage(UploadedFile $file, string $folder, ?string $publicId = null): ?array
     {
         try {
-            // Check if Cloudinary is configured (either via URL or individual vars)
-            $cloudinaryUrl = env('CLOUDINARY_URL');
-            $hasIndividualCreds = env('CLOUDINARY_CLOUD_NAME') && env('CLOUDINARY_API_KEY') && env('CLOUDINARY_API_SECRET');
-            
-            if (!$cloudinaryUrl && !$hasIndividualCreds) {
+            // Check if Cloudinary is configured
+            if (!$this->isConfigured) {
                 Log::error('Cloudinary credentials not configured');
                 return null;
             }
+
+            // Initialize Cloudinary if not already done
+            $this->initializeCloudinary();
 
             $uploadOptions = [
                 'folder' => $folder,
@@ -97,14 +131,14 @@ class CloudinaryService
     public function deleteImage(string $publicId): bool
     {
         try {
-            // Check if Cloudinary is configured (either via URL or individual vars)
-            $cloudinaryUrl = env('CLOUDINARY_URL');
-            $hasIndividualCreds = env('CLOUDINARY_CLOUD_NAME') && env('CLOUDINARY_API_KEY') && env('CLOUDINARY_API_SECRET');
-            
-            if (!$cloudinaryUrl && !$hasIndividualCreds) {
+            // Check if Cloudinary is configured
+            if (!$this->isConfigured) {
                 Log::error('Cloudinary credentials not configured');
                 return false;
             }
+
+            // Initialize Cloudinary if not already done
+            $this->initializeCloudinary();
 
             $result = $this->cloudinary->uploadApi()->destroy($publicId);
             return isset($result['result']) && $result['result'] === 'ok';
@@ -134,6 +168,14 @@ class CloudinaryService
             if (filter_var($publicId, FILTER_VALIDATE_URL)) {
                 return $publicId;
             }
+
+            // Check if Cloudinary is configured
+            if (!$this->isConfigured) {
+                return null;
+            }
+
+            // Initialize Cloudinary if not already done
+            $this->initializeCloudinary();
 
             // Generate Cloudinary URL
             return $this->cloudinary->image($publicId)->secure()->toUrl();

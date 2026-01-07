@@ -72,11 +72,18 @@ class CourtController extends Controller
                         // Store the Cloudinary secure URL
                         $validated['image'] = $uploadResult['secure_url'];
                     } else {
-                        return back()->withErrors(['image' => 'Failed to upload image to Cloudinary'])->withInput();
+                        // Fallback to local storage if Cloudinary is not configured
+                        \Log::warning('Cloudinary upload failed, falling back to local storage');
+                        $validated['image'] = $request->file('image')->store('courts', 'public');
                     }
                 } catch (\Exception $e) {
                     \Log::error('Failed to store court image', ['error' => $e->getMessage()]);
-                    return back()->withErrors(['image' => 'Failed to upload image: ' . $e->getMessage()])->withInput();
+                    // Fallback to local storage on error
+                    try {
+                        $validated['image'] = $request->file('image')->store('courts', 'public');
+                    } catch (\Exception $fallbackError) {
+                        return back()->withErrors(['image' => 'Failed to upload image: ' . $e->getMessage()])->withInput();
+                    }
                 }
             }
 
