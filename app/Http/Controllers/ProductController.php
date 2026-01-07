@@ -89,10 +89,12 @@ class ProductController extends Controller
                         // Don't set image - allow product to be created without image
                         unset($validated['image']);
                     }
-                } catch (\Exception $e) {
+                } catch (\Throwable $e) {
                     \Log::error('Failed to store product image', [
                         'error' => $e->getMessage(),
-                        'trace' => $e->getTraceAsString()
+                        'trace' => $e->getTraceAsString(),
+                        'file' => $e->getFile(),
+                        'line' => $e->getLine()
                     ]);
                     // If image upload fails, allow product creation without image
                     // Don't block the entire operation
@@ -103,20 +105,24 @@ class ProductController extends Controller
             try {
                 Product::create($validated);
                 return redirect('/products')->with('success', 'Product created successfully.');
-            } catch (\Exception $e) {
+            } catch (\Throwable $e) {
                 \Log::error('Product creation failed', [
                     'error' => $e->getMessage(),
                     'trace' => $e->getTraceAsString(),
+                    'file' => $e->getFile(),
+                    'line' => $e->getLine(),
                     'data' => $validated
                 ]);
                 return back()->withErrors(['error' => 'Failed to save product: ' . $e->getMessage()])->withInput();
             }
         } catch (\Illuminate\Validation\ValidationException $e) {
             throw $e;
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             \Log::error('Product store failed', [
                 'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine()
             ]);
             return back()->withErrors(['error' => 'Failed to create product: ' . $e->getMessage()])->withInput();
         }
@@ -174,30 +180,46 @@ class ProductController extends Controller
                     // Upload new image
                     $uploadResult = $cloudinaryService->uploadImage($request->file('image'), 'products');
                     
-                    if ($uploadResult) {
+                    if ($uploadResult && isset($uploadResult['secure_url'])) {
                         // Store the Cloudinary secure URL
                         $validated['image'] = $uploadResult['secure_url'];
                     } else {
                         return back()->withErrors(['image' => 'Failed to upload image to Cloudinary'])->withInput();
                     }
-                } catch (\Exception $e) {
+                } catch (\Throwable $e) {
                     \Log::error('Failed to update product image', [
                         'product_id' => $product->id,
-                        'error' => $e->getMessage()
+                        'error' => $e->getMessage(),
+                        'trace' => $e->getTraceAsString(),
+                        'file' => $e->getFile(),
+                        'line' => $e->getLine()
                     ]);
                     return back()->withErrors(['image' => 'Failed to upload image: ' . $e->getMessage()])->withInput();
                 }
             }
 
-            $product->update($validated);
-            return redirect('/products')->with('success', 'Product updated successfully.');
+            try {
+                $product->update($validated);
+                return redirect('/products')->with('success', 'Product updated successfully.');
+            } catch (\Throwable $e) {
+                \Log::error('Product update failed', [
+                    'product_id' => $product->id,
+                    'error' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString(),
+                    'file' => $e->getFile(),
+                    'line' => $e->getLine()
+                ]);
+                return back()->withErrors(['error' => 'Failed to update product: ' . $e->getMessage()])->withInput();
+            }
         } catch (\Illuminate\Validation\ValidationException $e) {
             throw $e;
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             \Log::error('Product update failed', [
-                'product_id' => $product->id,
+                'product_id' => $product->id ?? null,
                 'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine()
             ]);
             return back()->withErrors(['error' => 'Failed to update product: ' . $e->getMessage()])->withInput();
         }
@@ -218,22 +240,38 @@ class ProductController extends Controller
                     $cloudinaryService = new \App\Services\CloudinaryService();
                     $publicId = $cloudinaryService->extractPublicId($product->image);
                     $cloudinaryService->deleteImage($publicId);
-                } catch (\Exception $e) {
+                } catch (\Throwable $e) {
                     \Log::error('Failed to delete product image', [
                         'product_id' => $product->id,
-                        'error' => $e->getMessage()
+                        'error' => $e->getMessage(),
+                        'trace' => $e->getTraceAsString(),
+                        'file' => $e->getFile(),
+                        'line' => $e->getLine()
                     ]);
                     // Continue with deletion even if image deletion fails
                 }
             }
             
-            $product->delete();
-            return redirect('/products')->with('success', 'Product deleted successfully.');
-        } catch (\Exception $e) {
+            try {
+                $product->delete();
+                return redirect('/products')->with('success', 'Product deleted successfully.');
+            } catch (\Throwable $e) {
+                \Log::error('Product delete failed', [
+                    'product_id' => $product->id,
+                    'error' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString(),
+                    'file' => $e->getFile(),
+                    'line' => $e->getLine()
+                ]);
+                return back()->withErrors(['error' => 'Failed to delete product: ' . $e->getMessage()]);
+            }
+        } catch (\Throwable $e) {
             \Log::error('Product destroy failed', [
-                'product_id' => $product->id,
+                'product_id' => $product->id ?? null,
                 'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine()
             ]);
             return back()->withErrors(['error' => 'Failed to delete product: ' . $e->getMessage()]);
         }

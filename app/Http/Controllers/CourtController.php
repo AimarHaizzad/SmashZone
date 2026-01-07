@@ -79,7 +79,7 @@ class CourtController extends Controller
                         // Don't set image - allow court to be created without image
                         unset($validated['image']);
                     }
-                } catch (\Exception $e) {
+                } catch (\Throwable $e) {
                     \Log::error('Failed to store court image', [
                         'error' => $e->getMessage(),
                         'trace' => $e->getTraceAsString()
@@ -95,19 +95,38 @@ class CourtController extends Controller
             // Validate and sync pricing rules
             try {
                 $pricingRules = $this->validatedPricingRules($request);
+            } catch (\Illuminate\Validation\ValidationException $e) {
+                \Log::error('Pricing rules validation failed', [
+                    'error' => $e->getMessage(),
+                    'errors' => $e->errors()
+                ]);
+                return back()->withErrors($e->errors())->withInput();
             } catch (\Exception $e) {
-                \Log::error('Pricing rules validation failed', ['error' => $e->getMessage()]);
+                \Log::error('Pricing rules validation failed', [
+                    'error' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString()
+                ]);
                 return back()->withErrors(['pricing_rules' => 'Invalid pricing rules: ' . $e->getMessage()])->withInput();
             }
             
-            $court = Court::create($validated);
+            try {
+                $court = Court::create($validated);
+            } catch (\Exception $e) {
+                \Log::error('Failed to create court', [
+                    'error' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString(),
+                    'validated' => $validated
+                ]);
+                return back()->withErrors(['error' => 'Failed to create court: ' . $e->getMessage()])->withInput();
+            }
             
             try {
                 $this->syncPricingRules($court, $pricingRules);
             } catch (\Exception $e) {
                 \Log::error('Failed to sync pricing rules', [
                     'court_id' => $court->id,
-                    'error' => $e->getMessage()
+                    'error' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString()
                 ]);
                 // Continue even if pricing rules fail
             }
@@ -126,10 +145,12 @@ class CourtController extends Controller
             return redirect('/courts')->with('success', 'Court created successfully.');
         } catch (\Illuminate\Validation\ValidationException $e) {
             throw $e;
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             \Log::error('Court store failed', [
                 'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine()
             ]);
             return back()->withErrors(['error' => 'Failed to create court: ' . $e->getMessage()])->withInput();
         }
@@ -331,6 +352,7 @@ class CourtController extends Controller
                     'pricing_rules.*.start_time' => 'required|date_format:H:i',
                     'pricing_rules.*.end_time' => 'required|date_format:H:i',
                     'pricing_rules.*.price_per_hour' => 'required|numeric|min:0',
+                    'pricing_rules.*.day_of_week' => 'nullable|integer|min:0|max:6',
                 ]
             );
 
@@ -346,20 +368,45 @@ class CourtController extends Controller
 
             return collect($validated['pricing_rules'])
                 ->map(function ($rule) {
-                    $start = strlen($rule['start_time']) === 5 ? "{$rule['start_time']}:00" : $rule['start_time'];
-                    $end = strlen($rule['end_time']) === 5 ? "{$rule['end_time']}:00" : $rule['end_time'];
+                    // Ensure time is in H:i:s format for database
+                    $start = $rule['start_time'];
+                    if (strlen($start) === 5) {
+                        $start = "{$start}:00";
+                    }
+                    
+                    $end = $rule['end_time'];
+                    if (strlen($end) === 5) {
+                        $end = "{$end}:00";
+                    }
+
+                    // Convert day_of_week to integer if it's a string
+                    $dayOfWeek = $rule['day_of_week'] ?? null;
+                    if ($dayOfWeek !== null && !is_numeric($dayOfWeek)) {
+                        $dayOfWeek = null;
+                    } elseif ($dayOfWeek !== null) {
+                        $dayOfWeek = (int) $dayOfWeek;
+                    }
 
                     return [
                         'label' => $rule['label'] ?? null,
                         'start_time' => $start,
                         'end_time' => $end,
-                        'day_of_week' => $rule['day_of_week'] ?? null,
-                        'price_per_hour' => $rule['price_per_hour'],
+                        'day_of_week' => $dayOfWeek,
+                        'price_per_hour' => (float) $rule['price_per_hour'],
                     ];
                 })
                 ->toArray();
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            \Log::error('Pricing rules validation error', [
+                'error' => $e->getMessage(),
+                'errors' => $e->errors()
+            ]);
+            throw $e;
         } catch (\Exception $e) {
-            \Log::error('Pricing rules validation error', ['error' => $e->getMessage()]);
+            \Log::error('Pricing rules validation error', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
             throw $e;
         }
     }

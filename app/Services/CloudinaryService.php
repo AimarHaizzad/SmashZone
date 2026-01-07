@@ -39,7 +39,8 @@ class CloudinaryService
         }
 
         if (!$this->isConfigured) {
-            throw new \Exception('Cloudinary is not configured. Please set CLOUDINARY_URL or individual credentials in your .env file.');
+            Log::warning('Cloudinary is not configured. Image uploads will be skipped.');
+            return; // Don't throw exception, just return
         }
 
         try {
@@ -60,11 +61,20 @@ class CloudinaryService
                 ]);
             } else {
                 // Fallback to individual environment variables
+                $cloudName = env('CLOUDINARY_CLOUD_NAME');
+                $apiKey = env('CLOUDINARY_API_KEY');
+                $apiSecret = env('CLOUDINARY_API_SECRET');
+                
+                if (!$cloudName || !$apiKey || !$apiSecret) {
+                    Log::warning('Cloudinary individual credentials are incomplete');
+                    return;
+                }
+                
                 Configuration::instance([
                     'cloud' => [
-                        'cloud_name' => env('CLOUDINARY_CLOUD_NAME'),
-                        'api_key' => env('CLOUDINARY_API_KEY'),
-                        'api_secret' => env('CLOUDINARY_API_SECRET'),
+                        'cloud_name' => $cloudName,
+                        'api_key' => $apiKey,
+                        'api_secret' => $apiSecret,
                     ],
                     'url' => [
                         'secure' => true
@@ -73,12 +83,15 @@ class CloudinaryService
             }
 
             $this->cloudinary = new Cloudinary();
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             Log::error('Failed to initialize Cloudinary', [
                 'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine()
             ]);
-            throw $e;
+            // Don't throw exception - let uploadImage handle it by returning null
+            $this->isConfigured = false;
         }
     }
 
@@ -95,12 +108,18 @@ class CloudinaryService
         try {
             // Check if Cloudinary is configured
             if (!$this->isConfigured) {
-                Log::error('Cloudinary credentials not configured');
+                Log::warning('Cloudinary credentials not configured - skipping upload');
                 return null;
             }
 
             // Initialize Cloudinary if not already done
             $this->initializeCloudinary();
+            
+            // Check again after initialization (in case initialization failed)
+            if ($this->cloudinary === null) {
+                Log::warning('Cloudinary initialization failed - skipping upload');
+                return null;
+            }
 
             $uploadOptions = [
                 'folder' => $folder,
@@ -117,16 +136,26 @@ class CloudinaryService
                 $uploadOptions
             );
 
+            if (!isset($result['public_id']) || !isset($result['secure_url'])) {
+                Log::error('Cloudinary upload returned invalid response', [
+                    'result' => $result
+                ]);
+                return null;
+            }
+
             return [
                 'public_id' => $result['public_id'],
                 'secure_url' => $result['secure_url'],
-                'url' => $result['url'],
+                'url' => $result['url'] ?? $result['secure_url'],
             ];
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             Log::error('Cloudinary upload failed', [
                 'error' => $e->getMessage(),
                 'folder' => $folder,
-                'file' => $file->getClientOriginalName()
+                'file' => $file->getClientOriginalName(),
+                'trace' => $e->getTraceAsString(),
+                'file_path' => $e->getFile(),
+                'line' => $e->getLine()
             ]);
             return null;
         }
