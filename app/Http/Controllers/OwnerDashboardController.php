@@ -7,6 +7,16 @@ use Illuminate\Support\Facades\Artisan;
 
 class OwnerDashboardController extends Controller
 {
+    /**
+     * Owner Dashboard Index
+     * Redirects to main dashboard or shows owner-specific dashboard
+     */
+    public function index()
+    {
+        // Redirect to main dashboard which handles owner view
+        return redirect()->route('dashboard');
+    }
+
     public function bookings()
     {
         $ownerId = auth()->id();

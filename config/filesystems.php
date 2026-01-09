@@ -60,6 +60,11 @@ return [
             'report' => false,
         ],
 
+        'cloudinary' => [
+            'driver' => 'cloudinary',
+            'url' => config('cloudinary.cloud_url'),
+        ],
+
     ],
 
     /*

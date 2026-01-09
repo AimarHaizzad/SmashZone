@@ -23,8 +23,11 @@ class CloudinaryService
      */
     private function checkConfiguration(): bool
     {
-        $cloudinaryUrl = env('CLOUDINARY_URL');
-        $hasIndividualCreds = env('CLOUDINARY_CLOUD_NAME') && env('CLOUDINARY_API_KEY') && env('CLOUDINARY_API_SECRET');
+        // Use config() instead of env() for better Laravel practices
+        $cloudinaryUrl = config('cloudinary.cloud_url');
+        $hasIndividualCreds = config('cloudinary.cloud_name') && 
+                              config('cloudinary.api_key') && 
+                              config('cloudinary.api_secret');
         
         return !empty($cloudinaryUrl) || $hasIndividualCreds;
     }
@@ -44,8 +47,9 @@ class CloudinaryService
         }
 
         try {
+            // Use config() instead of env() for better Laravel practices
             // Support CLOUDINARY_URL format (cloudinary://api_key:api_secret@cloud_name)
-            $cloudinaryUrl = env('CLOUDINARY_URL');
+            $cloudinaryUrl = config('cloudinary.cloud_url');
             
             if ($cloudinaryUrl) {
                 // Fix common URL format issues - ensure @ symbol is present
@@ -60,10 +64,10 @@ class CloudinaryService
                     'url' => $cloudinaryUrl
                 ]);
             } else {
-                // Fallback to individual environment variables
-                $cloudName = env('CLOUDINARY_CLOUD_NAME');
-                $apiKey = env('CLOUDINARY_API_KEY');
-                $apiSecret = env('CLOUDINARY_API_SECRET');
+                // Fallback to individual configuration values
+                $cloudName = config('cloudinary.cloud_name');
+                $apiKey = config('cloudinary.api_key');
+                $apiSecret = config('cloudinary.api_secret');
                 
                 if (!$cloudName || !$apiKey || !$apiSecret) {
                     Log::warning('Cloudinary individual credentials are incomplete');
@@ -77,7 +81,7 @@ class CloudinaryService
                         'api_secret' => $apiSecret,
                     ],
                     'url' => [
-                        'secure' => true
+                        'secure' => config('cloudinary.secure', true)
                     ]
                 ]);
             }
