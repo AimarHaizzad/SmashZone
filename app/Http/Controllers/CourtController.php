@@ -101,6 +101,14 @@ class CourtController extends Controller
                             ])->withInput();
                         }
                     }
+                } catch (\RuntimeException $e) {
+                    // RuntimeExceptions from CloudinaryService (like initialization failures)
+                    \Log::error('Cloudinary upload failed with RuntimeException', [
+                        'error' => $e->getMessage()
+                    ]);
+                    return back()->withErrors([
+                        'image' => 'Cloudinary error: ' . $e->getMessage() . '. Please check your CLOUDINARY_URL in .env file.'
+                    ])->withInput();
                 } catch (\Throwable $e) {
                     \Log::error('Failed to store court image', [
                         'error' => $e->getMessage(),
@@ -302,6 +310,15 @@ class CourtController extends Controller
                             ])->withInput();
                         }
                     }
+                } catch (\RuntimeException $e) {
+                    // RuntimeExceptions from CloudinaryService (like initialization failures)
+                    \Log::error('Cloudinary upload failed with RuntimeException during update', [
+                        'court_id' => $court->id,
+                        'error' => $e->getMessage()
+                    ]);
+                    return back()->withErrors([
+                        'image' => 'Cloudinary error: ' . $e->getMessage() . '. Please check your CLOUDINARY_URL in .env file.'
+                    ])->withInput();
                 } catch (\Throwable $e) {
                     \Log::error('Failed to update court image', [
                         'court_id' => $court->id,

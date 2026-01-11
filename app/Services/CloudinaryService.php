@@ -59,10 +59,30 @@ class CloudinaryService
                     Log::warning('Fixed Cloudinary URL format - added missing @ symbol');
                 }
                 
-                // Parse CLOUDINARY_URL format
-                Configuration::instance([
-                    'url' => $cloudinaryUrl
-                ]);
+                // Parse the Cloudinary URL to extract credentials
+                // Format: cloudinary://api_key:api_secret@cloud_name
+                if (preg_match('/cloudinary:\/\/([^:]+):([^@]+)@(.+)/', $cloudinaryUrl, $matches)) {
+                    $apiKey = $matches[1];
+                    $apiSecret = $matches[2];
+                    $cloudName = $matches[3];
+                    
+                    // Initialize with explicit credentials
+                    Configuration::instance([
+                        'cloud' => [
+                            'cloud_name' => $cloudName,
+                            'api_key' => $apiKey,
+                            'api_secret' => $apiSecret,
+                        ],
+                        'url' => [
+                            'secure' => config('cloudinary.secure', true)
+                        ]
+                    ]);
+                } else {
+                    // If URL format is invalid, try setting as environment variable
+                    putenv('CLOUDINARY_URL=' . $cloudinaryUrl);
+                    $_ENV['CLOUDINARY_URL'] = $cloudinaryUrl;
+                    Configuration::instance();
+                }
             } else {
                 // Fallback to individual configuration values
                 $cloudName = config('cloudinary.cloud_name');
@@ -87,15 +107,29 @@ class CloudinaryService
             }
 
             $this->cloudinary = new Cloudinary();
+            
+            // Verify the instance was created successfully
+            if ($this->cloudinary === null) {
+                throw new \RuntimeException('Failed to create Cloudinary instance - new Cloudinary() returned null');
+            }
+            
+            Log::info('Cloudinary initialized successfully', [
+                'has_cloudinary_instance' => $this->cloudinary !== null
+            ]);
         } catch (\Throwable $e) {
             Log::error('Failed to initialize Cloudinary', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
                 'file' => $e->getFile(),
-                'line' => $e->getLine()
+                'line' => $e->getLine(),
+                'cloudinary_url_preview' => $cloudinaryUrl ? substr($cloudinaryUrl, 0, 30) . '...' : 'not set',
+                'has_cloudinary_url' => !empty($cloudinaryUrl)
             ]);
-            // Don't throw exception - let uploadImage handle it by returning null
+            // Set cloudinary to null explicitly
+            $this->cloudinary = null;
             $this->isConfigured = false;
+            // Re-throw so we can see the actual error
+            throw $e;
         }
     }
 
@@ -117,12 +151,30 @@ class CloudinaryService
             }
 
             // Initialize Cloudinary if not already done
-            $this->initializeCloudinary();
+            // This may throw an exception if initialization fails
+            try {
+                $this->initializeCloudinary();
+            } catch (\Throwable $initException) {
+                // Re-throw initialization exceptions as RuntimeException
+                $errorMsg = 'Cloudinary initialization failed: ' . $initException->getMessage();
+                Log::error($errorMsg, [
+                    'is_configured' => $this->isConfigured,
+                    'cloudinary_url_set' => !empty(config('cloudinary.cloud_url')),
+                    'cloudinary_url_preview' => config('cloudinary.cloud_url') ? substr(config('cloudinary.cloud_url'), 0, 30) . '...' : 'not set',
+                    'original_error' => $initException->getMessage()
+                ]);
+                throw new \RuntimeException($errorMsg . '. Please check your CLOUDINARY_URL in .env file.', 0, $initException);
+            }
             
-            // Check again after initialization (in case initialization failed)
+            // Check again after initialization (in case initialization failed silently)
             if ($this->cloudinary === null) {
-                Log::warning('Cloudinary initialization failed - skipping upload');
-                return null;
+                $errorMsg = 'Cloudinary initialization failed - cloudinary instance is null';
+                Log::error($errorMsg, [
+                    'is_configured' => $this->isConfigured,
+                    'cloudinary_url_set' => !empty(config('cloudinary.cloud_url')),
+                    'cloudinary_url_preview' => config('cloudinary.cloud_url') ? substr(config('cloudinary.cloud_url'), 0, 30) . '...' : 'not set'
+                ]);
+                throw new \RuntimeException($errorMsg . '. Please check your CLOUDINARY_URL in .env file.');
             }
 
             $uploadOptions = [
@@ -161,6 +213,14 @@ class CloudinaryService
                 'secure_url' => $result['secure_url'],
                 'url' => $result['url'] ?? $result['secure_url'],
             ];
+        } catch (\RuntimeException $e) {
+            // Re-throw RuntimeExceptions (like initialization failures) so controllers can show proper errors
+            Log::error('Cloudinary upload failed with RuntimeException', [
+                'error' => $e->getMessage(),
+                'folder' => $folder,
+                'file' => $file->getClientOriginalName(),
+            ]);
+            throw $e;
         } catch (\Throwable $e) {
             Log::error('Cloudinary upload failed', [
                 'error' => $e->getMessage(),
@@ -191,6 +251,12 @@ class CloudinaryService
 
             // Initialize Cloudinary if not already done
             $this->initializeCloudinary();
+            
+            // Check if cloudinary instance exists
+            if ($this->cloudinary === null) {
+                Log::error('Cloudinary instance is null when trying to delete image');
+                return false;
+            }
 
             $result = $this->cloudinary->uploadApi()->destroy($publicId);
             return isset($result['result']) && $result['result'] === 'ok';
@@ -228,6 +294,12 @@ class CloudinaryService
 
             // Initialize Cloudinary if not already done
             $this->initializeCloudinary();
+            
+            // Check if cloudinary instance exists
+            if ($this->cloudinary === null) {
+                Log::error('Cloudinary instance is null when trying to get image URL');
+                return null;
+            }
 
             // Generate Cloudinary URL
             return $this->cloudinary->image($publicId)->secure()->toUrl();

@@ -111,6 +111,14 @@ class ProductController extends Controller
                             ])->withInput();
                         }
                     }
+                } catch (\RuntimeException $e) {
+                    // RuntimeExceptions from CloudinaryService (like initialization failures)
+                    \Log::error('Cloudinary upload failed with RuntimeException', [
+                        'error' => $e->getMessage()
+                    ]);
+                    return back()->withErrors([
+                        'image' => 'Cloudinary error: ' . $e->getMessage() . '. Please check your CLOUDINARY_URL in .env file.'
+                    ])->withInput();
                 } catch (\Throwable $e) {
                     \Log::error('Failed to store product image', [
                         'error' => $e->getMessage(),
@@ -264,6 +272,15 @@ class ProductController extends Controller
                             ])->withInput();
                         }
                     }
+                } catch (\RuntimeException $e) {
+                    // RuntimeExceptions from CloudinaryService (like initialization failures)
+                    \Log::error('Cloudinary upload failed with RuntimeException during update', [
+                        'product_id' => $product->id,
+                        'error' => $e->getMessage()
+                    ]);
+                    return back()->withErrors([
+                        'image' => 'Cloudinary error: ' . $e->getMessage() . '. Please check your CLOUDINARY_URL in .env file.'
+                    ])->withInput();
                 } catch (\Throwable $e) {
                     \Log::error('Failed to update product image', [
                         'product_id' => $product->id,
