@@ -110,6 +110,7 @@ class CourtsController extends Controller
 
     /**
      * Get court availability with time slots for a specific date
+     * Returns real-time availability for viewing (not booking)
      */
     public function getAvailability(Request $request)
     {
@@ -122,62 +123,137 @@ class CourtsController extends Controller
             ], 401);
         }
         
+        // Get date from query parameter, default to today
         $date = $request->query('date', date('Y-m-d'));
         
         try {
-            // Define time slots (8 AM to 10 PM, hourly)
-            // 8 AM = 08:00, 9 AM = 09:00, ..., 10 PM = 22:00
-            $timeSlots = [];
-            for ($hour = 8; $hour <= 22; $hour++) {
-                $timeSlots[] = [
-                    'time' => sprintf('%02d:00:00', $hour), // Database format: "08:00:00"
-                    'display' => date('g:i A', mktime($hour, 0, 0)) // Display format: "8:00 AM"
-                ];
+            // Validate date format
+            if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Invalid date format. Use YYYY-MM-DD'
+                ], 400);
             }
             
-            // Get all courts with pricing rules
-            $courts = \App\Models\Court::with('pricingRules')
+            // Define time slots (8 AM to 10 PM, hourly)
+            $timeSlots = [];
+            for ($hour = 8; $hour <= 22; $hour++) {
+                $timeSlots[] = date('g:i A', mktime($hour, 0, 0));
+            }
+            
+            // Check if courts table exists
+            if (!DB::getSchemaBuilder()->hasTable('courts')) {
+                return response()->json([
+                    'success' => true,
+                    'date' => $date,
+                    'courts' => []
+                ]);
+            }
+            
+            // Get all courts
+            $courts = DB::table('courts')
+                ->select('id', 'name')
                 ->orderBy('name', 'asc')
                 ->get();
             
-            // Get all bookings for this date (excluding cancelled)
-            $bookings = \App\Models\Booking::where('date', $date)
-                ->whereIn('status', ['confirmed', 'pending'])
-                ->get();
+            // Determine price column
+            $priceColumn = null;
+            if (DB::getSchemaBuilder()->hasColumn('courts', 'price_per_hour')) {
+                $priceColumn = 'price_per_hour';
+            } elseif (DB::getSchemaBuilder()->hasColumn('courts', 'price')) {
+                $priceColumn = 'price';
+            }
             
             $availabilityData = [];
             
             foreach ($courts as $court) {
+                // Get court price
+                $courtPrice = 20.00; // Default price
+                if ($priceColumn) {
+                    $courtData = DB::table('courts')
+                        ->where('id', $court->id)
+                        ->select($priceColumn)
+                        ->first();
+                    if ($courtData && isset($courtData->$priceColumn)) {
+                        $courtPrice = floatval($courtData->$priceColumn);
+                    }
+                }
+                
+                // Try to use Court model with pricing rules for dynamic pricing
+                try {
+                    $courtModel = \App\Models\Court::with('pricingRules')->find($court->id);
+                    if ($courtModel) {
+                        // Use pricing rules if available
+                        $courtPrice = $courtModel->hourlyRateFor(Carbon::parse($date . ' 12:00:00'));
+                    }
+                } catch (\Exception $e) {
+                    // Fallback to static price if model fails
+                    \Log::warning('Could not load court model for pricing', ['court_id' => $court->id]);
+                }
+                
                 $courtTimeSlots = [];
                 
-                foreach ($timeSlots as $slotData) {
-                    $slotTime = $slotData['time']; // "08:00:00"
-                    $slotDisplay = $slotData['display']; // "8:00 AM"
+                foreach ($timeSlots as $timeSlot) {
+                    // Check if this time slot is booked
+                    $booking = null;
                     
-                    // Calculate slot end time (1 hour later)
-                    $slotEndTime = date('H:i:s', strtotime($slotTime . ' +1 hour'));
-                    
-                    // Check if this time slot overlaps with any booking
-                    $booking = $bookings->first(function ($b) use ($court, $slotTime, $slotEndTime) {
-                        // Check if slot overlaps with booking
-                        // Slot overlaps if: slot_start < booking_end AND slot_end > booking_start
-                        return $b->court_id == $court->id && 
-                               $slotTime < $b->end_time && 
-                               $slotEndTime > $b->start_time;
-                    });
+                    if (DB::getSchemaBuilder()->hasTable('bookings')) {
+                        // Check if bookings table has time_slot column (for exact match)
+                        $hasTimeSlot = DB::getSchemaBuilder()->hasColumn('bookings', 'time_slot');
+                        $hasStartEndTime = DB::getSchemaBuilder()->hasColumn('bookings', 'start_time') && 
+                                          DB::getSchemaBuilder()->hasColumn('bookings', 'end_time');
+                        
+                        if ($hasTimeSlot) {
+                            // Use time_slot column for exact match
+                            $booking = DB::table('bookings')
+                                ->where('court_id', $court->id)
+                                ->where('date', $date)
+                                ->where('time_slot', $timeSlot)
+                                ->whereIn('status', ['confirmed', 'pending'])
+                                ->first();
+                        } elseif ($hasStartEndTime) {
+                            // Use start_time/end_time for overlap detection
+                            // Convert time slot to 24-hour format for comparison
+                            $slotTime24 = date('H:i:s', strtotime($timeSlot));
+                            $slotEndTime24 = date('H:i:s', strtotime($slotTime24 . ' +1 hour'));
+                            
+                            $booking = DB::table('bookings')
+                                ->where('court_id', $court->id)
+                                ->where('date', $date)
+                                ->whereIn('status', ['confirmed', 'pending'])
+                                ->where(function($query) use ($slotTime24, $slotEndTime24) {
+                                    // Check if slot overlaps with booking
+                                    // Slot overlaps if: slot_start < booking_end AND slot_end > booking_start
+                                    $query->where('start_time', '<', $slotEndTime24)
+                                          ->where('end_time', '>', $slotTime24);
+                                })
+                                ->first();
+                        }
+                    }
                     
                     $status = 'available';
                     if ($booking) {
+                        // Check if it's the current user's booking
                         $status = ($booking->user_id == $user->id) ? 'my_booking' : 'booked';
                     }
                     
-                    // Get price for this time slot (use court's pricing rules)
-                    $slotDateTime = Carbon::createFromFormat('Y-m-d H:i:s', $date . ' ' . $slotTime);
-                    $price = $court->hourlyRateFor($slotDateTime);
-                    $priceFormatted = 'RM ' . number_format($price, 2) . '/hr';
+                    // Get dynamic price for this specific time slot if court model is available
+                    $slotPrice = $courtPrice;
+                    try {
+                        $courtModel = \App\Models\Court::with('pricingRules')->find($court->id);
+                        if ($courtModel) {
+                            $slotTime24 = date('H:i:s', strtotime($timeSlot));
+                            $slotDateTime = Carbon::createFromFormat('Y-m-d H:i:s', $date . ' ' . $slotTime24);
+                            $slotPrice = $courtModel->hourlyRateFor($slotDateTime);
+                        }
+                    } catch (\Exception $e) {
+                        // Use default price if dynamic pricing fails
+                    }
+                    
+                    $priceFormatted = 'RM ' . number_format($slotPrice, 2) . '/hr';
                     
                     $courtTimeSlots[] = [
-                        'time_slot' => $slotDisplay,
+                        'time_slot' => $timeSlot,
                         'status' => $status,
                         'price' => $priceFormatted
                     ];
@@ -197,9 +273,8 @@ class CourtsController extends Controller
             ]);
             
         } catch (\Exception $e) {
-            \Log::error('Court Availability Error: ' . $e->getMessage(), [
-                'trace' => $e->getTraceAsString()
-            ]);
+            \Log::error('Court Availability Error: ' . $e->getMessage());
+            \Log::error('Stack trace: ' . $e->getTraceAsString());
             
             return response()->json([
                 'success' => false,
