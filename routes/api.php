@@ -45,6 +45,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/payments', [PaymentsController::class, 'getPayments']);
     Route::get('/profile', [ProfileController::class, 'getProfile']);
     Route::get('/courts', [CourtsController::class, 'getCourts']);
+    Route::get('/courts/availability', [CourtsController::class, 'getAvailability']);
     
     // Existing API Routes (for backward compatibility)
     // Courts

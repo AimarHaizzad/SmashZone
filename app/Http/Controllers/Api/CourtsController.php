@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
 
 class CourtsController extends Controller
 {
@@ -104,6 +105,107 @@ class CourtsController extends Controller
                 'success' => true,
                 'courts' => []
             ]);
+        }
+    }
+
+    /**
+     * Get court availability with time slots for a specific date
+     */
+    public function getAvailability(Request $request)
+    {
+        $user = $request->user();
+        
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'User not authenticated'
+            ], 401);
+        }
+        
+        $date = $request->query('date', date('Y-m-d'));
+        
+        try {
+            // Define time slots (8 AM to 10 PM, hourly)
+            // 8 AM = 08:00, 9 AM = 09:00, ..., 10 PM = 22:00
+            $timeSlots = [];
+            for ($hour = 8; $hour <= 22; $hour++) {
+                $timeSlots[] = [
+                    'time' => sprintf('%02d:00:00', $hour), // Database format: "08:00:00"
+                    'display' => date('g:i A', mktime($hour, 0, 0)) // Display format: "8:00 AM"
+                ];
+            }
+            
+            // Get all courts with pricing rules
+            $courts = \App\Models\Court::with('pricingRules')
+                ->orderBy('name', 'asc')
+                ->get();
+            
+            // Get all bookings for this date (excluding cancelled)
+            $bookings = \App\Models\Booking::where('date', $date)
+                ->whereIn('status', ['confirmed', 'pending'])
+                ->get();
+            
+            $availabilityData = [];
+            
+            foreach ($courts as $court) {
+                $courtTimeSlots = [];
+                
+                foreach ($timeSlots as $slotData) {
+                    $slotTime = $slotData['time']; // "08:00:00"
+                    $slotDisplay = $slotData['display']; // "8:00 AM"
+                    
+                    // Calculate slot end time (1 hour later)
+                    $slotEndTime = date('H:i:s', strtotime($slotTime . ' +1 hour'));
+                    
+                    // Check if this time slot overlaps with any booking
+                    $booking = $bookings->first(function ($b) use ($court, $slotTime, $slotEndTime) {
+                        // Check if slot overlaps with booking
+                        // Slot overlaps if: slot_start < booking_end AND slot_end > booking_start
+                        return $b->court_id == $court->id && 
+                               $slotTime < $b->end_time && 
+                               $slotEndTime > $b->start_time;
+                    });
+                    
+                    $status = 'available';
+                    if ($booking) {
+                        $status = ($booking->user_id == $user->id) ? 'my_booking' : 'booked';
+                    }
+                    
+                    // Get price for this time slot (use court's pricing rules)
+                    $slotDateTime = Carbon::createFromFormat('Y-m-d H:i:s', $date . ' ' . $slotTime);
+                    $price = $court->hourlyRateFor($slotDateTime);
+                    $priceFormatted = 'RM ' . number_format($price, 2) . '/hr';
+                    
+                    $courtTimeSlots[] = [
+                        'time_slot' => $slotDisplay,
+                        'status' => $status,
+                        'price' => $priceFormatted
+                    ];
+                }
+                
+                $availabilityData[] = [
+                    'court_id' => (string)$court->id,
+                    'court_name' => $court->name,
+                    'time_slots' => $courtTimeSlots
+                ];
+            }
+            
+            return response()->json([
+                'success' => true,
+                'date' => $date,
+                'courts' => $availabilityData
+            ]);
+            
+        } catch (\Exception $e) {
+            \Log::error('Court Availability Error: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to fetch availability',
+                'error' => $e->getMessage()
+            ], 500);
         }
     }
 }
