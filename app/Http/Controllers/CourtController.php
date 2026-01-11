@@ -22,7 +22,19 @@ class CourtController extends Controller
     public function index()
     {
         try {
-            $courts = Court::with('owner')->get();
+            // Order courts by extracting numeric value from name for proper numerical sorting
+            // This handles "Court 1", "Court 2", etc. correctly (not alphabetically)
+            $courts = Court::with('owner')
+                ->get()
+                ->sortBy(function ($court) {
+                    // Extract number from court name (e.g., "Court 1" -> 1, "Court 10" -> 10)
+                    if (preg_match('/(\d+)/', $court->name ?? '', $matches)) {
+                        return (int) $matches[1];
+                    }
+                    // If no number found, sort by name alphabetically
+                    return 999999 + strcmp($court->name ?? '', '');
+                })
+                ->values(); // Re-index the collection
             return view('courts.index', compact('courts'));
         } catch (\Exception $e) {
             \Log::error('Courts index failed', [
