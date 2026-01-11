@@ -81,23 +81,34 @@ class ProductController extends Controller
                     if ($uploadResult && isset($uploadResult['secure_url'])) {
                         // Store the Cloudinary secure URL
                         $validated['image'] = $uploadResult['secure_url'];
-                    } else {
-                        // Fallback to local storage if Cloudinary is not available
-                        \Log::warning('Cloudinary upload failed, falling back to local storage', [
-                            'error' => 'Cloudinary upload returned null or invalid response'
+                        \Log::info('Product image uploaded to Cloudinary successfully', [
+                            'secure_url' => $uploadResult['secure_url']
                         ]);
-                        
-                        try {
-                            $imagePath = $request->file('image')->store('products', 'public');
-                            $validated['image'] = $imagePath;
-                            \Log::info('Product image saved to local storage', ['path' => $imagePath]);
-                        } catch (\Throwable $storageException) {
-                            \Log::error('Failed to save product image to local storage', [
-                                'error' => $storageException->getMessage(),
-                                'trace' => $storageException->getTraceAsString()
+                    } else {
+                        // Cloudinary upload failed - check if we should use local storage
+                        $cloudinaryUrl = config('cloudinary.cloud_url');
+                        if (empty($cloudinaryUrl)) {
+                            // Cloudinary not configured - use local storage as fallback
+                            \Log::warning('Cloudinary not configured, using local storage');
+                            try {
+                                $imagePath = $request->file('image')->store('products', 'public');
+                                $validated['image'] = $imagePath;
+                                \Log::info('Product image saved to local storage', ['path' => $imagePath]);
+                            } catch (\Throwable $storageException) {
+                                \Log::error('Failed to save product image to local storage', [
+                                    'error' => $storageException->getMessage()
+                                ]);
+                                unset($validated['image']);
+                            }
+                        } else {
+                            // Cloudinary is configured but upload failed - show error
+                            \Log::error('Cloudinary upload failed even though CLOUDINARY_URL is set', [
+                                'has_upload_result' => !is_null($uploadResult),
+                                'upload_result' => $uploadResult
                             ]);
-                            // Don't set image - allow product to be created without image
-                            unset($validated['image']);
+                            return back()->withErrors([
+                                'image' => 'Failed to upload image to Cloudinary. Please check your Cloudinary credentials or try again later.'
+                            ])->withInput();
                         }
                     }
                 } catch (\Throwable $e) {
@@ -108,16 +119,29 @@ class ProductController extends Controller
                         'line' => $e->getLine()
                     ]);
                     
-                    // Fallback to local storage
-                    try {
-                        $imagePath = $request->file('image')->store('products', 'public');
-                        $validated['image'] = $imagePath;
-                        \Log::info('Product image saved to local storage (fallback)', ['path' => $imagePath]);
-                    } catch (\Throwable $storageException) {
-                        \Log::error('Failed to save product image to local storage', [
-                            'error' => $storageException->getMessage()
+                    // Check Cloudinary config before falling back
+                    $cloudinaryUrl = config('cloudinary.cloud_url');
+                    if (empty($cloudinaryUrl)) {
+                        // Cloudinary not configured - use local storage
+                        try {
+                            $imagePath = $request->file('image')->store('products', 'public');
+                            $validated['image'] = $imagePath;
+                            \Log::info('Product image saved to local storage (fallback)', ['path' => $imagePath]);
+                        } catch (\Throwable $storageException) {
+                            \Log::error('Failed to save product image to local storage', [
+                                'error' => $storageException->getMessage()
+                            ]);
+                            unset($validated['image']);
+                        }
+                    } else {
+                        // Cloudinary configured but upload failed - show error
+                        \Log::error('Cloudinary upload exception', [
+                            'error' => $e->getMessage(),
+                            'trace' => $e->getTraceAsString()
                         ]);
-                        unset($validated['image']);
+                        return back()->withErrors([
+                            'image' => 'Failed to upload image to Cloudinary: ' . $e->getMessage()
+                        ])->withInput();
                     }
                 }
             }
@@ -203,26 +227,41 @@ class ProductController extends Controller
                     if ($uploadResult && isset($uploadResult['secure_url'])) {
                         // Store the Cloudinary secure URL
                         $validated['image'] = $uploadResult['secure_url'];
-                    } else {
-                        // Fallback to local storage if Cloudinary is not available
-                        \Log::warning('Cloudinary upload failed, falling back to local storage', [
-                            'product_id' => $product->id
+                        \Log::info('Product image uploaded to Cloudinary successfully', [
+                            'product_id' => $product->id,
+                            'secure_url' => $uploadResult['secure_url']
                         ]);
-                        
-                        // Delete old local image if exists
-                        if ($product->image && !filter_var($product->image, FILTER_VALIDATE_URL)) {
-                            Storage::disk('public')->delete($product->image);
-                        }
-                        
-                        try {
-                            $imagePath = $request->file('image')->store('products', 'public');
-                            $validated['image'] = $imagePath;
-                            \Log::info('Product image saved to local storage', ['path' => $imagePath]);
-                        } catch (\Throwable $storageException) {
-                            \Log::error('Failed to save product image to local storage', [
-                                'error' => $storageException->getMessage()
+                    } else {
+                        // Cloudinary upload failed - check if we should use local storage
+                        $cloudinaryUrl = config('cloudinary.cloud_url');
+                        if (empty($cloudinaryUrl)) {
+                            // Cloudinary not configured - use local storage as fallback
+                            \Log::warning('Cloudinary not configured, using local storage for update');
+                            // Delete old local image if exists
+                            if ($product->image && !filter_var($product->image, FILTER_VALIDATE_URL)) {
+                                Storage::disk('public')->delete($product->image);
+                            }
+                            
+                            try {
+                                $imagePath = $request->file('image')->store('products', 'public');
+                                $validated['image'] = $imagePath;
+                                \Log::info('Product image saved to local storage', ['path' => $imagePath]);
+                            } catch (\Throwable $storageException) {
+                                \Log::error('Failed to save product image to local storage', [
+                                    'error' => $storageException->getMessage()
+                                ]);
+                                return back()->withErrors(['image' => 'Failed to save image: ' . $storageException->getMessage()])->withInput();
+                            }
+                        } else {
+                            // Cloudinary is configured but upload failed - show error
+                            \Log::error('Cloudinary upload failed even though CLOUDINARY_URL is set', [
+                                'product_id' => $product->id,
+                                'has_upload_result' => !is_null($uploadResult),
+                                'upload_result' => $uploadResult
                             ]);
-                            return back()->withErrors(['image' => 'Failed to save image: ' . $storageException->getMessage()])->withInput();
+                            return back()->withErrors([
+                                'image' => 'Failed to upload image to Cloudinary. Please check your Cloudinary credentials or try again later.'
+                            ])->withInput();
                         }
                     }
                 } catch (\Throwable $e) {
@@ -234,21 +273,35 @@ class ProductController extends Controller
                         'line' => $e->getLine()
                     ]);
                     
-                    // Fallback to local storage
-                    try {
-                        // Delete old local image if exists
-                        if ($product->image && !filter_var($product->image, FILTER_VALIDATE_URL)) {
-                            Storage::disk('public')->delete($product->image);
+                    // Check Cloudinary config before falling back
+                    $cloudinaryUrl = config('cloudinary.cloud_url');
+                    if (empty($cloudinaryUrl)) {
+                        // Cloudinary not configured - use local storage
+                        try {
+                            // Delete old local image if exists
+                            if ($product->image && !filter_var($product->image, FILTER_VALIDATE_URL)) {
+                                Storage::disk('public')->delete($product->image);
+                            }
+                            
+                            $imagePath = $request->file('image')->store('products', 'public');
+                            $validated['image'] = $imagePath;
+                            \Log::info('Product image saved to local storage (fallback)', ['path' => $imagePath]);
+                        } catch (\Throwable $storageException) {
+                            \Log::error('Failed to save product image to local storage', [
+                                'error' => $storageException->getMessage()
+                            ]);
+                            return back()->withErrors(['image' => 'Failed to upload image: ' . $storageException->getMessage()])->withInput();
                         }
-                        
-                        $imagePath = $request->file('image')->store('products', 'public');
-                        $validated['image'] = $imagePath;
-                        \Log::info('Product image saved to local storage (fallback)', ['path' => $imagePath]);
-                    } catch (\Throwable $storageException) {
-                        \Log::error('Failed to save product image to local storage', [
-                            'error' => $storageException->getMessage()
+                    } else {
+                        // Cloudinary configured but upload failed - show error
+                        \Log::error('Cloudinary upload exception during update', [
+                            'product_id' => $product->id,
+                            'error' => $e->getMessage(),
+                            'trace' => $e->getTraceAsString()
                         ]);
-                        return back()->withErrors(['image' => 'Failed to upload image: ' . $storageException->getMessage()])->withInput();
+                        return back()->withErrors([
+                            'image' => 'Failed to upload image to Cloudinary: ' . $e->getMessage()
+                        ])->withInput();
                     }
                 }
             }

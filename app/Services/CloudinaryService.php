@@ -142,10 +142,19 @@ class CloudinaryService
 
             if (!isset($result['public_id']) || !isset($result['secure_url'])) {
                 Log::error('Cloudinary upload returned invalid response', [
-                    'result' => $result
+                    'result' => $result,
+                    'result_keys' => isset($result) ? array_keys($result) : 'null',
+                    'has_public_id' => isset($result['public_id']),
+                    'has_secure_url' => isset($result['secure_url']),
                 ]);
                 return null;
             }
+
+            Log::info('Cloudinary upload successful', [
+                'public_id' => $result['public_id'],
+                'folder' => $folder,
+                'secure_url' => $result['secure_url']
+            ]);
 
             return [
                 'public_id' => $result['public_id'],
