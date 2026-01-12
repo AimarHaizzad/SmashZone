@@ -189,58 +189,99 @@ class BookingController extends Controller
      */
     public function update(Request $request, Booking $booking)
     {
-        $user = Auth::user();
-        if ($user->isCustomer() && $booking->user_id !== $user->id) {
-            abort(403);
-        }
-        if ($user->isOwner() && $booking->court->owner_id !== $user->id) {
-            abort(403);
-        }
-        $validated = $request->validate([
-            'court_id' => 'required|exists:courts,id',
-            'date' => 'required|date|after_or_equal:today',
-            'start_time' => 'required|date_format:H:i',
-            'end_time' => 'required|date_format:H:i|after:start_time',
-            'status' => 'required|in:pending,confirmed,cancelled',
-        ]);
+        try {
+            $user = Auth::user();
+            if (!$user) {
+                return redirect()->route('login', absolute: false)->with('error', 'Please login to update bookings.');
+            }
 
-        // Check for overlapping bookings (exclude current booking)
-        $overlap = Booking::where('court_id', $validated['court_id'])
-            ->where('date', $validated['date'])
-            ->where('id', '!=', $booking->id)
-            ->where(function($query) use ($validated) {
-                $query->whereBetween('start_time', [$validated['start_time'], $validated['end_time']])
-                      ->orWhereBetween('end_time', [$validated['start_time'], $validated['end_time']]);
-            })->exists();
-        if ($overlap) {
-            return back()->withErrors(['overlap' => 'This court is already booked for the selected time.'])->withInput();
-        }
+            if ($user->isCustomer() && $booking->user_id !== $user->id) {
+                abort(403);
+            }
+            if ($user->isOwner() && $booking->court->owner_id !== $user->id) {
+                abort(403);
+            }
 
-        $court = Court::with('pricingRules')->findOrFail($validated['court_id']);
-        $total_price = $court->calculatePriceForRange(
-            $validated['date'],
-            $validated['start_time'],
-            $validated['end_time']
-        );
-
-        $booking->update([
-            'court_id' => $validated['court_id'],
-            'date' => $validated['date'],
-            'start_time' => $validated['start_time'],
-            'end_time' => $validated['end_time'],
-            'status' => $validated['status'],
-            'total_price' => $total_price,
-        ]);
-
-        if ($booking->payment) {
-            $newTotal = $booking->payment->bookings()->sum('total_price');
-            $booking->payment->update([
-                'amount' => $newTotal,
-                'booking_id' => $booking->payment->bookings()->orderBy('date')->orderBy('start_time')->value('id'),
+            $validated = $request->validate([
+                'court_id' => 'required|exists:courts,id',
+                'date' => 'required|date|after_or_equal:today',
+                'start_time' => 'required|date_format:H:i',
+                'end_time' => 'required|date_format:H:i|after:start_time',
+                'status' => 'required|in:pending,confirmed,cancelled',
             ]);
-        }
 
-        return redirect()->route('bookings.index', absolute: false)->with('success', 'Booking updated successfully.');
+            // Check for overlapping bookings (exclude current booking)
+            try {
+                $overlap = Booking::where('court_id', $validated['court_id'])
+                    ->where('date', $validated['date'])
+                    ->where('id', '!=', $booking->id)
+                    ->where(function($query) use ($validated) {
+                        $query->whereBetween('start_time', [$validated['start_time'], $validated['end_time']])
+                              ->orWhereBetween('end_time', [$validated['start_time'], $validated['end_time']]);
+                    })->exists();
+                if ($overlap) {
+                    return back()->withErrors(['overlap' => 'This court is already booked for the selected time.'])->withInput();
+                }
+            } catch (\Exception $e) {
+                \Log::error('Failed to check booking overlap', [
+                    'booking_id' => $booking->id,
+                    'error' => $e->getMessage()
+                ]);
+                return back()->withErrors(['error' => 'Failed to check availability. Please try again.'])->withInput();
+            }
+
+            try {
+                $court = Court::with('pricingRules')->findOrFail($validated['court_id']);
+                $total_price = $court->calculatePriceForRange(
+                    $validated['date'],
+                    $validated['start_time'],
+                    $validated['end_time']
+                );
+            } catch (\Exception $e) {
+                \Log::error('Failed to calculate booking price', [
+                    'court_id' => $validated['court_id'],
+                    'error' => $e->getMessage()
+                ]);
+                return back()->withErrors(['error' => 'Failed to calculate price. Please try again.'])->withInput();
+            }
+
+            $booking->update([
+                'court_id' => $validated['court_id'],
+                'date' => $validated['date'],
+                'start_time' => $validated['start_time'],
+                'end_time' => $validated['end_time'],
+                'status' => $validated['status'],
+                'total_price' => $total_price,
+            ]);
+
+            if ($booking->payment) {
+                try {
+                    $newTotal = $booking->payment->bookings()->sum('total_price');
+                    $booking->payment->update([
+                        'amount' => $newTotal,
+                        'booking_id' => $booking->payment->bookings()->orderBy('date')->orderBy('start_time')->value('id'),
+                    ]);
+                } catch (\Exception $e) {
+                    \Log::warning('Failed to update payment amount', [
+                        'payment_id' => $booking->payment->id,
+                        'error' => $e->getMessage()
+                    ]);
+                    // Continue even if payment update fails
+                }
+            }
+
+            return redirect()->route('bookings.index', absolute: false)->with('success', 'Booking updated successfully.');
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            throw $e;
+        } catch (\Exception $e) {
+            \Log::error('Booking update failed', [
+                'booking_id' => $booking->id ?? null,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return back()->withErrors(['error' => 'Failed to update booking. Please try again.'])->withInput();
+        }
     }
 
     /**

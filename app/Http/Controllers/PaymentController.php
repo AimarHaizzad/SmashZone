@@ -9,6 +9,7 @@ use Stripe\Stripe;
 use Stripe\Checkout\Session;
 use App\Notifications\PaymentConfirmation;
 use App\Notifications\BookingConfirmation;
+use App\Notifications\OrderConfirmation;
 use App\Services\FCMService;
 
 class PaymentController extends Controller
@@ -221,7 +222,9 @@ class PaymentController extends Controller
 
                 if ($session->payment_status === 'paid') {
                     // Only update if payment is still pending (avoid duplicate updates)
-                    if ($payment->status === 'pending') {
+                    $wasPending = $payment->status === 'pending';
+                    
+                    if ($wasPending) {
                         $payment->update([
                             'status' => 'paid',
                             'payment_date' => now(),
@@ -229,8 +232,11 @@ class PaymentController extends Controller
                         ]);
 
                         $this->markRelatedBookingsAsPaid($payment);
-                        
-                        // Send confirmation emails
+                    }
+                    
+                    // Always send confirmation emails if payment is paid (even if already processed by webhook)
+                    // This ensures emails are sent even if webhook failed or user visits before webhook
+                    if ($payment->status === 'paid') {
                         $this->sendPaymentConfirmationEmails($payment);
                     }
 
@@ -435,16 +441,68 @@ class PaymentController extends Controller
                     'stripe_payment_intent_id' => $session['payment_intent'],
                 ]);
 
-                $this->markRelatedBookingsAsPaid($payment);
+                // Check if this is a booking payment or product purchase
+                $paymentType = $session['metadata']['type'] ?? null;
                 
-                // Send confirmation emails via webhook (ensures emails are sent even if user doesn't visit success page)
-                $this->sendPaymentConfirmationEmails($payment);
+                if ($paymentType === 'product_purchase') {
+                    // Handle product purchase - create order and send email
+                    $this->handleProductPurchaseWebhook($payment, $session);
+                } else {
+                    // Handle booking payment
+                    $this->markRelatedBookingsAsPaid($payment);
+                    
+                    // Send confirmation emails via webhook (ensures emails are sent even if user doesn't visit success page)
+                    $this->sendPaymentConfirmationEmails($payment);
+                }
                 
-                \Log::info('Payment updated via webhook', ['payment_id' => $payment->id]);
+                \Log::info('Payment updated via webhook', [
+                    'payment_id' => $payment->id,
+                    'type' => $paymentType ?? 'booking'
+                ]);
             }
         }
 
         return response('Webhook handled', 200);
+    }
+
+    /**
+     * Handle product purchase via webhook
+     */
+    protected function handleProductPurchaseWebhook(Payment $payment, $session): void
+    {
+        try {
+            // Check if order already exists (user might have visited success page)
+            $order = \App\Models\Order::where('payment_id', $payment->id)->first();
+            
+            if (!$order) {
+                // Order doesn't exist yet, create it (this shouldn't happen often as success page usually creates it first)
+                \Log::warning('Order not found for product purchase webhook', [
+                    'payment_id' => $payment->id
+                ]);
+                // Can't create order without cart data, so just send email if order exists
+                return;
+            }
+            
+            // Load order relationships
+            $order->load(['items.product', 'shipping', 'user']);
+            
+            // Send order confirmation email with invoice
+            try {
+                if ($order->user) {
+                    $order->user->notify(new OrderConfirmation($order));
+                }
+            } catch (\Exception $e) {
+                \Log::error('Failed to send order confirmation email via webhook', [
+                    'order_id' => $order->id,
+                    'error' => $e->getMessage()
+                ]);
+            }
+        } catch (\Exception $e) {
+            \Log::error('Failed to handle product purchase webhook', [
+                'payment_id' => $payment->id,
+                'error' => $e->getMessage()
+            ]);
+        }
     }
 
     protected function markRelatedBookingsAsPaid(Payment $payment): void

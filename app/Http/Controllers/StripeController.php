@@ -122,75 +122,85 @@ class StripeController extends Controller
                     // Update payment status
                     $payment = Payment::find($paymentId);
                     if ($payment) {
-                        $payment->update([
-                            'status' => 'paid',
-                            'payment_date' => now(),
-                            'stripe_payment_intent_id' => $session->payment_intent,
-                        ]);
-
-                        // Get delivery information from session
-                        $deliveryInfo = session('delivery_info', [
-                            'method' => 'pickup',
-                            'address' => null,
-                            'city' => null,
-                            'postcode' => null,
-                            'state' => null,
-                            'phone' => null,
-                            'notes' => null,
-                        ]);
-
-                        // Create order
-                        $order = Order::create([
-                            'order_number' => Order::generateOrderNumber(),
-                            'user_id' => auth()->id(),
-                            'payment_id' => $payment->id,
-                            'total_amount' => $payment->amount,
-                            'status' => 'confirmed',
-                            'delivery_method' => $deliveryInfo['method'],
-                            'delivery_address' => $deliveryInfo['address'],
-                            'delivery_city' => $deliveryInfo['city'],
-                            'delivery_postcode' => $deliveryInfo['postcode'],
-                            'delivery_state' => $deliveryInfo['state'],
-                            'delivery_phone' => $deliveryInfo['phone'],
-                            'notes' => $deliveryInfo['notes'],
-                        ]);
-
-                        // Create order items and reduce product quantities
-                        foreach ($cart as $productId => $quantityPurchased) {
-                            $product = Product::find($productId);
-                            if (!$product) {
-                                continue;
-                            }
-
-                            // Create order item
-                            OrderItem::create([
-                                'order_id' => $order->id,
-                                'product_id' => $product->id,
-                                'product_name' => $product->name,
-                                'product_price' => $product->price,
-                                'quantity' => $quantityPurchased,
-                                'subtotal' => $product->price * $quantityPurchased,
+                        // Only update if payment is still pending (avoid duplicate updates)
+                        $wasPending = $payment->status === 'pending';
+                        
+                        if ($wasPending) {
+                            $payment->update([
+                                'status' => 'paid',
+                                'payment_date' => now(),
+                                'stripe_payment_intent_id' => $session->payment_intent,
                             ]);
-
-                            // Reduce product quantity
-                            $newQuantity = max(0, $product->quantity - $quantityPurchased);
-                            $product->update(['quantity' => $newQuantity]);
                         }
 
-                        // Create shipping record
-                        $carrier = $deliveryInfo['method'] === 'pickup' ? 'Self Pickup' : null;
-                        Shipping::create([
-                            'order_id' => $order->id,
-                            'status' => 'preparing',
-                            'carrier' => $carrier,
-                            'estimated_delivery_date' => $deliveryInfo['method'] === 'delivery' 
-                                ? now()->addDays(3) 
-                                : null,
-                        ]);
+                        // Check if order already exists (might have been created by webhook)
+                        $order = Order::where('payment_id', $payment->id)->first();
+                        
+                        if (!$order) {
+                            // Get delivery information from session
+                            $deliveryInfo = session('delivery_info', [
+                                'method' => 'pickup',
+                                'address' => null,
+                                'city' => null,
+                                'postcode' => null,
+                                'state' => null,
+                                'phone' => null,
+                                'notes' => null,
+                            ]);
 
-                        // Clear delivery info and cart from session
-                        session()->forget('delivery_info');
-                        session()->forget('cart');
+                            // Create order
+                            $order = Order::create([
+                                'order_number' => Order::generateOrderNumber(),
+                                'user_id' => auth()->id() ?? $payment->user_id,
+                                'payment_id' => $payment->id,
+                                'total_amount' => $payment->amount,
+                                'status' => 'confirmed',
+                                'delivery_method' => $deliveryInfo['method'],
+                                'delivery_address' => $deliveryInfo['address'],
+                                'delivery_city' => $deliveryInfo['city'],
+                                'delivery_postcode' => $deliveryInfo['postcode'],
+                                'delivery_state' => $deliveryInfo['state'],
+                                'delivery_phone' => $deliveryInfo['phone'],
+                                'notes' => $deliveryInfo['notes'],
+                            ]);
+
+                            // Create order items and reduce product quantities
+                            foreach ($cart as $productId => $quantityPurchased) {
+                                $product = Product::find($productId);
+                                if (!$product) {
+                                    continue;
+                                }
+
+                                // Create order item
+                                OrderItem::create([
+                                    'order_id' => $order->id,
+                                    'product_id' => $product->id,
+                                    'product_name' => $product->name,
+                                    'product_price' => $product->price,
+                                    'quantity' => $quantityPurchased,
+                                    'subtotal' => $product->price * $quantityPurchased,
+                                ]);
+
+                                // Reduce product quantity
+                                $newQuantity = max(0, $product->quantity - $quantityPurchased);
+                                $product->update(['quantity' => $newQuantity]);
+                            }
+
+                            // Create shipping record
+                            $carrier = $deliveryInfo['method'] === 'pickup' ? 'Self Pickup' : null;
+                            Shipping::create([
+                                'order_id' => $order->id,
+                                'status' => 'preparing',
+                                'carrier' => $carrier,
+                                'estimated_delivery_date' => $deliveryInfo['method'] === 'delivery' 
+                                    ? now()->addDays(3) 
+                                    : null,
+                            ]);
+
+                            // Clear delivery info and cart from session
+                            session()->forget('delivery_info');
+                            session()->forget('cart');
+                        }
 
                         // Load order relationships
                         $order->load(['items.product', 'shipping', 'user']);
@@ -203,9 +213,12 @@ class StripeController extends Controller
                             \Log::error('Failed to send web notification for new order: ' . $e->getMessage());
                         }
 
-                        // Send order confirmation email with invoice
+                        // Always send order confirmation email (even if order was created by webhook)
+                        // This ensures emails are sent even if webhook failed or user visits before webhook
                         try {
-                            $order->user->notify(new OrderConfirmation($order));
+                            if ($order->user) {
+                                $order->user->notify(new OrderConfirmation($order));
+                            }
                         } catch (\Exception $e) {
                             \Log::error('Failed to send order confirmation email', [
                                 'order_id' => $order->id,
