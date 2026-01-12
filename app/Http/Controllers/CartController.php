@@ -12,15 +12,43 @@ class CartController extends Controller
         try {
             $cart = session('cart', []);
             
+            // Ensure cart is an array
+            if (!is_array($cart)) {
+                $cart = [];
+                session(['cart' => $cart]);
+            }
+            
             // Try to get products, but handle database errors gracefully
-            try {
-                $products = Product::whereIn('id', array_keys($cart))->get();
-            } catch (\Exception $e) {
-                \Log::error('Failed to load products for cart', [
-                    'error' => $e->getMessage(),
-                    'cart_keys' => array_keys($cart)
-                ]);
-                $products = collect([]);
+            $products = collect([]);
+            if (!empty($cart)) {
+                try {
+                    $productIds = array_keys($cart);
+                    if (!empty($productIds)) {
+                        $products = Product::whereIn('id', $productIds)->get();
+                        
+                        // Remove products from cart that no longer exist in database
+                        $existingProductIds = $products->pluck('id')->toArray();
+                        $missingProductIds = array_diff($productIds, $existingProductIds);
+                        
+                        if (!empty($missingProductIds)) {
+                            foreach ($missingProductIds as $missingId) {
+                                unset($cart[$missingId]);
+                            }
+                            if (empty($cart)) {
+                                session()->forget('cart');
+                            } else {
+                                session(['cart' => $cart]);
+                            }
+                        }
+                    }
+                } catch (\Exception $e) {
+                    \Log::error('Failed to load products for cart', [
+                        'error' => $e->getMessage(),
+                        'trace' => $e->getTraceAsString(),
+                        'cart_keys' => array_keys($cart)
+                    ]);
+                    $products = collect([]);
+                }
             }
             
             // Check if user should see cart page tutorial (first time on this page)
@@ -82,12 +110,27 @@ class CartController extends Controller
     public function update(Request $request)
     {
         try {
+            // Get quantities and ensure it's an array
             $quantities = $request->input('quantities', []);
+            if (!is_array($quantities)) {
+                $quantities = [];
+            }
+            
             $cart = session('cart', []);
             $messages = [];
 
+            if (empty($quantities) && empty($cart)) {
+                // Cart is already empty, just redirect
+                return redirect()->route('cart.index', absolute: false)->with('info', 'Your cart is empty.');
+            }
+            
             if (empty($quantities)) {
-                return redirect()->route('cart.index', absolute: false)->with('error', 'No quantities provided.');
+                // No quantities provided but cart has items - might be a form issue
+                \Log::warning('Cart update called with empty quantities', [
+                    'cart_items' => array_keys($cart),
+                    'request_all' => $request->all()
+                ]);
+                return redirect()->route('cart.index', absolute: false)->with('error', 'No quantities provided. Please try again.');
             }
 
             foreach ($quantities as $productId => $quantity) {
@@ -154,17 +197,32 @@ class CartController extends Controller
             }
 
             // Only update session if cart has items, otherwise clear it
-            if (empty($cart)) {
-                session()->forget('cart');
-            } else {
-                session(['cart' => $cart]);
+            try {
+                if (empty($cart)) {
+                    session()->forget('cart');
+                } else {
+                    session(['cart' => $cart]);
+                    // Ensure session is saved
+                    session()->save();
+                }
+            } catch (\Exception $sessionException) {
+                \Log::error('Failed to save cart to session', [
+                    'error' => $sessionException->getMessage(),
+                    'cart_count' => count($cart)
+                ]);
+                // Continue anyway - try to redirect
             }
 
+            // Build redirect with messages
+            $redirect = redirect()->route('cart.index', absolute: false);
+            
             if (!empty($messages)) {
-                return redirect()->route('cart.index', absolute: false)->with('info', implode(' ', $messages));
+                $redirect->with('info', implode(' ', $messages));
+            } else {
+                $redirect->with('success', 'Cart updated successfully.');
             }
-
-            return redirect()->route('cart.index', absolute: false)->with('success', 'Cart updated successfully.');
+            
+            return $redirect;
         } catch (\Illuminate\Validation\ValidationException $e) {
             throw $e;
         } catch (\Exception $e) {

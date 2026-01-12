@@ -172,7 +172,7 @@
                         <!-- Summary Items -->
                         <div class="space-y-3">
                             @foreach($products as $product)
-                                @php $qty = $cart[$product->id]; $subtotal = $qty * $product->price; @endphp
+                                @php $qty = $cart[$product->id] ?? 0; $subtotal = $qty * ($product->price ?? 0); @endphp
                                 <div class="flex justify-between items-center text-sm">
                                     <div class="flex-1 min-w-0">
                                         <div class="font-medium text-gray-900 truncate">{{ $product->name }}</div>
