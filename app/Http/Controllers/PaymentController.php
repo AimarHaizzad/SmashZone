@@ -11,6 +11,7 @@ use App\Notifications\PaymentConfirmation;
 use App\Notifications\BookingConfirmation;
 use App\Notifications\OrderConfirmation;
 use App\Services\FCMService;
+use Illuminate\Support\Facades\Notification;
 
 class PaymentController extends Controller
 {
@@ -256,16 +257,29 @@ class PaymentController extends Controller
      */
     protected function sendPaymentConfirmationEmails(Payment $payment): void
     {
+        // Reload payment with all necessary relationships
+        $payment->refresh();
+        $payment->loadMissing(['user', 'bookings.court', 'booking.court']);
+        
         // Send payment confirmation email
         try {
-            $payment->load('user');
             if ($payment->user) {
-                $payment->user->notify(new PaymentConfirmation($payment));
+                \Log::info('Sending payment confirmation email', [
+                    'payment_id' => $payment->id,
+                    'user_id' => $payment->user->id,
+                    'user_email' => $payment->user->email
+                ]);
+                
+                // Send immediately (not queued) to ensure email is sent right away
+                Notification::sendNow($payment->user, new PaymentConfirmation($payment));
+            } else {
+                \Log::warning('Payment has no user', ['payment_id' => $payment->id]);
             }
         } catch (\Exception $e) {
             \Log::error('Failed to send payment confirmation email', [
                 'payment_id' => $payment->id,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
             ]);
         }
 
@@ -276,13 +290,28 @@ class PaymentController extends Controller
                 $bookings = collect([$payment->booking]);
             }
 
+            \Log::info('Processing booking confirmation emails', [
+                'payment_id' => $payment->id,
+                'bookings_count' => $bookings->count()
+            ]);
+
             foreach ($bookings as $booking) {
                 try {
                     // Send booking confirmation email with invoice PDF
-                    $booking->load('court');
-                    $payment->load('user');
+                    $booking->loadMissing('court');
+                    $payment->loadMissing('user');
+                    
                     if ($booking->user) {
-                        $booking->user->notify(new BookingConfirmation($booking, $payment));
+                        \Log::info('Sending booking confirmation email', [
+                            'booking_id' => $booking->id,
+                            'user_id' => $booking->user->id,
+                            'user_email' => $booking->user->email
+                        ]);
+                        
+                        // Send immediately (not queued) to ensure email is sent right away
+                        Notification::sendNow($booking->user, new BookingConfirmation($booking, $payment));
+                    } else {
+                        \Log::warning('Booking has no user', ['booking_id' => $booking->id]);
                     }
                     
                     // Send FCM notification for booking confirmation
@@ -488,13 +517,25 @@ class PaymentController extends Controller
             
             // Send order confirmation email with invoice
             try {
+                $order->loadMissing(['user', 'items.product', 'payment']);
                 if ($order->user) {
-                    $order->user->notify(new OrderConfirmation($order));
+                    \Log::info('Sending order confirmation email via webhook', [
+                        'order_id' => $order->id,
+                        'order_number' => $order->order_number,
+                        'user_id' => $order->user->id,
+                        'user_email' => $order->user->email
+                    ]);
+                    
+                    // Send immediately (not queued) to ensure email is sent right away
+                    Notification::sendNow($order->user, new OrderConfirmation($order));
+                } else {
+                    \Log::warning('Order has no user in webhook', ['order_id' => $order->id]);
                 }
             } catch (\Exception $e) {
                 \Log::error('Failed to send order confirmation email via webhook', [
                     'order_id' => $order->id,
-                    'error' => $e->getMessage()
+                    'error' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString()
                 ]);
             }
         } catch (\Exception $e) {

@@ -98,7 +98,19 @@ class CartController extends Controller
                         continue;
                     }
 
-                    $product = Product::find($productId);
+                    // Try to find product, handle database errors
+                    try {
+                        $product = Product::find($productId);
+                    } catch (\Exception $dbException) {
+                        \Log::warning('Database error finding product', [
+                            'product_id' => $productId,
+                            'error' => $dbException->getMessage()
+                        ]);
+                        // If database fails, keep the quantity as requested (best effort)
+                        $cart[$productId] = max(1, (int)$quantity);
+                        continue;
+                    }
+
                     if (!$product) {
                         unset($cart[$productId]);
                         $messages[] = "Removed unavailable product #{$productId} from your cart.";
@@ -110,7 +122,9 @@ class CartController extends Controller
                         $requestedQuantity = 1;
                     }
 
-                    $allowedQuantity = min($requestedQuantity, max(0, (int)$product->quantity));
+                    // Safely get product quantity with fallback
+                    $productQuantity = isset($product->quantity) ? (int)$product->quantity : 0;
+                    $allowedQuantity = min($requestedQuantity, max(0, $productQuantity));
 
                     if ($allowedQuantity === 0) {
                         unset($cart[$productId]);
@@ -129,25 +143,46 @@ class CartController extends Controller
                     // Log error but continue processing other items
                     \Log::warning('Error updating cart item', [
                         'product_id' => $productId ?? 'unknown',
-                        'error' => $e->getMessage()
+                        'error' => $e->getMessage(),
+                        'trace' => $e->getTraceAsString()
                     ]);
                     // Remove problematic item from cart
-                    unset($cart[$productId]);
+                    if (isset($productId)) {
+                        unset($cart[$productId]);
+                    }
                 }
             }
 
-            session(['cart' => $cart]);
+            // Only update session if cart has items, otherwise clear it
+            if (empty($cart)) {
+                session()->forget('cart');
+            } else {
+                session(['cart' => $cart]);
+            }
 
             if (!empty($messages)) {
                 return redirect()->route('cart.index', absolute: false)->with('info', implode(' ', $messages));
             }
 
             return redirect()->route('cart.index', absolute: false)->with('success', 'Cart updated successfully.');
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            throw $e;
         } catch (\Exception $e) {
             \Log::error('Cart update failed', [
                 'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
+                'request_data' => $request->except(['_token'])
             ]);
+            
+            // Try to preserve cart state even on error
+            try {
+                $currentCart = session('cart', []);
+                if (!empty($currentCart)) {
+                    session(['cart' => $currentCart]);
+                }
+            } catch (\Exception $sessionException) {
+                \Log::warning('Failed to preserve cart on error', ['error' => $sessionException->getMessage()]);
+            }
             
             return redirect()->route('cart.index', absolute: false)
                 ->with('error', 'Failed to update cart. Please try again.');

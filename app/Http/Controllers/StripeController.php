@@ -13,6 +13,7 @@ use App\Models\Shipping;
 use App\Services\WebNotificationService;
 use App\Services\FCMService;
 use App\Notifications\OrderConfirmation;
+use Illuminate\Support\Facades\Notification;
 
 class StripeController extends Controller
 {
@@ -216,13 +217,25 @@ class StripeController extends Controller
                         // Always send order confirmation email (even if order was created by webhook)
                         // This ensures emails are sent even if webhook failed or user visits before webhook
                         try {
+                            $order->loadMissing(['user', 'items.product', 'payment']);
                             if ($order->user) {
-                                $order->user->notify(new OrderConfirmation($order));
+                                \Log::info('Sending order confirmation email', [
+                                    'order_id' => $order->id,
+                                    'order_number' => $order->order_number,
+                                    'user_id' => $order->user->id,
+                                    'user_email' => $order->user->email
+                                ]);
+                                
+                                // Send immediately (not queued) to ensure email is sent right away
+                                Notification::sendNow($order->user, new OrderConfirmation($order));
+                            } else {
+                                \Log::warning('Order has no user', ['order_id' => $order->id]);
                             }
                         } catch (\Exception $e) {
                             \Log::error('Failed to send order confirmation email', [
                                 'order_id' => $order->id,
-                                'error' => $e->getMessage()
+                                'error' => $e->getMessage(),
+                                'trace' => $e->getTraceAsString()
                             ]);
                         }
 

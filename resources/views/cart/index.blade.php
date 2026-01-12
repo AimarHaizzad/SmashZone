@@ -63,7 +63,7 @@
                         <div class="space-y-4 sm:space-y-6">
                             @php $total = 0; @endphp
                             @foreach($products as $product)
-                                @php $qty = $cart[$product->id]; $subtotal = $qty * $product->price; $total += $subtotal; @endphp
+                                @php $qty = $cart[$product->id] ?? 0; $subtotal = $qty * ($product->price ?? 0); $total += $subtotal; @endphp
                                 <div class="flex items-center gap-2 sm:gap-3 md:gap-4 p-3 sm:p-4 md:p-6 bg-gray-50 rounded-xl md:rounded-2xl hover:bg-gray-100 transition-colors">
                                     <!-- Product Image -->
                                     <div class="flex-shrink-0">
