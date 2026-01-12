@@ -196,14 +196,20 @@ class PaymentController extends Controller
 
     public function paymentSuccess(Request $request, Payment $payment)
     {
-        // Check if user owns this payment
-        if ($payment->user_id !== auth()->id()) {
+        // Allow access if user is authenticated and owns the payment, or if session_id is provided (Stripe redirect)
+        $sessionId = $request->get('session_id');
+        $isAuthenticated = auth()->check();
+        
+        if ($isAuthenticated && $payment->user_id !== auth()->id()) {
             abort(403, 'Unauthorized access to payment.');
         }
 
-        $payment->loadMissing('bookings.court', 'booking.court');
+        // If not authenticated and no session_id, require login
+        if (!$isAuthenticated && !$sessionId) {
+            return redirect()->route('login')->with('error', 'Please login to view your payment details.');
+        }
 
-        $sessionId = $request->get('session_id');
+        $payment->loadMissing('bookings.court', 'booking.court', 'user');
 
         if ($sessionId) {
             try {
@@ -214,64 +220,18 @@ class PaymentController extends Controller
                 $session = Session::retrieve($sessionId);
 
                 if ($session->payment_status === 'paid') {
-                    // Update payment status
-                    $payment->update([
-                        'status' => 'paid',
-                        'payment_date' => now(),
-                        'stripe_payment_intent_id' => $session->payment_intent,
-                    ]);
-
-                    $this->markRelatedBookingsAsPaid($payment);
-
-                    // Send payment confirmation email
-                    try {
-                        $payment->user->notify(new PaymentConfirmation($payment));
-                    } catch (\Exception $e) {
-                        \Log::error('Failed to send payment confirmation email: ' . $e->getMessage());
-                    }
-
-                    // Send booking confirmation email with invoice for each booking
-                    try {
-                        $bookings = $payment->bookings()->with('court')->get();
-                        if ($bookings->isEmpty() && $payment->booking) {
-                            $bookings = collect([$payment->booking]);
-                        }
-
-                        foreach ($bookings as $booking) {
-                            try {
-                                // Send booking confirmation email with invoice PDF
-                                $booking->load('court');
-                                $payment->load('user');
-                                $booking->user->notify(new BookingConfirmation($booking, $payment));
-                                
-                                // Send FCM notification for booking confirmation
-                                try {
-                                    $fcmService = new FCMService();
-                                    $fcmService->sendBookingConfirmation($booking->user_id, [
-                                        'booking_id' => $booking->id,
-                                        'court_name' => $booking->court->name ?? 'Court',
-                                        'date' => \Carbon\Carbon::parse($booking->date)->format('M d, Y'),
-                                        'time' => \Carbon\Carbon::createFromFormat('H:i:s', $booking->start_time)->format('g:i A') . ' - ' . \Carbon\Carbon::createFromFormat('H:i:s', $booking->end_time)->format('g:i A'),
-                                        'amount' => $booking->total_price
-                                    ]);
-                                } catch (\Exception $e) {
-                                    \Log::error('Failed to send FCM notification for booking confirmation', [
-                                        'booking_id' => $booking->id,
-                                        'error' => $e->getMessage()
-                                    ]);
-                                }
-                            } catch (\Exception $e) {
-                                \Log::error('Failed to send booking confirmation email', [
-                                    'booking_id' => $booking->id,
-                                    'error' => $e->getMessage()
-                                ]);
-                            }
-                        }
-                    } catch (\Exception $e) {
-                        \Log::error('Failed to send booking confirmation notifications', [
-                            'payment_id' => $payment->id,
-                            'error' => $e->getMessage()
+                    // Only update if payment is still pending (avoid duplicate updates)
+                    if ($payment->status === 'pending') {
+                        $payment->update([
+                            'status' => 'paid',
+                            'payment_date' => now(),
+                            'stripe_payment_intent_id' => $session->payment_intent,
                         ]);
+
+                        $this->markRelatedBookingsAsPaid($payment);
+                        
+                        // Send confirmation emails
+                        $this->sendPaymentConfirmationEmails($payment);
                     }
 
                     return view('payments.success', compact('payment', 'session'));
@@ -284,11 +244,78 @@ class PaymentController extends Controller
 
         return view('payments.success', compact('payment'));
     }
+    
+    /**
+     * Send payment and booking confirmation emails
+     */
+    protected function sendPaymentConfirmationEmails(Payment $payment): void
+    {
+        // Send payment confirmation email
+        try {
+            $payment->load('user');
+            if ($payment->user) {
+                $payment->user->notify(new PaymentConfirmation($payment));
+            }
+        } catch (\Exception $e) {
+            \Log::error('Failed to send payment confirmation email', [
+                'payment_id' => $payment->id,
+                'error' => $e->getMessage()
+            ]);
+        }
+
+        // Send booking confirmation email with invoice for each booking
+        try {
+            $bookings = $payment->bookings()->with('court')->get();
+            if ($bookings->isEmpty() && $payment->booking) {
+                $bookings = collect([$payment->booking]);
+            }
+
+            foreach ($bookings as $booking) {
+                try {
+                    // Send booking confirmation email with invoice PDF
+                    $booking->load('court');
+                    $payment->load('user');
+                    if ($booking->user) {
+                        $booking->user->notify(new BookingConfirmation($booking, $payment));
+                    }
+                    
+                    // Send FCM notification for booking confirmation
+                    try {
+                        $fcmService = new FCMService();
+                        $fcmService->sendBookingConfirmation($booking->user_id, [
+                            'booking_id' => $booking->id,
+                            'court_name' => $booking->court->name ?? 'Court',
+                            'date' => \Carbon\Carbon::parse($booking->date)->format('M d, Y'),
+                            'time' => \Carbon\Carbon::createFromFormat('H:i:s', $booking->start_time)->format('g:i A') . ' - ' . \Carbon\Carbon::createFromFormat('H:i:s', $booking->end_time)->format('g:i A'),
+                            'amount' => $booking->total_price
+                        ]);
+                    } catch (\Exception $e) {
+                        \Log::error('Failed to send FCM notification for booking confirmation', [
+                            'booking_id' => $booking->id,
+                            'error' => $e->getMessage()
+                        ]);
+                    }
+                } catch (\Exception $e) {
+                    \Log::error('Failed to send booking confirmation email', [
+                        'booking_id' => $booking->id,
+                        'error' => $e->getMessage()
+                    ]);
+                }
+            }
+        } catch (\Exception $e) {
+            \Log::error('Failed to send booking confirmation notifications', [
+                'payment_id' => $payment->id,
+                'error' => $e->getMessage()
+            ]);
+        }
+    }
 
     public function paymentCancel(Payment $payment)
     {
-        // Check if user owns this payment
-        if ($payment->user_id !== auth()->id()) {
+        // Allow access if user is authenticated and owns the payment, or allow guest access for Stripe redirects
+        $isAuthenticated = auth()->check();
+        
+        if ($isAuthenticated && $payment->user_id !== auth()->id()) {
             abort(403, 'Unauthorized access to payment.');
         }
 
@@ -409,6 +436,9 @@ class PaymentController extends Controller
                 ]);
 
                 $this->markRelatedBookingsAsPaid($payment);
+                
+                // Send confirmation emails via webhook (ensures emails are sent even if user doesn't visit success page)
+                $this->sendPaymentConfirmationEmails($payment);
                 
                 \Log::info('Payment updated via webhook', ['payment_id' => $payment->id]);
             }

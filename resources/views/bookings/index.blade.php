@@ -838,17 +838,16 @@
             // Clear selections and hide panel
             clearAllSelections();
             document.getElementById('booking-modal').classList.add('hidden');
-            
-            const errorText = data.errors && data.errors.length > 0 ? data.errors.join('\n') : 'No specific errors reported';
 
             if (data.success && data.bookings_created === data.total_slots) {
-                alert('All bookings confirmed successfully! Redirecting you to your bookings to complete payment.');
+                alert('✓ Booking Confirmation\n\nAll your selected bookings have been confirmed successfully.\n\nYou will be redirected to complete your payment.');
                 window.location.href = myBookingsUrl;
                 return;
             }
 
             if (data.bookings_created > 0) {
-                alert(`${data.bookings_created} booking(s) confirmed successfully!\n\nSome slots were unavailable:\n${errorText}\n\nYou will be redirected to your bookings to continue with payment.`);
+                const bookingText = data.bookings_created === 1 ? 'booking has' : 'bookings have';
+                alert(`✓ Booking Confirmation\n\n${data.bookings_created} ${bookingText} been confirmed successfully.\n\nYou will be redirected to complete your payment.`);
                 window.location.href = myBookingsUrl;
                 return;
             }

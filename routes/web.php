@@ -675,9 +675,11 @@ Route::middleware(['auth'])->group(function () {
     Route::get('payments', [PaymentController::class, 'index'])->name('payments.index');
     Route::get('payments/{payment}/pay', [PaymentController::class, 'showPaymentForm'])->name('payments.pay');
     Route::post('payments/{payment}/process', [PaymentController::class, 'processPayment'])->name('payments.process');
+    Route::patch('payments/{payment}/mark-paid', [PaymentController::class, 'markAsPaid'])->name('payments.mark-paid');
+
+    // Payment success and cancel routes (accessible without auth for Stripe redirects)
     Route::get('payments/{payment}/success', [PaymentController::class, 'paymentSuccess'])->name('payments.success');
     Route::get('payments/{payment}/cancel', [PaymentController::class, 'paymentCancel'])->name('payments.cancel');
-    Route::patch('payments/{payment}/mark-paid', [PaymentController::class, 'markAsPaid'])->name('payments.mark-paid');
 
     // Refunds (Staff and Owners only)
     Route::middleware(['auth'])->group(function () {

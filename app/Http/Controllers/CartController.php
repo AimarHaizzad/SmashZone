@@ -9,17 +9,41 @@ class CartController extends Controller
 {
     public function index(Request $request)
     {
-        $cart = session('cart', []);
-        $products = Product::whereIn('id', array_keys($cart))->get();
-        
-        // Check if user should see cart page tutorial (first time on this page)
-        $user = auth()->user();
-        $showTutorial = $user && $user->isCustomer() && !session('cart_tutorial_shown', false) && count($cart) > 0;
-        if ($showTutorial) {
-            session(['cart_tutorial_shown' => true]);
+        try {
+            $cart = session('cart', []);
+            
+            // Try to get products, but handle database errors gracefully
+            try {
+                $products = Product::whereIn('id', array_keys($cart))->get();
+            } catch (\Exception $e) {
+                \Log::error('Failed to load products for cart', [
+                    'error' => $e->getMessage(),
+                    'cart_keys' => array_keys($cart)
+                ]);
+                $products = collect([]);
+            }
+            
+            // Check if user should see cart page tutorial (first time on this page)
+            $user = auth()->user();
+            $showTutorial = $user && $user->isCustomer() && !session('cart_tutorial_shown', false) && count($cart) > 0;
+            if ($showTutorial) {
+                session(['cart_tutorial_shown' => true]);
+            }
+            
+            return view('cart.index', compact('cart', 'products', 'showTutorial'));
+        } catch (\Exception $e) {
+            \Log::error('Cart index failed', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            // Return empty cart view on error
+            return view('cart.index', [
+                'cart' => [],
+                'products' => collect([]),
+                'showTutorial' => false
+            ])->with('error', 'Unable to load cart. Please try again.');
         }
-        
-        return view('cart.index', compact('cart', 'products', 'showTutorial'));
     }
 
     public function add(Request $request)
@@ -57,41 +81,77 @@ class CartController extends Controller
 
     public function update(Request $request)
     {
-        $quantities = $request->input('quantities', []);
-        $cart = session('cart', []);
-        $messages = [];
+        try {
+            $quantities = $request->input('quantities', []);
+            $cart = session('cart', []);
+            $messages = [];
 
-        foreach ($quantities as $productId => $quantity) {
-            $product = Product::find($productId);
-            if (!$product) {
-                unset($cart[$productId]);
-                $messages[] = "Removed unavailable product #{$productId} from your cart.";
-                continue;
+            if (empty($quantities)) {
+                return redirect()->route('cart.index', absolute: false)->with('error', 'No quantities provided.');
             }
 
-            $requestedQuantity = max(1, (int)$quantity);
-            $allowedQuantity = min($requestedQuantity, max(0, $product->quantity));
+            foreach ($quantities as $productId => $quantity) {
+                try {
+                    // Ensure productId is valid
+                    $productId = (int)$productId;
+                    if ($productId <= 0) {
+                        continue;
+                    }
 
-            if ($allowedQuantity === 0) {
-                unset($cart[$productId]);
-                $messages[] = "{$product->name} is out of stock and was removed from your cart.";
-                continue;
+                    $product = Product::find($productId);
+                    if (!$product) {
+                        unset($cart[$productId]);
+                        $messages[] = "Removed unavailable product #{$productId} from your cart.";
+                        continue;
+                    }
+
+                    $requestedQuantity = max(1, (int)$quantity);
+                    if ($requestedQuantity <= 0) {
+                        $requestedQuantity = 1;
+                    }
+
+                    $allowedQuantity = min($requestedQuantity, max(0, (int)$product->quantity));
+
+                    if ($allowedQuantity === 0) {
+                        unset($cart[$productId]);
+                        $productName = $product->name ?? "Product #{$productId}";
+                        $messages[] = "{$productName} is out of stock and was removed from your cart.";
+                        continue;
+                    }
+
+                    if ($allowedQuantity < $requestedQuantity) {
+                        $productName = $product->name ?? "Product #{$productId}";
+                        $messages[] = "Quantity for {$productName} was reduced to {$allowedQuantity} due to limited stock.";
+                    }
+
+                    $cart[$productId] = $allowedQuantity;
+                } catch (\Exception $e) {
+                    // Log error but continue processing other items
+                    \Log::warning('Error updating cart item', [
+                        'product_id' => $productId ?? 'unknown',
+                        'error' => $e->getMessage()
+                    ]);
+                    // Remove problematic item from cart
+                    unset($cart[$productId]);
+                }
             }
 
-            if ($allowedQuantity < $requestedQuantity) {
-                $messages[] = "Quantity for {$product->name} was reduced to {$allowedQuantity} due to limited stock.";
+            session(['cart' => $cart]);
+
+            if (!empty($messages)) {
+                return redirect()->route('cart.index', absolute: false)->with('info', implode(' ', $messages));
             }
 
-            $cart[$productId] = $allowedQuantity;
+            return redirect()->route('cart.index', absolute: false)->with('success', 'Cart updated successfully.');
+        } catch (\Exception $e) {
+            \Log::error('Cart update failed', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return redirect()->route('cart.index', absolute: false)
+                ->with('error', 'Failed to update cart. Please try again.');
         }
-
-        session(['cart' => $cart]);
-
-        if (!empty($messages)) {
-            return redirect()->route('cart.index', absolute: false)->with('info', implode(' ', $messages));
-        }
-
-        return redirect()->route('cart.index', absolute: false)->with('success', 'Cart updated successfully.');
     }
 
     public function remove(Request $request)

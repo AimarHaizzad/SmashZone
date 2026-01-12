@@ -6,6 +6,7 @@ use Illuminate\Mail\MailManager;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
 use InvalidArgumentException;
@@ -79,31 +80,50 @@ class AppServiceProvider extends ServiceProvider
         // Share pending orders count with all views (for owners and staff)
         View::composer('*', function ($view) {
             try {
-                // Only run if user is authenticated and database connection is available
-                if (auth()->check()) {
-                    $user = auth()->user();
-                    if ($user && ($user->isOwner() || $user->isStaff())) {
+                // Check if database connection is available first
+                try {
+                    DB::connection()->getPdo();
+                } catch (\Exception $e) {
+                    // Database not available - set default and return early
+                    $view->with('pendingOrdersCount', 0);
+                    return;
+                }
+
+                // Only run if user is authenticated (wrap in try-catch as auth might need DB)
+                try {
+                    if (auth()->check()) {
                         try {
-                            // Check if orders table exists and database is connected
-                            if (Schema::hasTable('orders')) {
-                                // Count orders that need attention (pending, confirmed, processing, return_requested)
-                                $pendingOrdersCount = Order::whereIn('status', ['pending', 'confirmed', 'processing', 'return_requested'])
-                                    ->count();
-                                
-                                $view->with('pendingOrdersCount', $pendingOrdersCount);
-                                return;
+                            $user = auth()->user();
+                            if ($user && ($user->isOwner() || $user->isStaff())) {
+                                try {
+                                    // Check if orders table exists
+                                    if (Schema::hasTable('orders')) {
+                                        // Count orders that need attention (pending, confirmed, processing, return_requested)
+                                        $pendingOrdersCount = Order::whereIn('status', ['pending', 'confirmed', 'processing', 'return_requested'])
+                                            ->count();
+                                        
+                                        $view->with('pendingOrdersCount', $pendingOrdersCount);
+                                        return;
+                                    }
+                                } catch (\Exception $tableException) {
+                                    // Table check failed - silently fail
+                                    \Log::debug('Could not check orders table', ['error' => $tableException->getMessage()]);
+                                }
                             }
-                        } catch (\Illuminate\Database\QueryException $dbException) {
-                            // Database connection issue - silently fail
-                            \Log::debug('Database not available for pending orders count', ['error' => $dbException->getMessage()]);
+                        } catch (\Exception $userException) {
+                            // User check failed - silently fail
+                            \Log::debug('Could not get user info', ['error' => $userException->getMessage()]);
                         }
                     }
+                } catch (\Exception $authException) {
+                    // Auth check failed (might need DB) - silently fail
+                    \Log::debug('Could not check authentication', ['error' => $authException->getMessage()]);
                 }
                 // Default to 0 if not authenticated, not owner/staff, or database unavailable
                 $view->with('pendingOrdersCount', 0);
             } catch (\Exception $e) {
                 // Catch any other exceptions to prevent 500 errors
-                \Log::warning('Failed to get pending orders count in view composer', ['error' => $e->getMessage()]);
+                \Log::debug('Failed to get pending orders count in view composer', ['error' => $e->getMessage()]);
                 $view->with('pendingOrdersCount', 0);
             }
         });
