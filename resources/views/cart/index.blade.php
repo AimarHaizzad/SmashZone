@@ -58,7 +58,7 @@
                         </h2>
                     </div>
                     
-                    <form action="{{ route('cart.update', absolute: false) }}" method="POST" class="p-4 sm:p-6">
+                    <form action="{{ route('cart.update') }}" method="POST" class="p-4 sm:p-6">
                         @csrf
                         <div class="space-y-4 sm:space-y-6">
                             @php $total = 0; @endphp
@@ -232,7 +232,7 @@ function removeItem(productId) {
     if (confirm('Are you sure you want to remove this item?')) {
         const form = document.createElement('form');
         form.method = 'POST';
-        form.action = '{{ route("cart.remove", absolute: false) }}';
+        form.action = '{{ route("cart.remove") }}';
         
         const csrfToken = document.createElement('input');
         csrfToken.type = 'hidden';

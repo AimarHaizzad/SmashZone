@@ -110,18 +110,24 @@ class CartController extends Controller
     public function update(Request $request)
     {
         try {
+            // Ensure cart session exists and is an array
+            $cart = session('cart', []);
+            if (!is_array($cart)) {
+                $cart = [];
+                session(['cart' => $cart]);
+            }
+            
             // Get quantities and ensure it's an array
             $quantities = $request->input('quantities', []);
             if (!is_array($quantities)) {
                 $quantities = [];
             }
             
-            $cart = session('cart', []);
             $messages = [];
 
             if (empty($quantities) && empty($cart)) {
                 // Cart is already empty, just redirect
-                return redirect()->route('cart.index', absolute: false)->with('info', 'Your cart is empty.');
+                return redirect()->route('cart.index')->with('info', 'Your cart is empty.');
             }
             
             if (empty($quantities)) {
@@ -130,7 +136,7 @@ class CartController extends Controller
                     'cart_items' => array_keys($cart),
                     'request_all' => $request->all()
                 ]);
-                return redirect()->route('cart.index', absolute: false)->with('error', 'No quantities provided. Please try again.');
+                return redirect()->route('cart.index')->with('error', 'No quantities provided. Please try again.');
             }
 
             foreach ($quantities as $productId => $quantity) {
@@ -214,15 +220,11 @@ class CartController extends Controller
             }
 
             // Build redirect with messages
-            $redirect = redirect()->route('cart.index', absolute: false);
-            
             if (!empty($messages)) {
-                $redirect->with('info', implode(' ', $messages));
+                return redirect()->route('cart.index')->with('info', implode(' ', $messages));
             } else {
-                $redirect->with('success', 'Cart updated successfully.');
+                return redirect()->route('cart.index')->with('success', 'Cart updated successfully.');
             }
-            
-            return $redirect;
         } catch (\Illuminate\Validation\ValidationException $e) {
             throw $e;
         } catch (\Exception $e) {
@@ -242,7 +244,7 @@ class CartController extends Controller
                 \Log::warning('Failed to preserve cart on error', ['error' => $sessionException->getMessage()]);
             }
             
-            return redirect()->route('cart.index', absolute: false)
+            return redirect()->route('cart.index')
                 ->with('error', 'Failed to update cart. Please try again.');
         }
     }
@@ -260,7 +262,7 @@ class CartController extends Controller
     {
         $cart = session('cart', []);
         if (empty($cart)) {
-            return redirect()->route('cart.index', absolute: false)->with('error', 'Your cart is empty.');
+            return redirect()->route('cart.index')->with('error', 'Your cart is empty.');
         }
 
         $products = Product::whereIn('id', array_keys($cart))->get();
