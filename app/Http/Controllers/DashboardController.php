@@ -45,10 +45,15 @@ class DashboardController extends Controller
                 }
                 
                 // Get recent orders for owner dashboard
-                $recentOrders = Order::with(['user', 'items'])
-                    ->orderBy('created_at', 'desc')
-                    ->take(5)
-                    ->get();
+                try {
+                    $recentOrders = Order::with(['user', 'items'])
+                        ->orderBy('created_at', 'desc')
+                        ->take(5)
+                        ->get();
+                } catch (\Exception $e) {
+                    \Log::warning('Dashboard orders load error: ' . $e->getMessage());
+                    $recentOrders = collect();
+                }
                 
             } elseif ($user->isStaff()) {
                 // For staff, get all bookings
@@ -69,10 +74,15 @@ class DashboardController extends Controller
                 });
                 
                 // Get recent orders for staff dashboard
-                $recentOrders = Order::with(['user', 'items'])
-                    ->orderBy('created_at', 'desc')
-                    ->take(5)
-                    ->get();
+                try {
+                    $recentOrders = Order::with(['user', 'items'])
+                        ->orderBy('created_at', 'desc')
+                        ->take(5)
+                        ->get();
+                } catch (\Exception $e) {
+                    \Log::warning('Dashboard orders load error: ' . $e->getMessage());
+                    $recentOrders = collect();
+                }
                 
             } else {
                 // For customers, get their own bookings
@@ -84,13 +94,22 @@ class DashboardController extends Controller
             }
         } catch (\Exception $e) {
             // If there's an error loading bookings, log it and continue with empty data
-            \Log::error('Dashboard booking load error: ' . $e->getMessage());
+            \Log::error('Dashboard booking load error: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString()
+            ]);
             $allBookings = collect();
             $totalRevenue = 0;
             $recentOrders = collect();
         }
         
-        $showTutorial = $user->isCustomer() && !$user->tutorial_completed;
+        // Safely check tutorial_completed field
+        try {
+            $tutorialCompleted = (bool) ($user->tutorial_completed ?? false);
+            $showTutorial = $user->isCustomer() && !$tutorialCompleted;
+        } catch (\Exception $e) {
+            // If tutorial_completed field doesn't exist, show tutorial for customers
+            $showTutorial = $user->isCustomer();
+        }
         
         return view('dashboard', compact('user', 'allBookings', 'totalRevenue', 'showTutorial', 'recentOrders'));
     }
