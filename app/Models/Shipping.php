@@ -54,6 +54,8 @@ class Shipping extends Model
     {
         return match($this->status) {
             'preparing' => 'bg-yellow-100 text-yellow-800',
+            'ready_for_pickup' => 'bg-blue-100 text-blue-800',
+            'picked_up' => 'bg-green-100 text-green-800',
             'out_for_delivery' => 'bg-orange-100 text-orange-800',
             'delivered' => 'bg-green-100 text-green-800',
             'cancelled' => 'bg-red-100 text-red-800',
@@ -65,6 +67,8 @@ class Shipping extends Model
     {
         return match($this->status) {
             'preparing' => 'Preparing',
+            'ready_for_pickup' => 'Ready for Pickup',
+            'picked_up' => 'Picked Up',
             'out_for_delivery' => 'Out for Delivery',
             'delivered' => 'Delivered',
             'cancelled' => 'Cancelled',
@@ -76,6 +80,8 @@ class Shipping extends Model
     {
         $statuses = [
             'preparing' => 33,
+            'ready_for_pickup' => 66,
+            'picked_up' => 100,
             'out_for_delivery' => 66,
             'delivered' => 100,
             'cancelled' => 0,

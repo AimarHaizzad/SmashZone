@@ -142,7 +142,7 @@ class OrderController extends Controller
         }
 
         $request->validate([
-            'status' => 'required|in:preparing,out_for_delivery,delivered,cancelled',
+            'status' => 'required|in:preparing,ready_for_pickup,picked_up,out_for_delivery,delivered,cancelled',
             'tracking_number' => 'nullable|string|max:255',
             'carrier' => 'nullable|string|max:255',
             'notes' => 'nullable|string',
@@ -178,7 +178,7 @@ class OrderController extends Controller
             $updateData['shipped_at'] = now();
         }
 
-        if ($request->status === 'delivered' && !$shipping->delivered_at) {
+        if (in_array($request->status, ['picked_up', 'delivered']) && !$shipping->delivered_at) {
             $updateData['delivered_at'] = now();
             // Also update order status
             $order->update(['status' => 'delivered']);
@@ -235,6 +235,23 @@ class OrderController extends Controller
         ]);
 
         $order->update(['status' => $request->status]);
+
+        // For pickup orders, automatically update shipping status when order is delivered
+        if ($order->delivery_method === 'pickup' && $request->status === 'delivered') {
+            $shipping = $order->shipping;
+            if (!$shipping) {
+                $shipping = Shipping::create([
+                    'order_id' => $order->id,
+                    'status' => 'delivered',
+                    'carrier' => 'Self Pickup',
+                ]);
+            } else {
+                $shipping->update([
+                    'status' => 'delivered',
+                    'delivered_at' => now(),
+                ]);
+            }
+        }
 
         return redirect()->back()->with('success', 'Order status updated successfully.');
     }

@@ -45,6 +45,17 @@ class BookingController extends Controller
                 ->where('status', '!=', 'cancelled')
                 ->get();
         }
+        
+        // Sort courts by extracting numeric value from name for proper numerical sorting
+        // This handles "Court 1", "Court 2", etc. correctly (not alphabetically)
+        $courts = $courts->sortBy(function ($court) {
+            // Extract number from court name (e.g., "Court 1" -> 1, "Court 10" -> 10)
+            if (preg_match('/(\d+)/', $court->name ?? '', $matches)) {
+                return (int) $matches[1];
+            }
+            // If no number found, sort by name alphabetically
+            return 999999 + strcmp($court->name ?? '', '');
+        })->values(); // Re-index the collection
         $timeSlots = [];
         for ($h = 8; $h <= 23; $h++) {
             $timeSlots[] = sprintf('%02d:00', $h);

@@ -92,7 +92,6 @@
                             <th class="px-2 sm:px-4 md:px-6 py-2 sm:py-3 md:py-4 border-b border-gray-200 text-center text-blue-700 text-xs sm:text-sm md:text-lg font-bold whitespace-nowrap shadow-sm min-w-[100px] sm:min-w-[120px]" data-court-id="{{ $court->id }}" data-tutorial="court-column-header">
                                 <div class="flex flex-col items-center">
                                     <span class="font-bold text-xs sm:text-sm md:text-base">{{ $court->name }}</span>
-                                    <span class="text-xs sm:text-sm font-normal text-gray-600 hidden sm:inline">Court {{ $loop->iteration }}</span>
                                 </div>
                             </th>
                         @endforeach

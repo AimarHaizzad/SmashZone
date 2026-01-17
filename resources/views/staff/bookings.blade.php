@@ -140,7 +140,6 @@
                                     </div>
                                     <div>
                                         <div class="text-xs sm:text-sm font-semibold text-gray-900">{{ $booking->court->name ?? 'N/A' }}</div>
-                                        <div class="text-xs sm:text-sm text-gray-500">Court {{ $loop->iteration }}</div>
                                         <div class="sm:hidden text-xs text-gray-500 mt-1">{{ $booking->user->name ?? 'N/A' }}</div>
                                     </div>
                                 </div>

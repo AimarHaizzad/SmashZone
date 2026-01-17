@@ -53,6 +53,55 @@
                     </button>
                 </form>
             </div>
+
+            <!-- Shipping Status Management (For Pickup Orders) -->
+            <div class="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
+                <h2 class="text-xl font-bold text-gray-900 mb-4">Shipping Status (Pickup)</h2>
+                
+                @if($order->shipping)
+                    <div class="mb-4 p-4 bg-gray-50 rounded-lg">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-sm text-gray-600">Current Shipping Status</span>
+                            <span class="px-3 py-1 rounded-full text-xs font-semibold {{ $order->shipping->status_badge_class }}">
+                                {{ $order->shipping->status_label }}
+                            </span>
+                        </div>
+                        @if($order->shipping->carrier)
+                            <div class="text-sm mt-1">
+                                <span class="text-gray-600">Carrier:</span>
+                                <span class="font-semibold text-gray-900">{{ $order->shipping->carrier }}</span>
+                            </div>
+                        @endif
+                    </div>
+                @endif
+
+                <form action="{{ route('orders.update-shipping', $order, absolute: false) }}" method="POST" class="space-y-4">
+                    @csrf
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Shipping Status</label>
+                        <select name="status" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            <option value="preparing" {{ $order->shipping && $order->shipping->status == 'preparing' ? 'selected' : '' }}>Preparing</option>
+                            <option value="ready_for_pickup" {{ $order->shipping && $order->shipping->status == 'ready_for_pickup' ? 'selected' : '' }}>Ready for Pickup</option>
+                            <option value="picked_up" {{ $order->shipping && $order->shipping->status == 'picked_up' ? 'selected' : '' }}>Picked Up</option>
+                            <option value="delivered" {{ $order->shipping && $order->shipping->status == 'delivered' ? 'selected' : '' }}>Delivered</option>
+                            <option value="cancelled" {{ $order->shipping && $order->shipping->status == 'cancelled' ? 'selected' : '' }}>Cancelled</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Notes</label>
+                        <textarea name="notes" rows="3" 
+                                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                  placeholder="Add shipping notes...">{{ $order->shipping ? $order->shipping->notes : '' }}</textarea>
+                    </div>
+
+                    <input type="hidden" name="carrier" value="Self Pickup">
+
+                    <button type="submit" class="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-semibold">
+                        Update Shipping Status
+                    </button>
+                </form>
+            </div>
             @endif
 
             <!-- Return Request Management -->
