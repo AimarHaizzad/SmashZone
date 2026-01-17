@@ -45,7 +45,7 @@
     @endif
 
     <!-- Enhanced Header Section -->
-    <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-4 sm:p-6 mb-6 sm:mb-8">
+    <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-4 sm:p-6 mb-6 sm:mb-8" data-tutorial="courts-header">
         <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 sm:gap-6">
             <!-- Stats and Info -->
             <div class="flex-1">
@@ -78,10 +78,11 @@
     </div>
 
     <!-- Enhanced Courts Grid -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6" data-tutorial="courts-grid">
         @forelse($courts as $court)
             <div id="court-card-{{ $court->id }}" 
-                 class="bg-white rounded-2xl shadow-lg border-2 border-gray-100 overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+                 class="bg-white rounded-2xl shadow-lg border-2 border-gray-100 overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
+                 data-tutorial="court-card-example">
                 
                 <!-- Court Image with Status Badge -->
                 <div class="relative">
@@ -214,4 +215,285 @@ document.addEventListener('DOMContentLoaded', function() {
     overflow: hidden;
 }
 </style>
+
+@if(isset($showTutorial) && $showTutorial)
+    @push('scripts')
+    <script>
+    (function() {
+        'use strict';
+        
+        function initCourtsTutorial() {
+            if (typeof introJs === 'undefined') {
+                console.error('Intro.js library not loaded');
+                return;
+            }
+            
+            function elementExists(selector) {
+                const element = document.querySelector(selector);
+                if (!element) return false;
+                const rect = element.getBoundingClientRect();
+                const style = window.getComputedStyle(element);
+                return rect.width > 0 && rect.height > 0 && style.display !== 'none' && style.visibility !== 'hidden';
+            }
+            
+            // Find first court card for tutorial
+            function findFirstCourtCard() {
+                const courtCards = document.querySelectorAll('[data-tutorial="court-card-example"]');
+                if (courtCards.length > 0) {
+                    const firstCard = courtCards[0];
+                    if (!firstCard.id) {
+                        firstCard.id = 'tutorial-court-card';
+                    }
+                    return '#tutorial-court-card';
+                }
+                return null;
+            }
+            
+            const steps = [
+                {
+                    element: '[data-tutorial="courts-header"]',
+                    intro: '<div style="text-align: center;"><h3 style="margin: 0 0 10px 0; font-size: 20px; font-weight: 600; color: #1f2937;">🏟️ Welcome to Courts!</h3><p style="margin: 0; color: #6b7280; line-height: 1.6;">Welcome to SmashZone\'s court directory! Here you can browse all available badminton courts. Let\'s learn how to explore and book courts!</p></div>',
+                    position: 'bottom',
+                    tooltipClass: 'introjs-tooltip-custom'
+                },
+                {
+                    element: '[data-tutorial="courts-grid"]',
+                    intro: '<div><h4 style="margin: 0 0 8px 0; font-size: 16px; font-weight: 600; color: #1f2937;">📋 Step 2: Courts Grid</h4><p style="margin: 0; color: #6b7280; line-height: 1.6;">This grid displays all available badminton courts. Each card shows:<br>• Court image<br>• Court name<br>• Owner information<br>• Status (Active/Maintenance/Closed)<br>• Location details<br><br>Scroll down to see more courts. Let\'s look at a court card in detail!</p></div>',
+                    position: 'top'
+                }
+            ];
+            
+            // Add court card step if courts exist
+            const courtCardSelector = findFirstCourtCard();
+            if (courtCardSelector && elementExists(courtCardSelector)) {
+                steps.push({
+                    element: courtCardSelector,
+                    intro: '<div><h4 style="margin: 0 0 8px 0; font-size: 16px; font-weight: 600; color: #1f2937;">🏸 Step 3: Understanding Court Cards</h4><p style="margin: 0; color: #6b7280; line-height: 1.6;">Each court card displays:<br>• <strong>Court image</strong> - Visual preview of the court<br>• <strong>Court name</strong> - The name/number of the court<br>• <strong>Owner</strong> - Who manages this court<br>• <strong>Status</strong> - Active (green), Maintenance (yellow), or Closed (red)<br>• <strong>Location</strong> - Physical location within the facility<br>• <strong>Created date</strong> - When the court was added<br><br>Hover over the card to see it lift up!</p></div>',
+                    position: 'top'
+                });
+                
+                // Add final step about booking
+                steps.push({
+                    element: courtCardSelector,
+                    intro: '<div><h4 style="margin: 0 0 8px 0; font-size: 16px; font-weight: 600; color: #1f2937;">✅ Step 4: How to Book a Court</h4><p style="margin: 0; color: #6b7280; line-height: 1.6;">To book a court:<br>1. Click on the <strong>"Bookings"</strong> link in the navigation menu<br>2. Select your preferred date<br>3. Choose a time slot<br>4. Select the court you want<br>5. Complete your booking!<br><br>The bookings page shows real-time availability for all courts. You can see which time slots are available and which are already booked! 🎉</p></div>',
+                    position: 'top'
+                });
+            }
+            
+            // Filter valid steps
+            const validSteps = steps.filter(step => elementExists(step.element));
+            
+            if (validSteps.length === 0) return;
+            
+            const intro = introJs();
+            intro.setOptions({
+                steps: validSteps,
+                showProgress: true,
+                showBullets: true,
+                exitOnOverlayClick: true,
+                exitOnEsc: true,
+                keyboardNavigation: true,
+                disableInteraction: false,
+                scrollToElement: true,
+                scrollPadding: 20,
+                nextLabel: 'Next →',
+                prevLabel: '← Previous',
+                skipLabel: 'Skip',
+                doneLabel: 'Got it! 🎉',
+                tooltipClass: 'customTooltip',
+                highlightClass: 'customHighlight',
+                buttonClass: 'introjs-button',
+                tooltipPosition: 'auto'
+            });
+            
+            // Ensure tooltip is visible after each step
+            intro.onchange(function(targetElement) {
+                setTimeout(function() {
+                    const tooltip = document.querySelector('.introjs-tooltip');
+                    if (tooltip) {
+                        tooltip.style.display = 'block';
+                        tooltip.style.visibility = 'visible';
+                        tooltip.style.opacity = '1';
+                        tooltip.style.zIndex = '999999';
+                        
+                        const header = tooltip.querySelector('.introjs-tooltip-header');
+                        if (header) {
+                            header.style.background = 'linear-gradient(135deg, #3b82f6 0%, #10b981 100%)';
+                            header.style.color = 'white';
+                            const headerText = header.querySelector('h3, h4');
+                            if (headerText) {
+                                headerText.style.color = 'white';
+                            }
+                        }
+                        
+                        const skipButton = tooltip.querySelector('.introjs-skipbutton');
+                        if (skipButton) {
+                            skipButton.style.color = 'white';
+                            skipButton.style.background = 'rgba(255, 255, 255, 0.2)';
+                            skipButton.style.border = '1px solid rgba(255, 255, 255, 0.3)';
+                            skipButton.style.padding = '8px 16px';
+                            skipButton.style.borderRadius = '8px';
+                            skipButton.style.fontWeight = '500';
+                        }
+                        
+                        const content = tooltip.querySelector('.introjs-tooltipcontent');
+                        if (content) {
+                            content.style.display = 'block';
+                            content.style.visibility = 'visible';
+                            content.style.opacity = '1';
+                        }
+                    }
+                }, 100);
+            });
+            
+            intro.onstart(function() {
+                console.log('Courts tutorial started with', validSteps.length, 'steps');
+            });
+            
+            intro.onexit(function() {
+                console.log('Courts tutorial exited');
+            });
+            
+            setTimeout(() => intro.start(), 1000);
+        }
+        
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initCourtsTutorial);
+        } else {
+            setTimeout(initCourtsTutorial, 100);
+        }
+    })();
+    </script>
+    <style>
+    /* Professional Tutorial Styling */
+    .customTooltip {
+        border-radius: 16px !important;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2) !important;
+        border: none !important;
+        max-width: 400px !important;
+        padding: 0 !important;
+        background: white !important;
+        overflow: hidden !important;
+    }
+
+    .introjs-tooltip-header {
+        background: linear-gradient(135deg, #3b82f6 0%, #10b981 100%) !important;
+        padding: 20px 20px 16px 20px !important;
+        border-bottom: none !important;
+        color: white !important;
+        position: relative !important;
+    }
+
+    .introjs-tooltip-header h3,
+    .introjs-tooltip-header h4 {
+        color: white !important;
+        margin: 0 !important;
+        font-weight: 600 !important;
+    }
+
+    .introjs-tooltipcontent {
+        padding: 20px !important;
+        font-size: 14px !important;
+        line-height: 1.6 !important;
+        color: #374151 !important;
+        background: white !important;
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+    }
+
+    .introjs-tooltipbuttons {
+        padding: 16px 20px 20px 20px !important;
+        border-top: 1px solid #e5e7eb !important;
+        text-align: center !important;
+        background: white !important;
+        display: flex !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+        gap: 12px !important;
+    }
+
+    .introjs-tooltip {
+        z-index: 999999 !important;
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        position: absolute !important;
+        max-width: 400px !important;
+        min-width: 300px !important;
+    }
+
+    .introjs-tooltip * {
+        visibility: visible !important;
+    }
+
+    .customHighlight {
+        border-radius: 12px !important;
+        box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.3) !important;
+    }
+
+    .introjs-skipbutton {
+        position: absolute !important;
+        top: 12px !important;
+        right: 12px !important;
+        z-index: 10 !important;
+        margin: 0 !important;
+        color: white !important;
+        font-size: 13px !important;
+        font-weight: 500 !important;
+        padding: 8px 16px !important;
+        border-radius: 8px !important;
+        transition: all 0.2s ease !important;
+        background: rgba(255, 255, 255, 0.2) !important;
+        border: 1px solid rgba(255, 255, 255, 0.3) !important;
+        cursor: pointer !important;
+        backdrop-filter: blur(4px) !important;
+    }
+
+    .introjs-skipbutton:hover {
+        background: rgba(255, 255, 255, 0.3) !important;
+        border-color: rgba(255, 255, 255, 0.5) !important;
+        transform: translateY(-1px) !important;
+    }
+
+    .introjs-button {
+        border-radius: 8px !important;
+        padding: 10px 20px !important;
+        font-weight: 600 !important;
+        font-size: 14px !important;
+        transition: all 0.2s ease !important;
+        border: none !important;
+        cursor: pointer !important;
+    }
+
+    .introjs-button.introjs-prevbutton {
+        background: #f3f4f6 !important;
+        color: #374151 !important;
+        border: 1px solid #e5e7eb !important;
+        flex: 1 !important;
+        max-width: 48% !important;
+    }
+
+    .introjs-button.introjs-prevbutton:hover {
+        background: #e5e7eb !important;
+        border-color: #d1d5db !important;
+    }
+
+    .introjs-button.introjs-nextbutton {
+        background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%) !important;
+        color: white !important;
+        border: none !important;
+        flex: 1 !important;
+        max-width: 48% !important;
+    }
+
+    .introjs-button.introjs-nextbutton:hover {
+        background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%) !important;
+        transform: translateY(-1px) !important;
+        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4) !important;
+    }
+    </style>
+    @endpush
+@endif
+
 @endsection 

@@ -35,7 +35,16 @@ class CourtController extends Controller
                     return 999999 + strcmp($court->name ?? '', '');
                 })
                 ->values(); // Re-index the collection
-            return view('courts.index', compact('courts'));
+            
+            // Check if user should see courts page tutorial (first time users only)
+            // Show tutorial if user hasn't seen it before, regardless of dashboard tutorial completion
+            $user = auth()->user();
+            $showTutorial = $user && $user->isCustomer() && !session('courts_tutorial_shown', false);
+            if ($showTutorial) {
+                session(['courts_tutorial_shown' => true]);
+            }
+            
+            return view('courts.index', compact('courts', 'showTutorial'));
         } catch (\Exception $e) {
             \Log::error('Courts index failed', [
                 'error' => $e->getMessage(),

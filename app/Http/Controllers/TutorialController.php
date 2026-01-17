@@ -42,7 +42,7 @@ class TutorialController extends Controller
             $user->save();
             
             // Clear session flags for page-specific tutorials
-            session()->forget(['booking_tutorial_shown', 'cart_tutorial_shown', 'products_tutorial_shown']);
+            session()->forget(['booking_tutorial_shown', 'cart_tutorial_shown', 'products_tutorial_shown', 'courts_tutorial_shown']);
             
             return response()->json([
                 'success' => true,
