@@ -44,21 +44,21 @@
                 <div class="bg-blue-500 text-white rounded-full p-3 sm:p-4 mb-2 sm:mb-3">
                     <svg class="w-5 h-5 sm:w-6 sm:h-6 lg:w-7 lg:h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 21m5.25-4l.75 4m-7.5-4h10.5a2.25 2.25 0 002.25-2.25V7.5A2.25 2.25 0 0017.25 5.25H6.75A2.25 2.25 0 004.5 7.5v7.25A2.25 2.25 0 006.75 17z"/></svg>
                 </div>
-                <div class="text-2xl sm:text-3xl font-bold text-blue-800">{{ $user->courts->count() }}</div>
+                <div class="text-2xl sm:text-3xl font-bold text-blue-800">{{ $user->courts()->count() }}</div>
                 <div class="text-gray-700 mt-1 font-medium text-sm sm:text-base">Courts Owned</div>
             </div>
             <div class="bg-gradient-to-br from-green-100 to-green-300 rounded-2xl shadow-lg p-4 sm:p-6 lg:p-8 flex flex-col items-center border-t-4 border-green-200 animate-fade-in">
                 <div class="bg-green-500 text-white rounded-full p-3 sm:p-4 mb-2 sm:mb-3">
                     <svg class="w-5 h-5 sm:w-6 sm:h-6 lg:w-7 lg:h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 17l4-4 4 4m0 0V3m0 14a4 4 0 01-8 0"/></svg>
                 </div>
-                <div class="text-2xl sm:text-3xl font-bold text-green-800">{{ $user->courts->flatMap->bookings->count() }}</div>
+                <div class="text-2xl sm:text-3xl font-bold text-green-800">{{ $allBookings->count() }}</div>
                 <div class="text-gray-700 mt-1 font-medium text-sm sm:text-base">Total Bookings</div>
             </div>
             <div class="bg-gradient-to-br from-yellow-100 to-yellow-300 rounded-2xl shadow-lg p-4 sm:p-6 lg:p-8 flex flex-col items-center border-t-4 border-yellow-200 animate-fade-in sm:col-span-2 lg:col-span-1">
                 <div class="bg-yellow-500 text-white rounded-full p-3 sm:p-4 mb-2 sm:mb-3">
                     <svg class="w-5 h-5 sm:w-6 sm:h-6 lg:w-7 lg:h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 1.343-3 3s1.343 3 3 3 3-1.343 3-3-1.343-3-3-3zm0 0V4m0 7v7"/></svg>
                 </div>
-                <div class="text-2xl sm:text-3xl font-bold text-yellow-800">RM {{ number_format($user->courts->flatMap->bookings->sum('total_price'), 2) }}</div>
+                <div class="text-2xl sm:text-3xl font-bold text-yellow-800">RM {{ number_format($totalRevenue, 2) }}</div>
                 <div class="text-gray-700 mt-1 font-medium text-sm sm:text-base">Total Revenue</div>
             </div>
         </div>
