@@ -30,10 +30,18 @@ class ProfileController extends Controller
         try {
             $user = $request->user();
             if (!$user) {
+                \Log::warning('Profile update attempted without authenticated user');
                 return Redirect::route('login', absolute: false)->with('error', 'Please login to update your profile.');
             }
 
             $validated = $request->validated();
+            
+            // Log validated data for debugging (remove sensitive data)
+            \Log::info('Profile update request', [
+                'user_id' => $user->id,
+                'fields' => array_keys($validated),
+                'has_profile_picture' => $request->hasFile('profile_picture')
+            ]);
 
             // Handle profile picture upload
             if ($request->hasFile('profile_picture')) {
@@ -103,16 +111,69 @@ class ProfileController extends Controller
                 }
             }
 
-            // Fill user with validated data
-            $user->fill($validated);
+            // Only fill fillable fields to prevent mass assignment issues
+            $fillableFields = $user->getFillable();
+            $dataToFill = [];
+            
+            // Only include fillable fields from validated data
+            foreach ($fillableFields as $field) {
+                if (array_key_exists($field, $validated)) {
+                    // Convert empty strings to null for nullable fields
+                    if (in_array($field, ['phone', 'position']) && $validated[$field] === '') {
+                        $dataToFill[$field] = null;
+                    } else {
+                        $dataToFill[$field] = $validated[$field];
+                    }
+                }
+            }
+            
+            // Log what we're about to save
+            \Log::info('About to fill user with data', [
+                'user_id' => $user->id,
+                'data_to_fill' => $dataToFill,
+                'current_email' => $user->email
+            ]);
+            
+            // Fill user with validated data (only fillable fields)
+            $user->fill($dataToFill);
 
             // If email is changed, reset email verification
             if ($user->isDirty('email')) {
                 $user->email_verified_at = null;
             }
+            
+            // Log dirty fields before save
+            $dirtyFields = $user->getDirty();
+            \Log::info('User model is dirty', [
+                'user_id' => $user->id,
+                'dirty_fields' => $dirtyFields
+            ]);
 
-            // Save the user
-            $user->save();
+            // Save the user - this may throw an exception on database errors
+            try {
+                $saved = $user->save();
+                if (!$saved) {
+                    \Log::error('User save returned false', [
+                        'user_id' => $user->id,
+                        'fillable_data' => $dataToFill,
+                        'dirty_fields' => $dirtyFields
+                    ]);
+                    throw new \Exception('Failed to save user profile - save() returned false');
+                }
+            } catch (\Illuminate\Database\QueryException $e) {
+                \Log::error('Database error saving user profile', [
+                    'user_id' => $user->id,
+                    'error' => $e->getMessage(),
+                    'sql' => $e->getSql(),
+                    'bindings' => $e->getBindings(),
+                    'code' => $e->getCode()
+                ]);
+                throw $e;
+            }
+            
+            \Log::info('Profile updated successfully', [
+                'user_id' => $user->id
+            ]);
 
             return Redirect::route('profile.edit', absolute: false)->with('status', 'profile-updated');
         } catch (\Exception $e) {
