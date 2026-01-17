@@ -181,6 +181,85 @@
                 </div>
             </div>
         </div>
+        
+        <!-- Recent Buy Product Activity Feed -->
+        <div class="bg-white rounded-2xl shadow-lg p-6 border-t-4 border-purple-200 mb-8">
+            <h2 class="text-xl font-bold mb-6 flex items-center">
+                <svg class="w-5 h-5 mr-2 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13l-1.35 2.7A2 2 0 007.52 19h8.96a2 2 0 001.87-2.3L17 13M7 13V6a1 1 0 011-1h5a1 1 0 011 1v7" />
+                </svg>
+                Recent Buy Product
+            </h2>
+            
+            <div class="space-y-4">
+                @php
+                    $recentOrders = isset($recentOrders) ? $recentOrders : collect();
+                @endphp
+                
+                @forelse($recentOrders as $order)
+                    <div class="flex items-center p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors">
+                        <div class="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-600 rounded-full flex items-center justify-center mr-4 shadow-sm">
+                            <svg class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13l-1.35 2.7A2 2 0 007.52 19h8.96a2 2 0 001.87-2.3L17 13M7 13V6a1 1 0 011-1h5a1 1 0 011 1v7" />
+                            </svg>
+                        </div>
+                        <div class="flex-1">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-sm font-semibold text-gray-900">
+                                        Product purchase by {{ $order->user->name ?? 'N/A' }}
+                                    </p>
+                                    <p class="text-sm text-gray-600">
+                                        {{ $order->items->take(2)->pluck('product_name')->join(', ') }}
+                                        @if($order->items->count() > 2)
+                                            +{{ $order->items->count() - 2 }} more
+                                        @endif
+                                        • RM {{ number_format($order->total_amount, 2) }}
+                                    </p>
+                                    <p class="text-xs text-gray-500 mt-1">
+                                        Order #{{ $order->order_number }}
+                                    </p>
+                                </div>
+                                <div class="text-right">
+                                    <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full
+                                        @if($order->status === 'delivered') bg-green-100 text-green-800
+                                        @elseif($order->status === 'shipped') bg-indigo-100 text-indigo-800
+                                        @elseif($order->status === 'processing') bg-purple-100 text-purple-800
+                                        @elseif($order->status === 'confirmed') bg-blue-100 text-blue-800
+                                        @elseif($order->status === 'pending') bg-yellow-100 text-yellow-800
+                                        @elseif($order->status === 'cancelled') bg-red-100 text-red-800
+                                        @else bg-gray-100 text-gray-800 @endif">
+                                        {{ ucfirst($order->status) }}
+                                    </span>
+                                    <p class="text-xs text-gray-500 mt-1">{{ $order->created_at->diffForHumans() }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                @empty
+                    <div class="text-center py-8">
+                        <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <svg class="w-8 h-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13l-1.35 2.7A2 2 0 007.52 19h8.96a2 2 0 001.87-2.3L17 13M7 13V6a1 1 0 011-1h5a1 1 0 011 1v7" />
+                            </svg>
+                        </div>
+                        <h3 class="text-lg font-semibold text-gray-600 mb-2">No Recent Product Purchases</h3>
+                        <p class="text-gray-500">Product purchase activity will appear here once customers start buying products.</p>
+                    </div>
+                @endforelse
+            </div>
+            
+            @if(isset($recentOrders) && $recentOrders->count() > 0)
+                <div class="mt-6 text-center">
+                    <a href="{{ route('orders.index') }}" class="inline-flex items-center px-4 py-2 bg-purple-100 text-purple-800 rounded-lg hover:bg-purple-200 transition-colors text-sm font-medium">
+                        View All Orders
+                        <svg class="w-4 h-4 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                        </svg>
+                    </a>
+                </div>
+            @endif
+        </div>
     </div>
 @elseif($user->isStaff())
     <div class="mb-12">
@@ -426,45 +505,56 @@
             @endif
         </div>
 
-        <!-- Recent Activity Feed -->
-        <div class="bg-white rounded-2xl shadow-lg p-6 border-t-4 border-orange-200 mb-8">
+        <!-- Recent Buy Product -->
+        <div class="bg-white rounded-2xl shadow-lg p-6 border-t-4 border-purple-200 mb-8">
             <h2 class="text-xl font-bold mb-6 flex items-center">
-                <svg class="w-5 h-5 mr-2 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                <svg class="w-5 h-5 mr-2 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13l-1.35 2.7A2 2 0 007.52 19h8.96a2 2 0 001.87-2.3L17 13M7 13V6a1 1 0 011-1h5a1 1 0 011 1v7" />
                 </svg>
-                Recent Activity
+                Recent Buy Product
             </h2>
             
             <div class="space-y-4">
                 @php
-                    $recentBookings = $allBookings->sortByDesc('created_at')->take(5);
+                    $recentOrders = isset($recentOrders) ? $recentOrders : collect();
                 @endphp
                 
-                @forelse($recentBookings as $booking)
+                @forelse($recentOrders as $order)
                     <div class="flex items-center p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors">
-                        <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center mr-4 shadow-sm">
+                        <div class="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-600 rounded-full flex items-center justify-center mr-4 shadow-sm">
                             <svg class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 17l4-4 4 4m0 0V3m0 14a4 4 0 01-8 0" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13l-1.35 2.7A2 2 0 007.52 19h8.96a2 2 0 001.87-2.3L17 13M7 13V6a1 1 0 011-1h5a1 1 0 011 1v7" />
                             </svg>
                         </div>
                         <div class="flex-1">
                             <div class="flex items-center justify-between">
                                 <div>
                                     <p class="text-sm font-semibold text-gray-900">
-                                        New booking by {{ $booking->user->name }}
+                                        Product purchase by {{ $order->user->name ?? 'N/A' }}
                                     </p>
                                     <p class="text-sm text-gray-600">
-                                        {{ $booking->court->name }} • {{ \Carbon\Carbon::parse($booking->date)->format('M d, Y') }} at {{ $booking->start_time }}
+                                        {{ $order->items->take(2)->pluck('product_name')->join(', ') }}
+                                        @if($order->items->count() > 2)
+                                            +{{ $order->items->count() - 2 }} more
+                                        @endif
+                                        • RM {{ number_format($order->total_amount, 2) }}
+                                    </p>
+                                    <p class="text-xs text-gray-500 mt-1">
+                                        Order #{{ $order->order_number }}
                                     </p>
                                 </div>
                                 <div class="text-right">
                                     <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full
-                                        @if($booking->status === 'confirmed') bg-green-100 text-green-800
-                                        @elseif($booking->status === 'pending') bg-yellow-100 text-yellow-800
+                                        @if($order->status === 'delivered') bg-green-100 text-green-800
+                                        @elseif($order->status === 'shipped') bg-indigo-100 text-indigo-800
+                                        @elseif($order->status === 'processing') bg-purple-100 text-purple-800
+                                        @elseif($order->status === 'confirmed') bg-blue-100 text-blue-800
+                                        @elseif($order->status === 'pending') bg-yellow-100 text-yellow-800
+                                        @elseif($order->status === 'cancelled') bg-red-100 text-red-800
                                         @else bg-gray-100 text-gray-800 @endif">
-                                        {{ ucfirst($booking->status) }}
+                                        {{ ucfirst($order->status) }}
                                     </span>
-                                    <p class="text-xs text-gray-500 mt-1">{{ $booking->created_at->diffForHumans() }}</p>
+                                    <p class="text-xs text-gray-500 mt-1">{{ $order->created_at->diffForHumans() }}</p>
                                 </div>
                             </div>
                         </div>
@@ -473,19 +563,19 @@
                     <div class="text-center py-8">
                         <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
                             <svg class="w-8 h-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13l-1.35 2.7A2 2 0 007.52 19h8.96a2 2 0 001.87-2.3L17 13M7 13V6a1 1 0 011-1h5a1 1 0 011 1v7" />
                             </svg>
                         </div>
-                        <h3 class="text-lg font-semibold text-gray-600 mb-2">No Recent Activity</h3>
-                        <p class="text-gray-500">Activity will appear here as bookings are made.</p>
+                        <h3 class="text-lg font-semibold text-gray-600 mb-2">No Recent Product Purchases</h3>
+                        <p class="text-gray-500">Product purchase activity will appear here once customers start buying products.</p>
                     </div>
                 @endforelse
             </div>
             
-            @if($recentBookings->count() > 0)
+            @if(isset($recentOrders) && $recentOrders->count() > 0)
                 <div class="mt-6 text-center">
-                    <a href="{{ route('staff.bookings') }}" class="inline-flex items-center px-4 py-2 bg-orange-100 text-orange-800 rounded-lg hover:bg-orange-200 transition-colors text-sm font-medium">
-                        View All Activity
+                    <a href="{{ route('orders.index') }}" class="inline-flex items-center px-4 py-2 bg-purple-100 text-purple-800 rounded-lg hover:bg-purple-200 transition-colors text-sm font-medium">
+                        View All Orders
                         <svg class="w-4 h-4 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
                         </svg>

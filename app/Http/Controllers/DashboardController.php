@@ -68,6 +68,12 @@ class DashboardController extends Controller
                     return $booking->payment ? $booking->payment->amount : 0;
                 });
                 
+                // Get recent product orders for staff dashboard
+                $recentOrders = Order::with(['user', 'items.product', 'payment'])
+                    ->orderBy('created_at', 'desc')
+                    ->take(5)
+                    ->get();
+                
             } else {
                 // For customers, get their own bookings
                 $allBookings = Booking::with(['court', 'user', 'payment'])

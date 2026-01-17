@@ -144,6 +144,18 @@
             </div>
         </div>
         
+        <!-- Search Bar -->
+        <div class="mb-4">
+            <div class="relative">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <svg class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                </div>
+                <input type="text" id="payment-search" onkeyup="searchPayments()" placeholder="Search by customer name, email, amount..." class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-purple-500 focus:border-purple-500 text-sm">
+            </div>
+        </div>
+        
         @if($payments->isEmpty())
             <div class="text-center py-16">
                 <div class="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -155,9 +167,9 @@
                 <p class="text-gray-500">There are no payment transactions to display.</p>
             </div>
         @else
-            <div class="overflow-x-auto">
+            <div class="overflow-x-auto overflow-y-auto max-h-[600px] border border-gray-200 rounded-lg">
                 <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-50">
+                    <thead class="bg-gray-50 sticky top-0 z-10">
                         <tr>
                             <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                                 Customer
@@ -281,6 +293,18 @@
                     </div>
                 </div>
                 
+                <!-- Search Bar -->
+                <div class="mb-4">
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <svg class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                            </svg>
+                        </div>
+                        <input type="text" id="refund-search" onkeyup="searchRefunds()" placeholder="Search by customer name, email, amount..." class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-orange-500 focus:border-orange-500 text-sm">
+                    </div>
+                </div>
+                
                 @if($refunds->isEmpty())
                     <div class="text-center py-16">
                         <div class="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -292,9 +316,9 @@
                         <p class="text-gray-500">There are no refund transactions to display.</p>
                     </div>
                 @else
-                    <div class="overflow-x-auto">
+                    <div class="overflow-x-auto overflow-y-auto max-h-[600px] border border-gray-200 rounded-lg">
                         <table class="min-w-full divide-y divide-gray-200">
-                            <thead class="bg-gray-50">
+                            <thead class="bg-gray-50 sticky top-0 z-10">
                                 <tr>
                                     <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                                         Customer
@@ -514,7 +538,21 @@ function showTab(tabName) {
 }
 
 // Payment filtering
+let currentPaymentFilter = 'all';
 function filterPayments(status) {
+    currentPaymentFilter = status;
+    applyPaymentFilters();
+}
+
+// Payment search
+function searchPayments() {
+    applyPaymentFilters();
+}
+
+// Apply both search and status filters for payments
+function applyPaymentFilters() {
+    const searchInput = document.getElementById('payment-search');
+    const searchTerm = searchInput ? searchInput.value.toLowerCase() : '';
     const rows = document.querySelectorAll('.payment-row');
     const buttons = document.querySelectorAll('.filter-btn');
     
@@ -524,23 +562,31 @@ function filterPayments(status) {
         btn.classList.add('bg-gray-200', 'text-gray-700');
     });
     
-    const activeBtn = document.getElementById(`filter-${status}`);
-    activeBtn.classList.remove('bg-gray-200', 'text-gray-700');
-    activeBtn.classList.add('active');
-    
-    if (status === 'all') {
-        activeBtn.classList.add('bg-purple-600', 'text-white');
-    } else if (status === 'paid') {
-        activeBtn.classList.add('bg-green-600', 'text-white');
-    } else if (status === 'pending') {
-        activeBtn.classList.add('bg-yellow-600', 'text-white');
-    } else if (status === 'failed') {
-        activeBtn.classList.add('bg-red-600', 'text-white');
+    const activeBtn = document.getElementById(`filter-${currentPaymentFilter}`);
+    if (activeBtn) {
+        activeBtn.classList.remove('bg-gray-200', 'text-gray-700');
+        activeBtn.classList.add('active');
+        
+        if (currentPaymentFilter === 'all') {
+            activeBtn.classList.add('bg-purple-600', 'text-white');
+        } else if (currentPaymentFilter === 'paid') {
+            activeBtn.classList.add('bg-green-600', 'text-white');
+        } else if (currentPaymentFilter === 'pending') {
+            activeBtn.classList.add('bg-yellow-600', 'text-white');
+        } else if (currentPaymentFilter === 'failed') {
+            activeBtn.classList.add('bg-red-600', 'text-white');
+        }
     }
     
-    // Filter rows
+    // Filter rows by both status and search term
     rows.forEach(row => {
-        if (status === 'all' || row.getAttribute('data-status') === status) {
+        const statusMatch = currentPaymentFilter === 'all' || row.getAttribute('data-status') === currentPaymentFilter;
+        
+        // Get row text content for search
+        const rowText = row.textContent.toLowerCase();
+        const searchMatch = searchTerm === '' || rowText.includes(searchTerm);
+        
+        if (statusMatch && searchMatch) {
             row.style.display = '';
         } else {
             row.style.display = 'none';
@@ -549,7 +595,21 @@ function filterPayments(status) {
 }
 
 // Refund filtering
+let currentRefundFilter = 'all';
 function filterRefunds(status) {
+    currentRefundFilter = status;
+    applyRefundFilters();
+}
+
+// Refund search
+function searchRefunds() {
+    applyRefundFilters();
+}
+
+// Apply both search and status filters for refunds
+function applyRefundFilters() {
+    const searchInput = document.getElementById('refund-search');
+    const searchTerm = searchInput ? searchInput.value.toLowerCase() : '';
     const rows = document.querySelectorAll('.refund-row');
     const buttons = document.querySelectorAll('.refund-filter-btn');
     
@@ -559,25 +619,33 @@ function filterRefunds(status) {
         btn.classList.add('bg-gray-200', 'text-gray-700');
     });
     
-    const activeBtn = document.getElementById(`refund-filter-${status}`);
-    activeBtn.classList.remove('bg-gray-200', 'text-gray-700');
-    activeBtn.classList.add('active');
-    
-    if (status === 'all') {
-        activeBtn.classList.add('bg-orange-600', 'text-white');
-    } else if (status === 'completed') {
-        activeBtn.classList.add('bg-green-600', 'text-white');
-    } else if (status === 'processing') {
-        activeBtn.classList.add('bg-blue-600', 'text-white');
-    } else if (status === 'pending') {
-        activeBtn.classList.add('bg-yellow-600', 'text-white');
-    } else if (status === 'failed') {
-        activeBtn.classList.add('bg-red-600', 'text-white');
+    const activeBtn = document.getElementById(`refund-filter-${currentRefundFilter}`);
+    if (activeBtn) {
+        activeBtn.classList.remove('bg-gray-200', 'text-gray-700');
+        activeBtn.classList.add('active');
+        
+        if (currentRefundFilter === 'all') {
+            activeBtn.classList.add('bg-orange-600', 'text-white');
+        } else if (currentRefundFilter === 'completed') {
+            activeBtn.classList.add('bg-green-600', 'text-white');
+        } else if (currentRefundFilter === 'processing') {
+            activeBtn.classList.add('bg-blue-600', 'text-white');
+        } else if (currentRefundFilter === 'pending') {
+            activeBtn.classList.add('bg-yellow-600', 'text-white');
+        } else if (currentRefundFilter === 'failed') {
+            activeBtn.classList.add('bg-red-600', 'text-white');
+        }
     }
     
-    // Filter rows
+    // Filter rows by both status and search term
     rows.forEach(row => {
-        if (status === 'all' || row.getAttribute('data-status') === status) {
+        const statusMatch = currentRefundFilter === 'all' || row.getAttribute('data-status') === currentRefundFilter;
+        
+        // Get row text content for search
+        const rowText = row.textContent.toLowerCase();
+        const searchMatch = searchTerm === '' || rowText.includes(searchTerm);
+        
+        if (statusMatch && searchMatch) {
             row.style.display = '';
         } else {
             row.style.display = 'none';
