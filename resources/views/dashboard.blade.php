@@ -108,6 +108,79 @@
                 </div>
             </div>
         </div>
+        
+        <!-- Recent Product Buy Activity -->
+        <div class="mb-6 sm:mb-8">
+            <div class="bg-white rounded-2xl shadow-lg p-4 sm:p-6 border-t-4 border-purple-100">
+                <h2 class="text-lg sm:text-xl font-bold mb-4 flex items-center">
+                    <svg class="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13l-1.35 2.7A2 2 0 007.52 19h8.96a2 2 0 001.87-2.3L17 13M7 13V6a1 1 0 011-1h5a1 1 0 011 1v7"/>
+                    </svg>
+                    Recent Product Buy Activity
+                </h2>
+                <div class="overflow-x-auto">
+                    @if(isset($recentOrders) && $recentOrders->count() > 0)
+                        <table class="w-full text-left border-separate border-spacing-y-2">
+                            <thead>
+                                <tr class="text-gray-600 text-xs sm:text-sm">
+                                    <th class="py-2">Order #</th>
+                                    <th class="hidden sm:table-cell">Customer</th>
+                                    <th class="hidden sm:table-cell">Products</th>
+                                    <th class="hidden sm:table-cell">Amount</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach($recentOrders as $order)
+                                    <tr class="bg-purple-50 hover:bg-purple-100 transition rounded-xl">
+                                        <td class="py-2 font-semibold text-sm sm:text-base">
+                                            <div class="sm:hidden">
+                                                <div>{{ $order->order_number }}</div>
+                                                <div class="text-xs text-gray-600 mt-1">{{ $order->user->name ?? 'N/A' }}</div>
+                                                <div class="text-xs text-gray-600">{{ $order->items->count() }} item(s) • RM {{ number_format($order->total_amount, 2) }}</div>
+                                            </div>
+                                            <div class="hidden sm:block">{{ $order->order_number }}</div>
+                                        </td>
+                                        <td class="hidden sm:table-cell text-sm">{{ $order->user->name ?? 'N/A' }}</td>
+                                        <td class="hidden sm:table-cell text-sm">
+                                            @foreach($order->items->take(2) as $item)
+                                                <div class="text-gray-700">{{ $item->product_name }} (x{{ $item->quantity }})</div>
+                                            @endforeach
+                                            @if($order->items->count() > 2)
+                                                <div class="text-gray-500 text-xs">+{{ $order->items->count() - 2 }} more</div>
+                                            @endif
+                                        </td>
+                                        <td class="hidden sm:table-cell text-sm font-semibold">RM {{ number_format($order->total_amount, 2) }}</td>
+                                        <td>
+                                            <span class="inline-block px-2 sm:px-3 py-1 rounded-full text-xs font-bold
+                                                @if($order->status === 'delivered') bg-green-200 text-green-800
+                                                @elseif($order->status === 'shipped') bg-indigo-200 text-indigo-800
+                                                @elseif($order->status === 'processing') bg-purple-200 text-purple-800
+                                                @elseif($order->status === 'confirmed') bg-blue-200 text-blue-800
+                                                @elseif($order->status === 'pending') bg-yellow-200 text-yellow-800
+                                                @elseif($order->status === 'cancelled') bg-red-200 text-red-800
+                                                @else bg-gray-200 text-gray-800 @endif">
+                                                {{ ucfirst($order->status) }}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    @else
+                        <div class="text-center py-8">
+                            <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <svg class="w-8 h-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13l-1.35 2.7A2 2 0 007.52 19h8.96a2 2 0 001.87-2.3L17 13M7 13V6a1 1 0 011-1h5a1 1 0 011 1v7"/>
+                                </svg>
+                            </div>
+                            <h3 class="text-lg font-semibold text-gray-600 mb-2">No Recent Orders</h3>
+                            <p class="text-gray-500">Product purchase activity will appear here once customers start buying products.</p>
+                        </div>
+                    @endif
+                </div>
+            </div>
+        </div>
     </div>
 @elseif($user->isStaff())
     <div class="mb-12">

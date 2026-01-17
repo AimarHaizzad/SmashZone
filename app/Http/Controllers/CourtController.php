@@ -238,10 +238,8 @@ class CourtController extends Controller
             abort(403);
         }
         
-        // Staff can edit any court, owners can only edit their own courts
-        if (auth()->user()->isOwner() && $court->owner_id !== auth()->id()) {
-            abort(403);
-        }
+        // Both owners and staff can edit any court
+        // Owners have full control over all courts in their business
         
         $court->load('pricingRules');
         return view('courts.edit', compact('court'));
@@ -257,10 +255,8 @@ class CourtController extends Controller
                 abort(403);
             }
             
-            // Staff can update any court, owners can only update their own courts
-            if (auth()->user()->isOwner() && $court->owner_id !== auth()->id()) {
-                abort(403);
-            }
+            // Both owners and staff can update any court
+            // Owners have full control over all courts in their business
             
             $validated = $request->validate([
                 'name' => 'required|string|max:255',
@@ -424,10 +420,8 @@ class CourtController extends Controller
             abort(403);
         }
         
-        // Staff can delete any court, owners can only delete their own courts
-        if (auth()->user()->isOwner() && $court->owner_id !== auth()->id()) {
-            abort(403);
-        }
+        // Both owners and staff can delete any court
+        // Owners have full control over all courts in their business
         
         // Store court info before deletion for notifications
         $courtName = $court->name;

@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\Booking;
 use App\Models\Court;
 use App\Models\User;
+use App\Models\Order;
 
 class DashboardController extends Controller
 {
@@ -16,6 +17,7 @@ class DashboardController extends Controller
         // Load bookings data based on user role
         $allBookings = collect();
         $totalRevenue = 0;
+        $recentOrders = collect();
         
         try {
             if ($user->isOwner()) {
@@ -41,6 +43,12 @@ class DashboardController extends Controller
                         return $booking->payment ? $booking->payment->amount : 0;
                     });
                 }
+                
+                // Get recent product orders for owner dashboard
+                $recentOrders = Order::with(['user', 'items.product', 'payment'])
+                    ->orderBy('created_at', 'desc')
+                    ->take(5)
+                    ->get();
                 
             } elseif ($user->isStaff()) {
                 // For staff, get all bookings
@@ -77,6 +85,6 @@ class DashboardController extends Controller
         
         $showTutorial = $user->isCustomer() && !$user->tutorial_completed;
         
-        return view('dashboard', compact('user', 'allBookings', 'totalRevenue', 'showTutorial'));
+        return view('dashboard', compact('user', 'allBookings', 'totalRevenue', 'showTutorial', 'recentOrders'));
     }
 }
