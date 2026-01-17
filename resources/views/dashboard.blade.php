@@ -206,10 +206,12 @@
 
         <!-- Analytics Cards -->
         @php
-            $allBookings = \App\Models\Booking::with(['court', 'user', 'payment'])->get();
+            // Use allBookings from controller, don't override it
             $todayBookings = $allBookings->where('date', now()->toDateString());
-            $pendingPayments = $allBookings->where('payment.status', 'pending');
-            $totalRevenue = $allBookings->where('payment.status', 'paid')->sum('payment.amount');
+            $pendingPayments = $allBookings->filter(function($booking) {
+                return $booking->payment && $booking->payment->status === 'pending';
+            });
+            // totalRevenue is already calculated in controller
         @endphp
         
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8">
