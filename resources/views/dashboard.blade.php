@@ -108,6 +108,69 @@
                 </div>
             </div>
         </div>
+        
+        <!-- Recent Product Buy -->
+        <div class="bg-white rounded-2xl shadow-lg border-t-4 border-orange-200 mb-8">
+            <div class="p-6 pt-8">
+                <h2 class="text-xl font-bold mb-6 flex items-center">
+                    <svg class="w-5 h-5 mr-2 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                    </svg>
+                    Recent Product Buy
+                </h2>
+            
+            <div class="space-y-4">
+                @forelse($recentOrders as $order)
+                    <div class="flex items-center p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors">
+                        <div class="w-10 h-10 bg-gradient-to-br from-orange-500 to-red-600 rounded-full flex items-center justify-center mr-4 shadow-sm">
+                            <svg class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                            </svg>
+                        </div>
+                        <div class="flex-1">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-sm font-semibold text-gray-900">
+                                        Order by {{ $order->user->name }}
+                                    </p>
+                                    <p class="text-sm text-gray-600">
+                                        {{ $order->order_number }} • {{ $order->items->count() }} item(s) • RM {{ number_format($order->total_amount, 2) }}
+                                    </p>
+                                </div>
+                                <div class="text-right">
+                                    <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full {{ $order->status_badge_class }}">
+                                        {{ ucfirst(str_replace('_', ' ', $order->status)) }}
+                                    </span>
+                                    <p class="text-xs text-gray-500 mt-1">{{ $order->created_at->diffForHumans() }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                @empty
+                    <div class="text-center py-8">
+                        <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <svg class="w-8 h-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                            </svg>
+                        </div>
+                        <h3 class="text-lg font-semibold text-gray-600 mb-2">No Recent Product Purchases</h3>
+                        <p class="text-gray-500">Product purchases will appear here as orders are made.</p>
+                    </div>
+                @endforelse
+            </div>
+            
+            @if($recentOrders->count() > 0)
+                <div class="mt-6 text-center">
+                    <a href="{{ route('orders.index') }}" class="inline-flex items-center px-4 py-2 bg-orange-100 text-orange-800 rounded-lg hover:bg-orange-200 transition-colors text-sm font-medium">
+                        View All Orders
+                        <svg class="w-4 h-4 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                        </svg>
+                    </a>
+                </div>
+            @endif
+            </div>
+        </div>
     </div>
 @elseif($user->isStaff())
     <div class="mb-12">
@@ -353,45 +416,39 @@
             @endif
         </div>
 
-        <!-- Recent Activity Feed -->
-        <div class="bg-white rounded-2xl shadow-lg p-6 border-t-4 border-orange-200 mb-8">
-            <h2 class="text-xl font-bold mb-6 flex items-center">
-                <svg class="w-5 h-5 mr-2 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                Recent Activity
-            </h2>
+        <!-- Recent Product Buy -->
+        <div class="bg-white rounded-2xl shadow-lg border-t-4 border-orange-200 mb-8">
+            <div class="p-6 pt-8">
+                <h2 class="text-xl font-bold mb-6 flex items-center">
+                    <svg class="w-5 h-5 mr-2 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                    </svg>
+                    Recent Product Buy
+                </h2>
             
             <div class="space-y-4">
-                @php
-                    $recentBookings = $allBookings->sortByDesc('created_at')->take(5);
-                @endphp
-                
-                @forelse($recentBookings as $booking)
+                @forelse($recentOrders as $order)
                     <div class="flex items-center p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors">
-                        <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center mr-4 shadow-sm">
+                        <div class="w-10 h-10 bg-gradient-to-br from-orange-500 to-red-600 rounded-full flex items-center justify-center mr-4 shadow-sm">
                             <svg class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 17l4-4 4 4m0 0V3m0 14a4 4 0 01-8 0" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
                             </svg>
                         </div>
                         <div class="flex-1">
                             <div class="flex items-center justify-between">
                                 <div>
                                     <p class="text-sm font-semibold text-gray-900">
-                                        New booking by {{ $booking->user->name }}
+                                        Order by {{ $order->user->name }}
                                     </p>
                                     <p class="text-sm text-gray-600">
-                                        {{ $booking->court->name }} • {{ \Carbon\Carbon::parse($booking->date)->format('M d, Y') }} at {{ $booking->start_time }}
+                                        {{ $order->order_number }} • {{ $order->items->count() }} item(s) • RM {{ number_format($order->total_amount, 2) }}
                                     </p>
                                 </div>
                                 <div class="text-right">
-                                    <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full
-                                        @if($booking->status === 'confirmed') bg-green-100 text-green-800
-                                        @elseif($booking->status === 'pending') bg-yellow-100 text-yellow-800
-                                        @else bg-gray-100 text-gray-800 @endif">
-                                        {{ ucfirst($booking->status) }}
+                                    <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full {{ $order->status_badge_class }}">
+                                        {{ ucfirst(str_replace('_', ' ', $order->status)) }}
                                     </span>
-                                    <p class="text-xs text-gray-500 mt-1">{{ $booking->created_at->diffForHumans() }}</p>
+                                    <p class="text-xs text-gray-500 mt-1">{{ $order->created_at->diffForHumans() }}</p>
                                 </div>
                             </div>
                         </div>
@@ -400,25 +457,28 @@
                     <div class="text-center py-8">
                         <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
                             <svg class="w-8 h-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
                             </svg>
                         </div>
-                        <h3 class="text-lg font-semibold text-gray-600 mb-2">No Recent Activity</h3>
-                        <p class="text-gray-500">Activity will appear here as bookings are made.</p>
+                        <h3 class="text-lg font-semibold text-gray-600 mb-2">No Recent Product Purchases</h3>
+                        <p class="text-gray-500">Product purchases will appear here as orders are made.</p>
                     </div>
                 @endforelse
             </div>
             
-            @if($recentBookings->count() > 0)
+            @if($recentOrders->count() > 0)
                 <div class="mt-6 text-center">
-                    <a href="{{ route('staff.bookings') }}" class="inline-flex items-center px-4 py-2 bg-orange-100 text-orange-800 rounded-lg hover:bg-orange-200 transition-colors text-sm font-medium">
-                        View All Activity
+                    <a href="{{ route('orders.index') }}" class="inline-flex items-center px-4 py-2 bg-orange-100 text-orange-800 rounded-lg hover:bg-orange-200 transition-colors text-sm font-medium">
+                        View All Orders
                         <svg class="w-4 h-4 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
                         </svg>
                     </a>
                 </div>
             @endif
+            </div>
+        </div>
+            </div>
         </div>
     </div>
 @else

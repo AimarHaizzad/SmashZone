@@ -681,11 +681,11 @@ Route::middleware(['auth'])->group(function () {
     Route::get('payments/{payment}/success', [PaymentController::class, 'paymentSuccess'])->name('payments.success');
     Route::get('payments/{payment}/cancel', [PaymentController::class, 'paymentCancel'])->name('payments.cancel');
 
-    // Refunds (Staff and Owners only)
+    // Refunds (Owners only)
     Route::middleware(['auth'])->group(function () {
         Route::get('refunds', function() {
             $user = auth()->user();
-            if (!$user->isOwner() && !$user->isStaff()) {
+            if (!$user->isOwner()) {
                 abort(403, 'Unauthorized access to refunds.');
             }
             return app(App\Http\Controllers\RefundController::class)->index();
@@ -693,7 +693,7 @@ Route::middleware(['auth'])->group(function () {
         
         Route::get('refunds/{refund}', function($refund) {
             $user = auth()->user();
-            if (!$user->isOwner() && !$user->isStaff()) {
+            if (!$user->isOwner()) {
                 abort(403, 'Unauthorized access to refunds.');
             }
             return app(App\Http\Controllers\RefundController::class)->show($refund);
@@ -701,7 +701,7 @@ Route::middleware(['auth'])->group(function () {
         
         Route::post('refunds/{refund}/retry', function($refund) {
             $user = auth()->user();
-            if (!$user->isOwner() && !$user->isStaff()) {
+            if (!$user->isOwner()) {
                 abort(403, 'Unauthorized access to refunds.');
             }
             return app(App\Http\Controllers\RefundController::class)->retry($refund);
@@ -709,7 +709,7 @@ Route::middleware(['auth'])->group(function () {
         
         Route::post('refunds/{refund}/manual', function($refund) {
             $user = auth()->user();
-            if (!$user->isOwner() && !$user->isStaff()) {
+            if (!$user->isOwner()) {
                 abort(403, 'Unauthorized access to refunds.');
             }
             return app(App\Http\Controllers\RefundController::class)->manualRefund(request(), $refund);

@@ -190,7 +190,7 @@
                     </div>
 
                     <!-- Action Buttons -->
-                    @if(!auth()->user() || (auth()->user() && auth()->user()->role !== 'owner'))
+                    @if(!auth()->user() || (auth()->user() && auth()->user()->isCustomer()))
                         <div class="mb-3 text-sm {{ ($product->quantity ?? 0) > 0 ? 'text-gray-600' : 'text-red-600 font-semibold' }}">
                             @if(($product->quantity ?? 0) > 0)
                                 In stock: {{ $product->quantity }}
