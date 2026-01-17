@@ -326,7 +326,7 @@
         </div>
 
         <!-- Recent Bookings Table -->
-        <div class="bg-white rounded-2xl shadow-lg p-6 border-t-4 border-green-200">
+        <div class="bg-white rounded-2xl shadow-lg p-6 border-t-4 border-green-200 mb-8">
             <div class="flex items-center justify-between mb-6">
                 <h2 class="text-xl font-bold flex items-center">
                     <svg class="w-5 h-5 mr-2 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">

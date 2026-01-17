@@ -45,14 +45,26 @@ class LoginRequest extends FormRequest
         $credentials = [
             'email' => $this->input('email'),
             'password' => $this->input('password'),
-            'role' => $this->input('role'),
         ];
+
+        $requestedRole = $this->input('role');
 
         if (! Auth::attempt($credentials, $this->boolean('remember'))) {
             RateLimiter::hit($this->throttleKey());
 
             throw ValidationException::withMessages([
                 'email' => trans('auth.failed'),
+            ]);
+        }
+
+        // Check if the authenticated user's role matches the requested role
+        $user = Auth::user();
+        if ($user && $user->role !== $requestedRole) {
+            Auth::logout();
+            RateLimiter::hit($this->throttleKey());
+
+            throw ValidationException::withMessages([
+                'role' => 'The selected role does not match your account type.',
             ]);
         }
 

@@ -128,23 +128,41 @@
         <div class="p-6">
             <!-- Payments Tab -->
             <div id="payments-content" class="tab-content">
-                <div class="flex items-center justify-between mb-4">
-                    <h3 class="text-lg font-semibold text-gray-800">Payment Transactions</h3>
+                <div class="mb-4">
+                    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
+                        <h3 class="text-lg font-semibold text-gray-800">Payment Transactions</h3>
+                        
+                        <!-- Payment Filter Buttons -->
+                        <div class="flex items-center gap-2 flex-wrap">
+                            <button onclick="filterPayments('all')" id="filter-all" class="filter-btn active px-3 py-1 rounded-lg text-sm font-medium bg-purple-600 text-white">
+                                All
+                            </button>
+                            <button onclick="filterPayments('paid')" id="filter-paid" class="filter-btn px-3 py-1 rounded-lg text-sm font-medium bg-gray-200 text-gray-700 hover:bg-green-200 hover:text-green-800">
+                                Paid
+                            </button>
+                            <button onclick="filterPayments('pending')" id="filter-pending" class="filter-btn px-3 py-1 rounded-lg text-sm font-medium bg-gray-200 text-gray-700 hover:bg-yellow-200 hover:text-yellow-800">
+                                Pending
+                            </button>
+                            <button onclick="filterPayments('failed')" id="filter-failed" class="filter-btn px-3 py-1 rounded-lg text-sm font-medium bg-gray-200 text-gray-700 hover:bg-red-200 hover:text-red-800">
+                                Failed
+                            </button>
+                        </div>
+                    </div>
                     
-                    <!-- Payment Filter Buttons -->
-                <div class="flex items-center gap-2">
-                        <button onclick="filterPayments('all')" id="filter-all" class="filter-btn active px-3 py-1 rounded-lg text-sm font-medium bg-purple-600 text-white">
-                        All
-                    </button>
-                        <button onclick="filterPayments('paid')" id="filter-paid" class="filter-btn px-3 py-1 rounded-lg text-sm font-medium bg-gray-200 text-gray-700 hover:bg-green-200 hover:text-green-800">
-                        Paid
-                    </button>
-                        <button onclick="filterPayments('pending')" id="filter-pending" class="filter-btn px-3 py-1 rounded-lg text-sm font-medium bg-gray-200 text-gray-700 hover:bg-yellow-200 hover:text-yellow-800">
-                        Pending
-                    </button>
-                        <button onclick="filterPayments('failed')" id="filter-failed" class="filter-btn px-3 py-1 rounded-lg text-sm font-medium bg-gray-200 text-gray-700 hover:bg-red-200 hover:text-red-800">
-                        Failed
-                    </button>
+                    <!-- Search Input -->
+                    <div class="relative mb-4">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <svg class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                            </svg>
+                        </div>
+                        <input 
+                            type="text" 
+                            id="payment-search" 
+                            placeholder="Search by customer name, email, or amount..." 
+                            class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-sm"
+                            onkeyup="searchPayments()"
+                        />
             </div>
         </div>
         
@@ -159,9 +177,9 @@
                 <p class="text-gray-500">There are no payment transactions to display.</p>
             </div>
         @else
-            <div class="overflow-x-auto">
+            <div class="overflow-x-auto max-h-[600px] overflow-y-auto border border-gray-200 rounded-lg">
                 <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-50">
+                    <thead class="bg-gray-50 sticky top-0 z-10">
                         <tr>
                             <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                                 Customer
@@ -180,9 +198,14 @@
                             </th>
                         </tr>
                     </thead>
-                    <tbody class="bg-white divide-y divide-gray-200">
+                    <tbody class="bg-white divide-y divide-gray-200" id="payments-tbody">
                         @foreach($payments as $payment)
-                            <tr class="payment-row hover:bg-gray-50 transition-colors" data-status="{{ $payment->status }}">
+                            <tr class="payment-row hover:bg-gray-50 transition-colors" 
+                                data-status="{{ $payment->status }}"
+                                data-customer-name="{{ strtolower($payment->user->name ?? '') }}"
+                                data-customer-email="{{ strtolower($payment->user->email ?? '') }}"
+                                data-amount="{{ $payment->amount }}"
+                                data-payment-id="{{ $payment->id }}">
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <div class="flex items-center">
                                         <div class="w-10 h-10 bg-gradient-to-br from-purple-500 to-blue-500 rounded-full flex items-center justify-center mr-3">
@@ -263,26 +286,44 @@
             <!-- Refunds Tab -->
             @if(!auth()->user()->isStaff())
             <div id="refunds-content" class="tab-content hidden">
-                <div class="flex items-center justify-between mb-4">
-                    <h3 class="text-lg font-semibold text-gray-800">Refund History</h3>
+                <div class="mb-4">
+                    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
+                        <h3 class="text-lg font-semibold text-gray-800">Refund History</h3>
+                        
+                        <!-- Refund Filter Buttons -->
+                        <div class="flex items-center gap-2 flex-wrap">
+                            <button onclick="filterRefunds('all')" id="refund-filter-all" class="refund-filter-btn active px-3 py-1 rounded-lg text-sm font-medium bg-orange-600 text-white">
+                                All
+                            </button>
+                            <button onclick="filterRefunds('completed')" id="refund-filter-completed" class="refund-filter-btn px-3 py-1 rounded-lg text-sm font-medium bg-gray-200 text-gray-700 hover:bg-green-200 hover:text-green-800">
+                                Completed
+                            </button>
+                            <button onclick="filterRefunds('processing')" id="refund-filter-processing" class="refund-filter-btn px-3 py-1 rounded-lg text-sm font-medium bg-gray-200 text-gray-700 hover:bg-blue-200 hover:text-blue-800">
+                                Processing
+                            </button>
+                            <button onclick="filterRefunds('pending')" id="refund-filter-pending" class="refund-filter-btn px-3 py-1 rounded-lg text-sm font-medium bg-gray-200 text-gray-700 hover:bg-yellow-200 hover:text-yellow-800">
+                                Pending
+                            </button>
+                            <button onclick="filterRefunds('failed')" id="refund-filter-failed" class="refund-filter-btn px-3 py-1 rounded-lg text-sm font-medium bg-gray-200 text-gray-700 hover:bg-red-200 hover:text-red-800">
+                                Failed
+                            </button>
+                        </div>
+                    </div>
                     
-                    <!-- Refund Filter Buttons -->
-                    <div class="flex items-center gap-2">
-                        <button onclick="filterRefunds('all')" id="refund-filter-all" class="refund-filter-btn active px-3 py-1 rounded-lg text-sm font-medium bg-orange-600 text-white">
-                            All
-                        </button>
-                        <button onclick="filterRefunds('completed')" id="refund-filter-completed" class="refund-filter-btn px-3 py-1 rounded-lg text-sm font-medium bg-gray-200 text-gray-700 hover:bg-green-200 hover:text-green-800">
-                            Completed
-                        </button>
-                        <button onclick="filterRefunds('processing')" id="refund-filter-processing" class="refund-filter-btn px-3 py-1 rounded-lg text-sm font-medium bg-gray-200 text-gray-700 hover:bg-blue-200 hover:text-blue-800">
-                            Processing
-                        </button>
-                        <button onclick="filterRefunds('pending')" id="refund-filter-pending" class="refund-filter-btn px-3 py-1 rounded-lg text-sm font-medium bg-gray-200 text-gray-700 hover:bg-yellow-200 hover:text-yellow-800">
-                            Pending
-                        </button>
-                        <button onclick="filterRefunds('failed')" id="refund-filter-failed" class="refund-filter-btn px-3 py-1 rounded-lg text-sm font-medium bg-gray-200 text-gray-700 hover:bg-red-200 hover:text-red-800">
-                            Failed
-                        </button>
+                    <!-- Search Input -->
+                    <div class="relative mb-4">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <svg class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                            </svg>
+                        </div>
+                        <input 
+                            type="text" 
+                            id="refund-search" 
+                            placeholder="Search by customer name, email, or amount..." 
+                            class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-sm"
+                            onkeyup="searchRefunds()"
+                        />
                     </div>
                 </div>
                 
@@ -297,9 +338,9 @@
                         <p class="text-gray-500">There are no refund transactions to display.</p>
                     </div>
                 @else
-                    <div class="overflow-x-auto">
+                    <div class="overflow-x-auto max-h-[600px] overflow-y-auto border border-gray-200 rounded-lg">
                         <table class="min-w-full divide-y divide-gray-200">
-                            <thead class="bg-gray-50">
+                            <thead class="bg-gray-50 sticky top-0 z-10">
                                 <tr>
                                     <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                                         Customer
@@ -318,9 +359,14 @@
                                     </th>
                                 </tr>
                             </thead>
-                            <tbody class="bg-white divide-y divide-gray-200">
+                            <tbody class="bg-white divide-y divide-gray-200" id="refunds-tbody">
                                 @foreach($refunds as $refund)
-                                    <tr class="refund-row hover:bg-gray-50 transition-colors" data-status="{{ $refund->status }}">
+                                    <tr class="refund-row hover:bg-gray-50 transition-colors" 
+                                        data-status="{{ $refund->status }}"
+                                        data-customer-name="{{ strtolower($refund->user->name ?? '') }}"
+                                        data-customer-email="{{ strtolower($refund->user->email ?? '') }}"
+                                        data-amount="{{ $refund->amount }}"
+                                        data-refund-id="{{ $refund->id }}">
                                         <td class="px-6 py-4 whitespace-nowrap">
                                             <div class="flex items-center">
                                                 <div class="w-10 h-10 bg-gradient-to-br from-orange-500 to-red-500 rounded-full flex items-center justify-center mr-3">
@@ -521,8 +567,13 @@ function showTab(tabName) {
     }
 }
 
+// Store current filter state
+let currentPaymentFilter = 'all';
+let currentRefundFilter = 'all';
+
 // Payment filtering
 function filterPayments(status) {
+    currentPaymentFilter = status;
     const rows = document.querySelectorAll('.payment-row');
     const buttons = document.querySelectorAll('.filter-btn');
     
@@ -546,9 +597,37 @@ function filterPayments(status) {
         activeBtn.classList.add('bg-red-600', 'text-white');
     }
     
-    // Filter rows
+    // Apply both filter and search
+    applyPaymentFilters();
+}
+
+// Payment search
+function searchPayments() {
+    applyPaymentFilters();
+}
+
+// Apply both payment filter and search
+function applyPaymentFilters() {
+    const searchTerm = document.getElementById('payment-search')?.value.toLowerCase() || '';
+    const rows = document.querySelectorAll('.payment-row');
+    
     rows.forEach(row => {
-        if (status === 'all' || row.getAttribute('data-status') === status) {
+        const status = row.getAttribute('data-status');
+        const customerName = row.getAttribute('data-customer-name') || '';
+        const customerEmail = row.getAttribute('data-customer-email') || '';
+        const amount = row.getAttribute('data-amount') || '';
+        
+        // Check status filter
+        const statusMatch = currentPaymentFilter === 'all' || status === currentPaymentFilter;
+        
+        // Check search term
+        const searchMatch = !searchTerm || 
+            customerName.includes(searchTerm) || 
+            customerEmail.includes(searchTerm) || 
+            amount.includes(searchTerm);
+        
+        // Show row if both conditions match
+        if (statusMatch && searchMatch) {
             row.style.display = '';
         } else {
             row.style.display = 'none';
@@ -558,6 +637,7 @@ function filterPayments(status) {
 
 // Refund filtering
 function filterRefunds(status) {
+    currentRefundFilter = status;
     const rows = document.querySelectorAll('.refund-row');
     const buttons = document.querySelectorAll('.refund-filter-btn');
     
@@ -583,9 +663,37 @@ function filterRefunds(status) {
         activeBtn.classList.add('bg-red-600', 'text-white');
     }
     
-    // Filter rows
+    // Apply both filter and search
+    applyRefundFilters();
+}
+
+// Refund search
+function searchRefunds() {
+    applyRefundFilters();
+}
+
+// Apply both refund filter and search
+function applyRefundFilters() {
+    const searchTerm = document.getElementById('refund-search')?.value.toLowerCase() || '';
+    const rows = document.querySelectorAll('.refund-row');
+    
     rows.forEach(row => {
-        if (status === 'all' || row.getAttribute('data-status') === status) {
+        const status = row.getAttribute('data-status');
+        const customerName = row.getAttribute('data-customer-name') || '';
+        const customerEmail = row.getAttribute('data-customer-email') || '';
+        const amount = row.getAttribute('data-amount') || '';
+        
+        // Check status filter
+        const statusMatch = currentRefundFilter === 'all' || status === currentRefundFilter;
+        
+        // Check search term
+        const searchMatch = !searchTerm || 
+            customerName.includes(searchTerm) || 
+            customerEmail.includes(searchTerm) || 
+            amount.includes(searchTerm);
+        
+        // Show row if both conditions match
+        if (statusMatch && searchMatch) {
             row.style.display = '';
         } else {
             row.style.display = 'none';
