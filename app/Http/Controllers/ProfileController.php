@@ -54,7 +54,22 @@ class ProfileController extends Controller
                 }
             }
 
-            $user->fill($validated);
+            // Update user fields explicitly to avoid issues with missing database columns
+            $user->name = $validated['name'];
+            $user->email = $validated['email'];
+            
+            // Only set phone and position if they exist in validated data and are fillable
+            if (isset($validated['phone']) && in_array('phone', $user->getFillable())) {
+                $user->phone = $validated['phone'];
+            }
+            
+            if (isset($validated['position']) && in_array('position', $user->getFillable())) {
+                $user->position = $validated['position'];
+            }
+            
+            if (isset($validated['profile_picture'])) {
+                $user->profile_picture = $validated['profile_picture'];
+            }
 
             if ($user->isDirty('email')) {
                 $user->email_verified_at = null;

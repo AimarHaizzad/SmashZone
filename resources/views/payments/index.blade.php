@@ -66,6 +66,7 @@
             </div>
         </div>
         
+        @if(!auth()->user()->isStaff())
         <div class="bg-white rounded-2xl shadow-lg p-6 border border-gray-100">
             <div class="flex items-center justify-between">
                 <div>
@@ -79,6 +80,7 @@
                 </div>
             </div>
         </div>
+        @endif
         
         @if($showRevenueCard)
             <div class="bg-white rounded-2xl shadow-lg p-6 border border-gray-100">
@@ -113,9 +115,11 @@
                     <button onclick="showTab('payments')" id="tab-payments" class="tab-btn active px-4 py-2 rounded-lg text-sm font-medium bg-purple-600 text-white">
                         Payments
                     </button>
+                    @if(!auth()->user()->isStaff())
                     <button onclick="showTab('refunds')" id="tab-refunds" class="tab-btn px-4 py-2 rounded-lg text-sm font-medium bg-gray-200 text-gray-700 hover:bg-orange-200 hover:text-orange-800">
                         Refunds
                     </button>
+                    @endif
                 </div>
             </div>
         </div>
@@ -257,6 +261,7 @@
     </div>
     
             <!-- Refunds Tab -->
+            @if(!auth()->user()->isStaff())
             <div id="refunds-content" class="tab-content hidden">
                 <div class="flex items-center justify-between mb-4">
                     <h3 class="text-lg font-semibold text-gray-800">Refund History</h3>
@@ -381,6 +386,7 @@
                 @endif
             </div>
         </div>
+            @endif
     </div>
     
     <!-- Financial Insights -->
@@ -414,6 +420,7 @@
                         </div>
                     @endforeach
                     
+                    @if(!auth()->user()->isStaff())
                     @foreach($refunds->take(2) as $refund)
                         <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
                             <div class="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center">
@@ -430,6 +437,7 @@
                             </div>
                         </div>
                     @endforeach
+                    @endif
                 </div>
             </div>
         </div>
