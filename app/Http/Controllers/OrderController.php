@@ -141,6 +141,11 @@ class OrderController extends Controller
             abort(403, 'Unauthorized. Only owners and staff can update shipping status.');
         }
 
+        // Prevent shipping status updates if customer has marked order as received
+        if ($order->received_at) {
+            return redirect()->back()->with('error', 'Cannot update shipping status. Customer has already marked this order as received.');
+        }
+
         $request->validate([
             'status' => 'required|in:preparing,ready_for_pickup,picked_up,out_for_delivery,delivered,cancelled',
             'tracking_number' => 'nullable|string|max:255',
