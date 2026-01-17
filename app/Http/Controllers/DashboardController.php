@@ -6,7 +6,6 @@ use Illuminate\Http\Request;
 use App\Models\Booking;
 use App\Models\Court;
 use App\Models\User;
-use App\Models\Order;
 
 class DashboardController extends Controller
 {
@@ -17,7 +16,6 @@ class DashboardController extends Controller
         // Load bookings data based on user role
         $allBookings = collect();
         $totalRevenue = 0;
-        $recentOrders = collect();
         
         try {
             if ($user->isOwner()) {
@@ -44,17 +42,6 @@ class DashboardController extends Controller
                     });
                 }
                 
-                // Get recent orders for owner dashboard
-                try {
-                    $recentOrders = Order::with(['user', 'items'])
-                        ->orderBy('created_at', 'desc')
-                        ->take(5)
-                        ->get();
-                } catch (\Exception $e) {
-                    \Log::warning('Dashboard orders load error: ' . $e->getMessage());
-                    $recentOrders = collect();
-                }
-                
             } elseif ($user->isStaff()) {
                 // For staff, get all bookings
                 $allBookings = Booking::with(['court', 'user', 'payment'])
@@ -73,17 +60,6 @@ class DashboardController extends Controller
                     return $booking->payment ? $booking->payment->amount : 0;
                 });
                 
-                // Get recent orders for staff dashboard
-                try {
-                    $recentOrders = Order::with(['user', 'items'])
-                        ->orderBy('created_at', 'desc')
-                        ->take(5)
-                        ->get();
-                } catch (\Exception $e) {
-                    \Log::warning('Dashboard orders load error: ' . $e->getMessage());
-                    $recentOrders = collect();
-                }
-                
             } else {
                 // For customers, get their own bookings
                 $allBookings = Booking::with(['court', 'user', 'payment'])
@@ -94,23 +70,13 @@ class DashboardController extends Controller
             }
         } catch (\Exception $e) {
             // If there's an error loading bookings, log it and continue with empty data
-            \Log::error('Dashboard booking load error: ' . $e->getMessage(), [
-                'trace' => $e->getTraceAsString()
-            ]);
+            \Log::error('Dashboard booking load error: ' . $e->getMessage());
             $allBookings = collect();
             $totalRevenue = 0;
-            $recentOrders = collect();
         }
         
-        // Safely check tutorial_completed field
-        try {
-            $tutorialCompleted = (bool) ($user->tutorial_completed ?? false);
-            $showTutorial = $user->isCustomer() && !$tutorialCompleted;
-        } catch (\Exception $e) {
-            // If tutorial_completed field doesn't exist, show tutorial for customers
-            $showTutorial = $user->isCustomer();
-        }
+        $showTutorial = $user->isCustomer() && !$user->tutorial_completed;
         
-        return view('dashboard', compact('user', 'allBookings', 'totalRevenue', 'showTutorial', 'recentOrders'));
+        return view('dashboard', compact('user', 'allBookings', 'totalRevenue', 'showTutorial'));
     }
 }

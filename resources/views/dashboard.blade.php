@@ -44,21 +44,21 @@
                 <div class="bg-blue-500 text-white rounded-full p-3 sm:p-4 mb-2 sm:mb-3">
                     <svg class="w-5 h-5 sm:w-6 sm:h-6 lg:w-7 lg:h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 21m5.25-4l.75 4m-7.5-4h10.5a2.25 2.25 0 002.25-2.25V7.5A2.25 2.25 0 0017.25 5.25H6.75A2.25 2.25 0 004.5 7.5v7.25A2.25 2.25 0 006.75 17z"/></svg>
                 </div>
-                <div class="text-2xl sm:text-3xl font-bold text-blue-800">{{ $user->courts()->count() }}</div>
+                <div class="text-2xl sm:text-3xl font-bold text-blue-800">{{ $user->courts->count() }}</div>
                 <div class="text-gray-700 mt-1 font-medium text-sm sm:text-base">Courts Owned</div>
             </div>
             <div class="bg-gradient-to-br from-green-100 to-green-300 rounded-2xl shadow-lg p-4 sm:p-6 lg:p-8 flex flex-col items-center border-t-4 border-green-200 animate-fade-in">
                 <div class="bg-green-500 text-white rounded-full p-3 sm:p-4 mb-2 sm:mb-3">
                     <svg class="w-5 h-5 sm:w-6 sm:h-6 lg:w-7 lg:h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 17l4-4 4 4m0 0V3m0 14a4 4 0 01-8 0"/></svg>
                 </div>
-                <div class="text-2xl sm:text-3xl font-bold text-green-800">{{ $allBookings->count() }}</div>
+                <div class="text-2xl sm:text-3xl font-bold text-green-800">{{ $user->courts->flatMap->bookings->count() }}</div>
                 <div class="text-gray-700 mt-1 font-medium text-sm sm:text-base">Total Bookings</div>
             </div>
             <div class="bg-gradient-to-br from-yellow-100 to-yellow-300 rounded-2xl shadow-lg p-4 sm:p-6 lg:p-8 flex flex-col items-center border-t-4 border-yellow-200 animate-fade-in sm:col-span-2 lg:col-span-1">
                 <div class="bg-yellow-500 text-white rounded-full p-3 sm:p-4 mb-2 sm:mb-3">
                     <svg class="w-5 h-5 sm:w-6 sm:h-6 lg:w-7 lg:h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 1.343-3 3s1.343 3 3 3 3-1.343 3-3-1.343-3-3-3zm0 0V4m0 7v7"/></svg>
                 </div>
-                <div class="text-2xl sm:text-3xl font-bold text-yellow-800">RM {{ number_format($totalRevenue, 2) }}</div>
+                <div class="text-2xl sm:text-3xl font-bold text-yellow-800">RM {{ number_format($user->courts->flatMap->bookings->sum('total_price'), 2) }}</div>
                 <div class="text-gray-700 mt-1 font-medium text-sm sm:text-base">Total Revenue</div>
             </div>
         </div>
@@ -108,69 +108,6 @@
                 </div>
             </div>
         </div>
-        
-        <!-- Recent Product Buy -->
-        <div class="bg-white rounded-2xl shadow-lg border-t-4 border-orange-200 mb-8">
-            <div class="p-6 pt-8">
-                <h2 class="text-xl font-bold mb-6 flex items-center">
-                    <svg class="w-5 h-5 mr-2 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-                    </svg>
-                    Recent Product Buy
-                </h2>
-            
-            <div class="space-y-4">
-                @forelse($recentOrders as $order)
-                    <div class="flex items-center p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors">
-                        <div class="w-10 h-10 bg-gradient-to-br from-orange-500 to-red-600 rounded-full flex items-center justify-center mr-4 shadow-sm">
-                            <svg class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-                            </svg>
-                        </div>
-                        <div class="flex-1">
-                            <div class="flex items-center justify-between">
-                                <div>
-                                    <p class="text-sm font-semibold text-gray-900">
-                                        Order by {{ $order->user->name }}
-                                    </p>
-                                    <p class="text-sm text-gray-600">
-                                        {{ $order->order_number }} • {{ $order->items->count() }} item(s) • RM {{ number_format($order->total_amount, 2) }}
-                                    </p>
-                                </div>
-                                <div class="text-right">
-                                    <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full {{ $order->status_badge_class }}">
-                                        {{ ucfirst(str_replace('_', ' ', $order->status)) }}
-                                    </span>
-                                    <p class="text-xs text-gray-500 mt-1">{{ $order->created_at->diffForHumans() }}</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                @empty
-                    <div class="text-center py-8">
-                        <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                            <svg class="w-8 h-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-                            </svg>
-                        </div>
-                        <h3 class="text-lg font-semibold text-gray-600 mb-2">No Recent Product Purchases</h3>
-                        <p class="text-gray-500">Product purchases will appear here as orders are made.</p>
-                    </div>
-                @endforelse
-            </div>
-            
-            @if($recentOrders->count() > 0)
-                <div class="mt-6 text-center">
-                    <a href="{{ route('orders.index') }}" class="inline-flex items-center px-4 py-2 bg-orange-100 text-orange-800 rounded-lg hover:bg-orange-200 transition-colors text-sm font-medium">
-                        View All Orders
-                        <svg class="w-4 h-4 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-                        </svg>
-                    </a>
-                </div>
-            @endif
-            </div>
-        </div>
     </div>
 @elseif($user->isStaff())
     <div class="mb-12">
@@ -206,12 +143,10 @@
 
         <!-- Analytics Cards -->
         @php
-            // Use allBookings from controller, don't override it
+            $allBookings = \App\Models\Booking::with(['court', 'user', 'payment'])->get();
             $todayBookings = $allBookings->where('date', now()->toDateString());
-            $pendingPayments = $allBookings->filter(function($booking) {
-                return $booking->payment && $booking->payment->status === 'pending';
-            });
-            // totalRevenue is already calculated in controller
+            $pendingPayments = $allBookings->where('payment.status', 'pending');
+            $totalRevenue = $allBookings->where('payment.status', 'paid')->sum('payment.amount');
         @endphp
         
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8">
@@ -328,7 +263,7 @@
         </div>
 
         <!-- Recent Bookings Table -->
-        <div class="bg-white rounded-2xl shadow-lg p-6 border-t-4 border-green-200 mb-8">
+        <div class="bg-white rounded-2xl shadow-lg p-6 border-t-4 border-green-200">
             <div class="flex items-center justify-between mb-6">
                 <h2 class="text-xl font-bold flex items-center">
                     <svg class="w-5 h-5 mr-2 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -418,39 +353,45 @@
             @endif
         </div>
 
-        <!-- Recent Product Buy -->
-        <div class="bg-white rounded-2xl shadow-lg border-t-4 border-orange-200 mb-8">
-            <div class="p-6 pt-8">
-                <h2 class="text-xl font-bold mb-6 flex items-center">
-                    <svg class="w-5 h-5 mr-2 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-                    </svg>
-                    Recent Product Buy
-                </h2>
+        <!-- Recent Activity Feed -->
+        <div class="bg-white rounded-2xl shadow-lg p-6 border-t-4 border-orange-200 mb-8">
+            <h2 class="text-xl font-bold mb-6 flex items-center">
+                <svg class="w-5 h-5 mr-2 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                Recent Activity
+            </h2>
             
             <div class="space-y-4">
-                @forelse($recentOrders as $order)
+                @php
+                    $recentBookings = $allBookings->sortByDesc('created_at')->take(5);
+                @endphp
+                
+                @forelse($recentBookings as $booking)
                     <div class="flex items-center p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors">
-                        <div class="w-10 h-10 bg-gradient-to-br from-orange-500 to-red-600 rounded-full flex items-center justify-center mr-4 shadow-sm">
+                        <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center mr-4 shadow-sm">
                             <svg class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 17l4-4 4 4m0 0V3m0 14a4 4 0 01-8 0" />
                             </svg>
                         </div>
                         <div class="flex-1">
                             <div class="flex items-center justify-between">
                                 <div>
                                     <p class="text-sm font-semibold text-gray-900">
-                                        Order by {{ $order->user->name }}
+                                        New booking by {{ $booking->user->name }}
                                     </p>
                                     <p class="text-sm text-gray-600">
-                                        {{ $order->order_number }} • {{ $order->items->count() }} item(s) • RM {{ number_format($order->total_amount, 2) }}
+                                        {{ $booking->court->name }} • {{ \Carbon\Carbon::parse($booking->date)->format('M d, Y') }} at {{ $booking->start_time }}
                                     </p>
                                 </div>
                                 <div class="text-right">
-                                    <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full {{ $order->status_badge_class }}">
-                                        {{ ucfirst(str_replace('_', ' ', $order->status)) }}
+                                    <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full
+                                        @if($booking->status === 'confirmed') bg-green-100 text-green-800
+                                        @elseif($booking->status === 'pending') bg-yellow-100 text-yellow-800
+                                        @else bg-gray-100 text-gray-800 @endif">
+                                        {{ ucfirst($booking->status) }}
                                     </span>
-                                    <p class="text-xs text-gray-500 mt-1">{{ $order->created_at->diffForHumans() }}</p>
+                                    <p class="text-xs text-gray-500 mt-1">{{ $booking->created_at->diffForHumans() }}</p>
                                 </div>
                             </div>
                         </div>
@@ -459,28 +400,25 @@
                     <div class="text-center py-8">
                         <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
                             <svg class="w-8 h-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
                         </div>
-                        <h3 class="text-lg font-semibold text-gray-600 mb-2">No Recent Product Purchases</h3>
-                        <p class="text-gray-500">Product purchases will appear here as orders are made.</p>
+                        <h3 class="text-lg font-semibold text-gray-600 mb-2">No Recent Activity</h3>
+                        <p class="text-gray-500">Activity will appear here as bookings are made.</p>
                     </div>
                 @endforelse
             </div>
             
-            @if($recentOrders->count() > 0)
+            @if($recentBookings->count() > 0)
                 <div class="mt-6 text-center">
-                    <a href="{{ route('orders.index') }}" class="inline-flex items-center px-4 py-2 bg-orange-100 text-orange-800 rounded-lg hover:bg-orange-200 transition-colors text-sm font-medium">
-                        View All Orders
+                    <a href="{{ route('staff.bookings') }}" class="inline-flex items-center px-4 py-2 bg-orange-100 text-orange-800 rounded-lg hover:bg-orange-200 transition-colors text-sm font-medium">
+                        View All Activity
                         <svg class="w-4 h-4 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
                         </svg>
                     </a>
                 </div>
             @endif
-            </div>
-        </div>
-            </div>
         </div>
     </div>
 @else
