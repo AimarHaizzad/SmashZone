@@ -50,8 +50,8 @@ class BookingController extends Controller
             $timeSlots[] = sprintf('%02d:00', $h);
         }
         
-        // Check if user should see booking page tutorial (first time on this page)
-        $showTutorial = $user->isCustomer() && !session('booking_tutorial_shown', false);
+        // Check if user should see booking page tutorial (first time users only)
+        $showTutorial = $user->isCustomer() && !$user->tutorial_completed && !session('booking_tutorial_shown', false);
         if ($showTutorial) {
             session(['booking_tutorial_shown' => true]);
         }

@@ -51,9 +51,9 @@ class CartController extends Controller
                 }
             }
             
-            // Check if user should see cart page tutorial (first time on this page)
+            // Check if user should see cart page tutorial (first time users only)
             $user = auth()->user();
-            $showTutorial = $user && $user->isCustomer() && !session('cart_tutorial_shown', false) && count($cart) > 0;
+            $showTutorial = $user && $user->isCustomer() && !$user->tutorial_completed && !session('cart_tutorial_shown', false) && count($cart) > 0;
             if ($showTutorial) {
                 session(['cart_tutorial_shown' => true]);
             }

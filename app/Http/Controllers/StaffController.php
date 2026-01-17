@@ -10,6 +10,7 @@ use App\Notifications\StaffAccountCreated;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Validation\Rules\Password;
 
 class StaffController extends Controller
@@ -99,11 +100,16 @@ class StaffController extends Controller
                 ]);
 
                 // Send email notification to the new staff member
+                // Use sendNow() to send immediately instead of queuing
                 // Wrap in try-catch so email failure doesn't prevent staff creation
                 $emailSent = false;
                 try {
-                    $staff->notify(new StaffAccountCreated($staff, $request->password));
+                    Notification::sendNow($staff, new StaffAccountCreated($staff, $request->password));
                     $emailSent = true;
+                    \Log::info('Staff account creation email sent successfully', [
+                        'staff_id' => $staff->id,
+                        'staff_email' => $staff->email,
+                    ]);
                 } catch (\Exception $e) {
                     \Log::error('Failed to send staff account creation email', [
                         'staff_id' => $staff->id,

@@ -23,9 +23,9 @@ class ProductController extends Controller
             
             $products = $query->get();
             
-            // Check if user should see products page tutorial (first time on this page)
+            // Check if user should see products page tutorial (first time users only)
             $user = auth()->user();
-            $showTutorial = $user && $user->isCustomer() && !session('products_tutorial_shown', false);
+            $showTutorial = $user && $user->isCustomer() && !$user->tutorial_completed && !session('products_tutorial_shown', false);
             if ($showTutorial) {
                 session(['products_tutorial_shown' => true]);
             }

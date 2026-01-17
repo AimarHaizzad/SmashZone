@@ -45,30 +45,45 @@ class RevenueSummarySheet implements FromCollection, WithHeadings, WithMapping, 
     public function collection()
     {
         try {
-            $payments = Payment::whereHas('booking', function($query) {
-                $query->whereHas('court', function($q) {
-                    $q->where('owner_id', $this->user->id);
-                });
-            })
-            ->where('payments.status', 'paid')
-            ->join('bookings', 'payments.booking_id', '=', 'bookings.id')
-            ->join('courts', 'bookings.court_id', '=', 'courts.id')
-            ->join('users', 'bookings.user_id', '=', 'users.id')
-            ->select(
-                'courts.name as court_name',
-                'users.name as customer_name',
-                'users.email as customer_email',
-                'bookings.date',
-                'bookings.start_time',
-                'bookings.end_time',
-                'payments.amount',
-                'payments.payment_date',
-                'payments.status'
-            )
-            ->orderBy('payments.payment_date', 'desc')
-            ->get();
+            // Get owner's court IDs
+            $courtIds = Court::where('owner_id', $this->user->id)->pluck('id');
             
-            // Return collection (can be empty)
+            if ($courtIds->isEmpty()) {
+                return collect([]);
+            }
+            
+            // Simplified query - get bookings for owner's courts, then get their payments
+            $payments = Payment::with(['booking.court', 'booking.user'])
+                ->whereHas('booking', function($query) use ($courtIds) {
+                    $query->whereIn('court_id', $courtIds);
+                })
+                ->whereIn('status', ['paid', 'completed']) // Support both status values
+                ->orderBy('payment_date', 'desc')
+                ->get()
+                ->map(function($payment) {
+                    // Transform to match expected structure
+                    $booking = $payment->booking;
+                    if (!$booking) {
+                        return null;
+                    }
+                    
+                    $court = $booking->court;
+                    $user = $booking->user;
+                    
+                    return (object) [
+                        'court_name' => $court ? $court->name : 'Unknown Court',
+                        'customer_name' => $user ? $user->name : 'Unknown Customer',
+                        'customer_email' => $user ? $user->email : 'No email',
+                        'date' => $booking->date,
+                        'start_time' => $booking->start_time,
+                        'end_time' => $booking->end_time,
+                        'amount' => $payment->amount,
+                        'payment_date' => $payment->payment_date,
+                        'status' => $payment->status,
+                    ];
+                })
+                ->filter(); // Remove null values
+            
             return $payments;
         } catch (\Exception $e) {
             Log::error('RevenueSummarySheet collection error', [
@@ -214,28 +229,48 @@ class CustomerAnalyticsSheet implements FromCollection, WithHeadings, WithMappin
     public function collection()
     {
         try {
-            $customers = Payment::whereHas('booking', function($query) {
-                $query->whereHas('court', function($q) {
-                    $q->where('owner_id', $this->user->id);
-                });
-            })
-            ->where('payments.status', 'paid')
-            ->join('bookings', 'payments.booking_id', '=', 'bookings.id')
-            ->join('users', 'bookings.user_id', '=', 'users.id')
-            ->selectRaw('
-                users.name,
-                users.email,
-                COUNT(*) as booking_count,
-                SUM(payments.amount) as total_spent,
-                AVG(payments.amount) as avg_spent_per_booking,
-                MIN(bookings.date) as first_booking,
-                MAX(bookings.date) as last_booking
-            ')
-            ->groupBy('users.id', 'users.name', 'users.email')
-            ->orderBy('total_spent', 'desc')
-            ->get();
+            // Get owner's court IDs
+            $courtIds = Court::where('owner_id', $this->user->id)->pluck('id');
             
-            // Return collection (can be empty)
+            if ($courtIds->isEmpty()) {
+                return collect([]);
+            }
+            
+            // Simplified query using Eloquent relationships
+            $customers = Payment::with(['booking.court', 'booking.user'])
+                ->whereHas('booking', function($query) use ($courtIds) {
+                    $query->whereIn('court_id', $courtIds);
+                })
+                ->whereIn('status', ['paid', 'completed']) // Support both status values
+                ->get()
+                ->groupBy('booking.user_id')
+                ->map(function($payments, $userId) {
+                    $firstPayment = $payments->first();
+                    $user = $firstPayment->booking->user ?? null;
+                    
+                    if (!$user) {
+                        return null;
+                    }
+                    
+                    $bookings = $payments->pluck('booking')->filter();
+                    $bookingCount = $bookings->count();
+                    $totalSpent = $payments->sum('amount');
+                    $avgSpent = $bookingCount > 0 ? $totalSpent / $bookingCount : 0;
+                    
+                    return (object) [
+                        'name' => $user->name,
+                        'email' => $user->email,
+                        'booking_count' => $bookingCount,
+                        'total_spent' => $totalSpent,
+                        'avg_spent_per_booking' => $avgSpent,
+                        'first_booking' => $bookings->min('date'),
+                        'last_booking' => $bookings->max('date'),
+                    ];
+                })
+                ->filter() // Remove null values
+                ->sortByDesc('total_spent')
+                ->values();
+            
             return $customers;
         } catch (\Exception $e) {
             Log::error('CustomerAnalyticsSheet collection error', [
@@ -311,36 +346,39 @@ class PerformanceMetricsSheet implements FromCollection, WithHeadings, WithMappi
                 $query->where('owner_id', $this->user->id);
             })->count();
 
-            $paidBookings = Payment::whereHas('booking', function($query) {
-                $query->whereHas('court', function($q) {
-                    $q->where('owner_id', $this->user->id);
-                });
-            })->where('payments.status', 'paid')->count();
+            // Get owner's court IDs
+            $courtIds = Court::where('owner_id', $this->user->id)->pluck('id');
+            
+            if ($courtIds->isEmpty()) {
+                $paidBookings = 0;
+                $conversionRate = 0;
+                $avgBookingValue = 0;
+                $currentMonthRevenue = 0;
+                $lastMonthRevenue = 0;
+            } else {
+                $paidBookings = Payment::whereHas('booking', function($query) use ($courtIds) {
+                    $query->whereIn('court_id', $courtIds);
+                })->whereIn('status', ['paid', 'completed'])->count();
 
-            $conversionRate = $totalBookings > 0 ? ($paidBookings / $totalBookings) * 100 : 0;
+                $conversionRate = $totalBookings > 0 ? ($paidBookings / $totalBookings) * 100 : 0;
 
-            $avgBookingValue = Payment::whereHas('booking', function($query) {
-                $query->whereHas('court', function($q) {
-                    $q->where('owner_id', $this->user->id);
-                });
-            })->where('payments.status', 'paid')->avg('amount') ?? 0;
+                $avgBookingValue = Payment::whereHas('booking', function($query) use ($courtIds) {
+                    $query->whereIn('court_id', $courtIds);
+                })->whereIn('status', ['paid', 'completed'])->avg('amount') ?? 0;
 
-            $currentMonthRevenue = Payment::whereHas('booking', function($query) {
-                $query->whereHas('court', function($q) {
-                    $q->where('owner_id', $this->user->id);
-                });
-            })->where('payments.status', 'paid')
-            ->where('payment_date', '>=', now()->startOfMonth())
-            ->sum('amount');
+                $currentMonthRevenue = Payment::whereHas('booking', function($query) use ($courtIds) {
+                    $query->whereIn('court_id', $courtIds);
+                })->whereIn('status', ['paid', 'completed'])
+                ->where('payment_date', '>=', now()->startOfMonth())
+                ->sum('amount');
 
-            $lastMonthRevenue = Payment::whereHas('booking', function($query) {
-                $query->whereHas('court', function($q) {
-                    $q->where('owner_id', $this->user->id);
-                });
-            })->where('payments.status', 'paid')
-            ->where('payment_date', '>=', now()->subMonth()->startOfMonth())
-            ->where('payment_date', '<', now()->startOfMonth())
-            ->sum('amount');
+                $lastMonthRevenue = Payment::whereHas('booking', function($query) use ($courtIds) {
+                    $query->whereIn('court_id', $courtIds);
+                })->whereIn('status', ['paid', 'completed'])
+                ->where('payment_date', '>=', now()->subMonth()->startOfMonth())
+                ->where('payment_date', '<', now()->startOfMonth())
+                ->sum('amount');
+            }
 
             $monthlyGrowth = $lastMonthRevenue > 0 ? (($currentMonthRevenue - $lastMonthRevenue) / $lastMonthRevenue) * 100 : 0;
 

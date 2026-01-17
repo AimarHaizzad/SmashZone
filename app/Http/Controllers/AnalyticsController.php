@@ -58,7 +58,7 @@ class AnalyticsController extends Controller
                 $performanceData = $this->getEmptyPerformanceData();
             }
             
-            // AI Booking Predictions
+            // Booking Predictions
             try {
                 $predictionService = new BookingPredictionService();
                 $predictionData = $predictionService->predictWeeklyTrends($user->id);

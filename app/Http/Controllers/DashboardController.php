@@ -3,33 +3,15 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Services\NewsApiService;
 use App\Models\Booking;
 use App\Models\Court;
 use App\Models\User;
 
 class DashboardController extends Controller
 {
-    protected $newsService;
-
-    public function __construct(NewsApiService $newsService)
-    {
-        $this->newsService = $newsService;
-    }
-
     public function index()
     {
         $user = auth()->user();
-        
-        // Get badminton news only (with error handling)
-        try {
-            $badmintonNews = $this->newsService->getBadmintonNews(6);
-            $newsStatus = $this->newsService->getStatus();
-        } catch (\Exception $e) {
-            // If news service fails, use empty data
-            $badmintonNews = [];
-            $newsStatus = ['configured' => false, 'error' => $e->getMessage()];
-        }
         
         // Load bookings data based on user role
         $allBookings = collect();
@@ -95,6 +77,6 @@ class DashboardController extends Controller
         
         $showTutorial = $user->isCustomer() && !$user->tutorial_completed;
         
-        return view('dashboard', compact('user', 'badmintonNews', 'newsStatus', 'allBookings', 'totalRevenue', 'showTutorial'));
+        return view('dashboard', compact('user', 'allBookings', 'totalRevenue', 'showTutorial'));
     }
 }

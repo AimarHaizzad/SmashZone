@@ -25,7 +25,8 @@
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <!-- Main Content -->
         <div class="lg:col-span-2 space-y-6">
-            <!-- Order Status Management -->
+            <!-- Order Status Management (Only for Pickup Orders) -->
+            @if($order->delivery_method === 'pickup')
             <div class="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
                 <h2 class="text-xl font-bold text-gray-900 mb-4">Order Status</h2>
                 <form action="{{ route('orders.update-status', $order, absolute: false) }}" method="POST" class="space-y-4">
@@ -52,6 +53,7 @@
                     </button>
                 </form>
             </div>
+            @endif
 
             <!-- Return Request Management -->
             @if($order->status === 'return_requested' && $order->return_requested_at)
