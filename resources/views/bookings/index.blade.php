@@ -1694,14 +1694,53 @@
                 }, 100);
             });
             
+            // Mark booking tutorial as completed
+            function markBookingTutorialComplete() {
+                const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+                if (!csrfToken) {
+                    console.error('CSRF token not found');
+                    return;
+                }
+                
+                fetch('{{ route("tutorial.complete") }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken,
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({ type: 'booking' })
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.success) {
+                        console.log('✅ Booking tutorial completed successfully!');
+                    }
+                })
+                .catch(error => {
+                    console.error('❌ Error marking booking tutorial as completed:', error);
+                });
+            }
+            
             // Debug: Log when tutorial starts
             intro.onstart(function() {
                 console.log('Booking tutorial started with', validSteps.length, 'steps');
             });
             
-            // Ensure tutorial can be exited
+            // Mark tutorial as completed when finished
+            intro.oncomplete(function() {
+                markBookingTutorialComplete();
+            });
+            
+            // Ensure tutorial can be exited (also mark as completed if user exits)
             intro.onexit(function() {
                 console.log('Tutorial exited');
+                markBookingTutorialComplete();
             });
             
             // Wait a bit longer to ensure table is fully rendered

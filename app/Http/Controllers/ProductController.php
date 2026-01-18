@@ -24,12 +24,9 @@ class ProductController extends Controller
             $products = $query->get();
             
             // Check if user should see products page tutorial (first time users only)
-            // Show tutorial if user hasn't seen it before, regardless of dashboard tutorial completion
+            // Use database field instead of session to persist across logouts
             $user = auth()->user();
-            $showTutorial = $user && $user->isCustomer() && !session('products_tutorial_shown', false);
-            if ($showTutorial) {
-                session(['products_tutorial_shown' => true]);
-            }
+            $showTutorial = $user && $user->isCustomer() && !$user->products_tutorial_completed;
             
             return view('products.index', compact('products', 'showTutorial'));
         } catch (\Exception $e) {

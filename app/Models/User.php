@@ -27,6 +27,8 @@ class User extends Authenticatable
         'position',
         'profile_picture',
         'tutorial_completed',
+        'booking_tutorial_completed',
+        'products_tutorial_completed',
     ];
 
     /**
@@ -50,6 +52,8 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'tutorial_completed' => 'boolean',
+            'booking_tutorial_completed' => 'boolean',
+            'products_tutorial_completed' => 'boolean',
         ];
     }
 

@@ -62,11 +62,8 @@ class BookingController extends Controller
         }
         
         // Check if user should see booking page tutorial (first time users only)
-        // Show tutorial if user hasn't seen it before, regardless of dashboard tutorial completion
-        $showTutorial = $user->isCustomer() && !session('booking_tutorial_shown', false);
-        if ($showTutorial) {
-            session(['booking_tutorial_shown' => true]);
-        }
+        // Use database field instead of session to persist across logouts
+        $showTutorial = $user->isCustomer() && !$user->booking_tutorial_completed;
         
         return view('bookings.index', compact('courts', 'timeSlots', 'bookings', 'selectedDate', 'showTutorial'));
     }

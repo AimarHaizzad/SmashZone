@@ -15,7 +15,22 @@ class TutorialController extends Controller
         $user = Auth::user();
         
         if ($user) {
-            $user->tutorial_completed = true;
+            $tutorialType = $request->input('type', 'dashboard'); // default to dashboard
+            
+            // Mark specific tutorial as completed based on type
+            switch ($tutorialType) {
+                case 'booking':
+                    $user->booking_tutorial_completed = true;
+                    break;
+                case 'products':
+                    $user->products_tutorial_completed = true;
+                    break;
+                case 'dashboard':
+                default:
+                    $user->tutorial_completed = true;
+                    break;
+            }
+            
             $user->save();
             
             return response()->json([
@@ -38,10 +53,13 @@ class TutorialController extends Controller
         $user = Auth::user();
         
         if ($user) {
+            // Reset all tutorial flags
             $user->tutorial_completed = false;
+            $user->booking_tutorial_completed = false;
+            $user->products_tutorial_completed = false;
             $user->save();
             
-            // Clear session flags for page-specific tutorials
+            // Clear session flags for page-specific tutorials (legacy support)
             session()->forget(['booking_tutorial_shown', 'cart_tutorial_shown', 'products_tutorial_shown', 'courts_tutorial_shown']);
             
             return response()->json([

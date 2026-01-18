@@ -490,13 +490,52 @@
                 }, 100);
             });
             
+            // Mark products tutorial as completed
+            function markProductsTutorialComplete() {
+                const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+                if (!csrfToken) {
+                    console.error('CSRF token not found');
+                    return;
+                }
+                
+                fetch('{{ route("tutorial.complete") }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken,
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({ type: 'products' })
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.success) {
+                        console.log('✅ Products tutorial completed successfully!');
+                    }
+                })
+                .catch(error => {
+                    console.error('❌ Error marking products tutorial as completed:', error);
+                });
+            }
+            
             // Debug: Log when tutorial starts
             intro.onstart(function() {
                 console.log('Products tutorial started with', validSteps.length, 'steps');
             });
             
+            // Mark tutorial as completed when finished
+            intro.oncomplete(function() {
+                markProductsTutorialComplete();
+            });
+            
             intro.onexit(function() {
                 console.log('Products tutorial exited');
+                markProductsTutorialComplete();
             });
             
             setTimeout(() => intro.start(), 1000);
