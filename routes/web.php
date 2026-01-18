@@ -721,6 +721,9 @@ Route::middleware(['auth'])->group(function () {
         Route::get('analytics', [App\Http\Controllers\AnalyticsController::class, 'index'])->name('analytics.index');
         Route::get('analytics/export-pdf', [App\Http\Controllers\AnalyticsController::class, 'exportPDF'])->name('analytics.export-pdf');
         // Excel export removed due to server compatibility issues
+        
+        // Seed past booking data (Owner only - one-time use)
+        Route::post('seed/past-bookings', [App\Http\Controllers\SeederController::class, 'runPastDataSeeder'])->name('seed.past-bookings');
     });
 });
 

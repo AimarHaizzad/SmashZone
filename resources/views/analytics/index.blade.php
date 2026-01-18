@@ -10,6 +10,16 @@
                 <p class="text-gray-600 mt-2">Comprehensive business insights and performance metrics</p>
             </div>
             <div class="flex gap-3">
+                <form action="{{ route('seed.past-bookings') }}" method="POST" onsubmit="return confirm('This will generate past booking data for the last 6 months. This may take a few minutes. Continue?');" class="inline-block">
+                    @csrf
+                    <button type="submit" 
+                            class="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                        </svg>
+                        Seed Past Data
+                    </button>
+                </form>
                 <a href="{{ route('analytics.export-pdf', absolute: false) }}" 
                    class="inline-flex items-center px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">
                     <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
