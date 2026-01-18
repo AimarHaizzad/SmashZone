@@ -724,6 +724,8 @@ Route::middleware(['auth'])->group(function () {
         
         // Seed past booking data (Owner only - one-time use)
         Route::post('seed/past-bookings', [App\Http\Controllers\SeederController::class, 'runPastDataSeeder'])->name('seed.past-bookings');
+        // Delete past seeded data (Owner only - for presentation/demo)
+        Route::post('seed/delete-past-data', [App\Http\Controllers\SeederController::class, 'deletePastData'])->name('seed.delete-past-data');
     });
 });
 

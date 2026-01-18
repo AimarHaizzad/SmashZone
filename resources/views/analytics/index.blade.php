@@ -10,16 +10,33 @@
                 <p class="text-gray-600 mt-2">Comprehensive business insights and performance metrics</p>
             </div>
             <div class="flex gap-3">
-                <form action="{{ route('seed.past-bookings') }}" method="POST" onsubmit="return confirm('This will generate past booking data for the last 6 months. This may take a few minutes. Continue?');" class="inline-block">
-                    @csrf
-                    <button type="submit" 
-                            class="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
-                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                        </svg>
-                        Seed Past Data
-                    </button>
-                </form>
+                @php
+                    // Hide seeder buttons during presentation - set SHOW_SEEDER_BUTTONS=false in .env to hide
+                    $showSeederButtons = config('app.show_seeder_buttons', env('SHOW_SEEDER_BUTTONS', 'true')) !== 'false';
+                @endphp
+                
+                @if($showSeederButtons)
+                    <form action="{{ route('seed.past-bookings') }}" method="POST" onsubmit="return confirm('This will generate past booking data for the last 6 months. This may take a few minutes. Continue?');" class="inline-block">
+                        @csrf
+                        <button type="submit" 
+                                class="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                            </svg>
+                            Seed Past Data
+                        </button>
+                    </form>
+                    <form action="{{ route('seed.delete-past-data') }}" method="POST" onsubmit="return confirm('This will delete all past booking data (older than 1 day). This is useful for presentations. Continue?');" class="inline-block">
+                        @csrf
+                        <button type="submit" 
+                                class="inline-flex items-center px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                            Delete Past Data
+                        </button>
+                    </form>
+                @endif
                 <a href="{{ route('analytics.export-pdf', absolute: false) }}" 
                    class="inline-flex items-center px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">
                     <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
