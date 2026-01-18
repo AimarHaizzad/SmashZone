@@ -15,18 +15,27 @@ class ProfileUpdateRequest extends FormRequest
      */
     public function rules(): array
     {
-        $userId = $this->user()?->id;
+        $user = $this->user();
+        $userId = $user ? $user->id : null;
+        
+        $emailRules = [
+            'required',
+            'string',
+            'lowercase',
+            'email',
+            'max:255',
+        ];
+        
+        // Only add unique rule if user exists
+        if ($userId) {
+            $emailRules[] = Rule::unique(User::class)->ignore($userId);
+        } else {
+            $emailRules[] = Rule::unique(User::class);
+        }
         
         return [
             'name' => ['required', 'string', 'max:255'],
-            'email' => [
-                'required',
-                'string',
-                'lowercase',
-                'email',
-                'max:255',
-                Rule::unique(User::class)->ignore($userId),
-            ],
+            'email' => $emailRules,
             'phone' => ['nullable', 'string', 'max:20'],
             'position' => ['nullable', 'string', 'max:255'],
             'profile_picture' => ['nullable', 'image', 'max:10240'], // 10MB max
