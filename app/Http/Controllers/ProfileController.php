@@ -150,31 +150,43 @@ class ProfileController extends Controller
                 'dirty_fields' => $dirtyFields
             ]);
 
-            // Save the user - this may throw an exception on database errors
-            try {
-                $saved = $user->save();
-                if (!$saved) {
-                    Log::error('User save returned false', [
-                        'user_id' => $user->id,
-                        'fillable_data' => $dataToFill,
-                        'dirty_fields' => $dirtyFields
-                    ]);
-                    throw new \Exception('Failed to save user profile - save() returned false');
-                }
-            } catch (\Illuminate\Database\QueryException $e) {
-                Log::error('Database error saving user profile', [
-                    'user_id' => $user->id,
-                    'error' => $e->getMessage(),
-                    'code' => $e->getCode()
-                ]);
-                throw $e;
-            }
+            // Only save if there are actual changes or if profile picture was uploaded
+            $hasChanges = !empty($dirtyFields) || $request->hasFile('profile_picture');
             
-            Log::info('Profile updated successfully', [
-                'user_id' => $user->id
-            ]);
+            if ($hasChanges) {
+                // Save the user - this may throw an exception on database errors
+                try {
+                    $saved = $user->save();
+                    if (!$saved) {
+                        Log::error('User save returned false', [
+                            'user_id' => $user->id,
+                            'fillable_data' => $dataToFill,
+                            'dirty_fields' => $dirtyFields
+                        ]);
+                        throw new \Exception('Failed to save user profile - save() returned false');
+                    }
+                } catch (\Illuminate\Database\QueryException $e) {
+                    Log::error('Database error saving user profile', [
+                        'user_id' => $user->id,
+                        'error' => $e->getMessage(),
+                        'code' => $e->getCode()
+                    ]);
+                    throw $e;
+                }
+                
+                Log::info('Profile updated successfully', [
+                    'user_id' => $user->id
+                ]);
 
-            return Redirect::route('profile.edit', absolute: false)->with('status', 'profile-updated');
+                return back()->with('status', 'profile-updated');
+            } else {
+                // No changes made, just redirect back
+                Log::info('Profile update called but no changes detected', [
+                    'user_id' => $user->id
+                ]);
+
+                return back()->with('status', 'profile-updated');
+            }
         } catch (\Exception $e) {
             Log::error('Profile update failed', [
                 'user_id' => $request->user()?->id,

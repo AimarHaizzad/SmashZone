@@ -23,7 +23,12 @@ use Illuminate\Support\Facades\Storage;
                 <!-- Avatar Section -->
                 <div class="relative">
                     @if(auth()->user()->profile_picture)
-                        <img src="{{ Storage::url(auth()->user()->profile_picture) }}" 
+                        @php
+                            $profilePicture = auth()->user()->profile_picture;
+                            $isCloudinaryUrl = filter_var($profilePicture, FILTER_VALIDATE_URL);
+                            $pictureUrl = $isCloudinaryUrl ? $profilePicture : Storage::url($profilePicture);
+                        @endphp
+                        <img src="{{ $pictureUrl }}" 
                              alt="Profile Picture" 
                              class="w-24 h-24 rounded-full object-cover shadow-lg"
                              id="profile-preview">

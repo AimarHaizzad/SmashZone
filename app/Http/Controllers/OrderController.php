@@ -146,6 +146,11 @@ class OrderController extends Controller
             return redirect()->back()->with('error', 'Cannot update shipping status. Customer has already marked this order as received.');
         }
 
+        // Prevent shipping status updates if already picked up or delivered
+        if ($order->shipping && in_array($order->shipping->status, ['picked_up', 'delivered'])) {
+            return redirect()->back()->with('error', 'Cannot update shipping status. Order has already been picked up or delivered.');
+        }
+
         $request->validate([
             'status' => 'required|in:preparing,ready_for_pickup,picked_up,out_for_delivery,delivered,cancelled',
             'tracking_number' => 'nullable|string|max:255',
@@ -235,6 +240,23 @@ class OrderController extends Controller
             abort(403, 'Unauthorized. Only owners and staff can update order status.');
         }
 
+        // Prevent order status updates if customer has marked order as received
+        if ($order->received_at) {
+            return redirect()->back()->with('error', 'Cannot update order status. Customer has already marked this order as received.');
+        }
+
+        // For pickup orders, prevent status updates if already picked up or delivered
+        if ($order->delivery_method === 'pickup') {
+            if ($order->shipping && in_array($order->shipping->status, ['picked_up', 'delivered'])) {
+                return redirect()->back()->with('error', 'Cannot update order status. Order has already been picked up or delivered.');
+            }
+        }
+
+        // Prevent changing status if order is already delivered
+        if ($order->status === 'delivered' && $request->status !== 'delivered') {
+            return redirect()->back()->with('error', 'Cannot change order status. Order has already been delivered.');
+        }
+
         $request->validate([
             'status' => 'required|in:pending,confirmed,processing,shipped,delivered,cancelled,return_requested',
         ]);
@@ -266,26 +288,40 @@ class OrderController extends Controller
      */
     public function markAsReceived(Order $order)
     {
-        // Ensure user owns this order
-        if ($order->user_id !== auth()->id()) {
-            abort(403, 'Unauthorized access.');
+        try {
+            // Ensure user owns this order
+            if ($order->user_id !== auth()->id()) {
+                abort(403, 'Unauthorized access.');
+            }
+
+            // Only allow if order is delivered
+            if ($order->status !== 'delivered') {
+                return redirect()->back()->with('error', 'Order must be delivered before marking as received.');
+            }
+
+            // Check if already received
+            if ($order->received_at) {
+                return redirect()->back()->with('info', 'Order has already been marked as received.');
+            }
+
+            $order->update([
+                'received_at' => now(),
+            ]);
+
+            // Refresh the order to ensure all relationships are loaded
+            $order->refresh();
+
+            return redirect()->back()->with('success', 'Order marked as received. Thank you!');
+        } catch (\Exception $e) {
+            \Log::error('Mark as received failed', [
+                'order_id' => $order->id,
+                'user_id' => auth()->id(),
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return redirect()->back()->with('error', 'Failed to mark order as received. Please try again.');
         }
-
-        // Only allow if order is delivered
-        if ($order->status !== 'delivered') {
-            return redirect()->back()->with('error', 'Order must be delivered before marking as received.');
-        }
-
-        // Check if already received
-        if ($order->received_at) {
-            return redirect()->back()->with('info', 'Order has already been marked as received.');
-        }
-
-        $order->update([
-            'received_at' => now(),
-        ]);
-
-        return redirect()->back()->with('success', 'Order marked as received. Thank you!');
     }
 
     /**
@@ -293,37 +329,65 @@ class OrderController extends Controller
      */
     public function requestReturn(Request $request, Order $order)
     {
-        // Ensure user owns this order
-        if ($order->user_id !== auth()->id()) {
-            abort(403, 'Unauthorized access.');
+        try {
+            // Ensure user owns this order
+            if ($order->user_id !== auth()->id()) {
+                abort(403, 'Unauthorized access.');
+            }
+
+            // Only allow if order is delivered
+            if ($order->status !== 'delivered') {
+                return redirect()->back()->with('error', 'Order must be delivered before requesting a return.');
+            }
+
+            // Check if return already requested
+            if ($order->return_requested_at) {
+                return redirect()->back()->with('info', 'Return has already been requested for this order.');
+            }
+
+            $request->validate([
+                'return_reason' => 'required|string|max:1000',
+            ]);
+
+            $order->update([
+                'return_requested_at' => now(),
+                'return_reason' => $request->return_reason,
+                'status' => 'return_requested',
+            ]);
+
+            // Update shipping status if exists
+            if ($order->shipping) {
+                $order->shipping->update(['status' => 'cancelled']);
+            }
+
+            // Refresh the order to ensure all relationships are loaded
+            $order->refresh();
+
+            // Use back() with fallback to order show page
+            try {
+                return redirect()->back()->with('success', 'Return request submitted successfully. We will process your request shortly.');
+            } catch (\Exception $redirectError) {
+                \Log::warning('Redirect back failed, using fallback', [
+                    'order_id' => $order->id,
+                    'error' => $redirectError->getMessage()
+                ]);
+                return redirect()->route('orders.show', $order)->with('success', 'Return request submitted successfully. We will process your request shortly.');
+            }
+        } catch (\Exception $e) {
+            \Log::error('Return request failed', [
+                'order_id' => $order->id,
+                'user_id' => auth()->id(),
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            // Try to redirect back, fallback to order show if that fails
+            try {
+                return redirect()->back()->with('error', 'Failed to submit return request. Please try again.');
+            } catch (\Exception $redirectError) {
+                return redirect()->route('orders.show', $order)->with('error', 'Failed to submit return request. Please try again.');
+            }
         }
-
-        // Only allow if order is delivered
-        if ($order->status !== 'delivered') {
-            return redirect()->back()->with('error', 'Order must be delivered before requesting a return.');
-        }
-
-        // Check if return already requested
-        if ($order->return_requested_at) {
-            return redirect()->back()->with('info', 'Return has already been requested for this order.');
-        }
-
-        $request->validate([
-            'return_reason' => 'required|string|max:1000',
-        ]);
-
-        $order->update([
-            'return_requested_at' => now(),
-            'return_reason' => $request->return_reason,
-            'status' => 'return_requested',
-        ]);
-
-        // Update shipping status if exists
-        if ($order->shipping) {
-            $order->shipping->update(['status' => 'cancelled']);
-        }
-
-        return redirect()->back()->with('success', 'Return request submitted successfully. We will process your request shortly.');
     }
 
     /**
