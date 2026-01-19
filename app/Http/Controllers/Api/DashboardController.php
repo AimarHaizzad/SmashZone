@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
 
 class DashboardController extends Controller
 {
@@ -15,7 +15,7 @@ class DashboardController extends Controller
      */
     public function getDashboardData(Request $request)
     {
-        $user = $request->user();
+        $user = Auth::user();
         
         if (!$user) {
             return response()->json([
@@ -25,98 +25,60 @@ class DashboardController extends Controller
         }
         
         try {
-            // Get stats - adjust table names according to your database
-            // Assuming you have a 'bookings' table
+            // Get all bookings for the user
+            $allBookings = $user->bookings()->get();
             
-            // Count upcoming bookings (future dates, not cancelled)
-            $upcomingBookingsCount = DB::table('bookings')
-                ->where('user_id', $user->id)
-                ->where('date', '>=', now()->format('Y-m-d'))
-                ->whereIn('status', ['confirmed', 'pending'])
-                ->count();
-            
-            // Count total bookings
-            $totalBookingsCount = DB::table('bookings')
-                ->where('user_id', $user->id)
-                ->count();
-            
-            // Calculate total spent - handle both price and total_price columns
-            $hasTotalPrice = DB::getSchemaBuilder()->hasColumn('bookings', 'total_price');
-            $hasPrice = DB::getSchemaBuilder()->hasColumn('bookings', 'price');
-            
-            if ($hasTotalPrice) {
-                $totalSpent = DB::table('bookings')
-                    ->where('user_id', $user->id)
-                    ->where('status', 'confirmed')
-                    ->sum('total_price');
-            } elseif ($hasPrice) {
-                $totalSpent = DB::table('bookings')
-                    ->where('user_id', $user->id)
-                    ->where('status', 'confirmed')
-                    ->sum('price');
-            } else {
-                $totalSpent = 0;
-            }
-            
-            // Format total spent
-            $totalSpentFormatted = 'RM ' . number_format($totalSpent ?? 0, 2);
-            
-            // Get upcoming bookings with court details
-            // Handle time_slot vs start_time/end_time
-            $hasTimeSlot = DB::getSchemaBuilder()->hasColumn('bookings', 'time_slot');
-            $hasStartEndTime = DB::getSchemaBuilder()->hasColumn('bookings', 'start_time') && 
-                               DB::getSchemaBuilder()->hasColumn('bookings', 'end_time');
-            
-            if ($hasTimeSlot) {
-                $timeSlotSelect = DB::raw('COALESCE(bookings.time_slot, "") as time_slot');
-                $orderByTime = 'bookings.time_slot';
-            } elseif ($hasStartEndTime) {
-                $timeSlotSelect = DB::raw('CONCAT(TIME_FORMAT(bookings.start_time, "%h:%i %p"), " - ", TIME_FORMAT(bookings.end_time, "%h:%i %p")) as time_slot');
-                $orderByTime = 'bookings.start_time';
-            } else {
-                $timeSlotSelect = DB::raw('"" as time_slot');
-                $orderByTime = 'bookings.created_at';
-            }
-            
-            // Handle price column
-            if ($hasTotalPrice) {
-                $priceSelect = DB::raw('COALESCE(CONCAT("RM ", FORMAT(bookings.total_price, 2)), "RM 0.00") as price');
-            } elseif ($hasPrice) {
-                $priceSelect = DB::raw('COALESCE(CONCAT("RM ", FORMAT(bookings.price, 2)), "RM 0.00") as price');
-            } else {
-                $priceSelect = DB::raw('"RM 0.00" as price');
-            }
-            
-            $upcomingBookings = DB::table('bookings')
-                ->leftJoin('courts', 'bookings.court_id', '=', 'courts.id')
-                ->select(
-                    'bookings.id',
-                    'courts.name as court_name',
-                    'bookings.date',
-                    $timeSlotSelect,
-                    'bookings.status',
-                    $priceSelect
-                )
-                ->where('bookings.user_id', $user->id)
-                ->where('bookings.date', '>=', now()->format('Y-m-d'))
-                ->whereIn('bookings.status', ['confirmed', 'pending'])
-                ->orderBy('bookings.date', 'asc')
-                ->orderBy($orderByTime, 'asc')
-                ->limit(10)
+            // Get upcoming bookings (date >= today, not cancelled)
+            $upcomingBookings = $user->bookings()
+                ->with('court')
+                ->where('date', '>=', Carbon::today()->toDateString())
+                ->where('status', '!=', 'cancelled')
+                ->orderBy('date', 'asc')
+                ->orderBy('start_time', 'asc')
                 ->get();
+            
+            // Calculate stats
+            $totalBookings = $allBookings->count();
+            $upcomingCount = $upcomingBookings->count();
+            $totalSpent = $allBookings->where('status', 'confirmed')
+                ->sum('total_price');
+            
+            // Format upcoming bookings for response
+            $upcomingBookingsFormatted = $upcomingBookings->map(function ($booking) {
+                // Format time slot from start_time and end_time
+                $timeSlot = 'N/A';
+                if ($booking->start_time && $booking->end_time) {
+                    $startTime = Carbon::parse($booking->start_time)->format('g:i A');
+                    $endTime = Carbon::parse($booking->end_time)->format('g:i A');
+                    $timeSlot = $startTime . ' - ' . $endTime;
+                }
+                
+                return [
+                    'id' => (string) $booking->id,
+                    'court_name' => $booking->court->name ?? 'Court',
+                    'date' => $booking->date,
+                    'time_slot' => $timeSlot,
+                    'status' => $booking->status,
+                    'price' => 'RM ' . number_format($booking->total_price ?? 0, 2)
+                ];
+            });
             
             return response()->json([
                 'success' => true,
                 'stats' => [
-                    'upcoming_bookings' => $upcomingBookingsCount,
-                    'total_bookings' => $totalBookingsCount,
-                    'total_spent' => $totalSpentFormatted
+                    'upcoming_bookings' => $upcomingCount,
+                    'total_bookings' => $totalBookings,
+                    'total_spent' => 'RM ' . number_format($totalSpent, 2)
                 ],
-                'upcoming_bookings' => $upcomingBookings
+                'upcoming_bookings' => $upcomingBookingsFormatted
             ]);
             
         } catch (\Exception $e) {
-            // If tables don't exist or there's an error, return empty data
+            \Log::error('DashboardController Error: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            // Return empty data on error
             return response()->json([
                 'success' => true,
                 'stats' => [
@@ -127,5 +89,14 @@ class DashboardController extends Controller
                 'upcoming_bookings' => []
             ]);
         }
+    }
+    
+    /**
+     * Alias method for /api/dashboard endpoint
+     * This matches the specification exactly
+     */
+    public function index(Request $request)
+    {
+        return $this->getDashboardData($request);
     }
 }
