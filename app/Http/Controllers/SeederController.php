@@ -20,14 +20,16 @@ class SeederController extends Controller
         }
 
         try {
+            $owner = auth()->user();
+            
             Log::info('Starting PastDataSeeder via HTTP request', [
-                'user_id' => auth()->id(),
-                'user_email' => auth()->user()->email
+                'user_id' => $owner->id,
+                'user_email' => $owner->email
             ]);
 
-            // Create seeder instance and run it
-            // The seeder now handles running without a command object
+            // Create seeder instance and set the owner ID
             $seeder = new PastDataSeeder();
+            $seeder->setOwnerId($owner->id);
             $seeder->run();
 
             Log::info('PastDataSeeder completed successfully via HTTP');

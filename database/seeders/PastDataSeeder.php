@@ -13,23 +13,44 @@ use Illuminate\Support\Str;
 class PastDataSeeder extends Seeder
 {
     /**
+     * Optional owner ID to use (when called from HTTP route)
+     */
+    private ?int $ownerId = null;
+
+    /**
+     * Set the owner ID to use for seeding
+     */
+    public function setOwnerId(int $ownerId): void
+    {
+        $this->ownerId = $ownerId;
+    }
+
+    /**
      * Seed past booking data for reports and predictions.
      */
     public function run(): void
     {
         $this->log('🌱 Seeding past booking data...');
 
-        // Get or create owner
-        $owner = User::firstOrCreate(
-            ['email' => 'AimarHaizzad@gmail.com'],
-            [
-                'name' => 'Owner',
-                'password' => bcrypt('Aimar123'),
-                'role' => 'owner',
-                'email_verified_at' => now(),
-                'remember_token' => Str::random(10),
-            ]
-        );
+        // Get owner - use provided owner ID or fallback to hardcoded email (for CLI usage)
+        if ($this->ownerId) {
+            $owner = User::find($this->ownerId);
+            if (!$owner || !$owner->isOwner()) {
+                throw new \Exception("Invalid owner ID provided: {$this->ownerId}");
+            }
+        } else {
+            // Fallback for CLI usage - get or create owner
+            $owner = User::firstOrCreate(
+                ['email' => 'AimarHaizzad@gmail.com'],
+                [
+                    'name' => 'Owner',
+                    'password' => bcrypt('Aimar123'),
+                    'role' => 'owner',
+                    'email_verified_at' => now(),
+                    'remember_token' => Str::random(10),
+                ]
+            );
+        }
 
         // Get existing courts or create some
         $courts = Court::where('owner_id', $owner->id)->get();
@@ -52,8 +73,17 @@ class PastDataSeeder extends Seeder
             ]);
         }
 
-        // Generate bookings for the past 6 months for better analytics
-        $startDate = Carbon::now()->subMonths(6);
+        // Ensure we have courts and customers before proceeding
+        if ($courts->isEmpty()) {
+            throw new \Exception("No courts found for owner ID {$owner->id}. Please create courts first.");
+        }
+        
+        if ($customers->isEmpty()) {
+            throw new \Exception("No customers found. Cannot create bookings without customers.");
+        }
+
+        // Generate bookings for the past 3 months for better analytics
+        $startDate = Carbon::now()->subMonths(3);
         $endDate = Carbon::now()->subDay(); // Up to yesterday
         
         $this->log("Generating bookings from {$startDate->format('Y-m-d')} to {$endDate->format('Y-m-d')}...");
