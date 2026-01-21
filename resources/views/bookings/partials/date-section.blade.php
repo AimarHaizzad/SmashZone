@@ -82,7 +82,7 @@
                             </div>
                             <div>
                                 <p class="text-xs text-gray-500 font-medium">Court</p>
-                                <p class="text-sm font-bold text-gray-900">{{ $booking->court->name }}</p>
+                                <p class="text-sm font-bold text-gray-900">{{ $booking->court->name ?? 'Unknown Court' }}</p>
                             </div>
                         </div>
                         
@@ -144,32 +144,39 @@
                             Details
                         </button>
                         
-                        @if($showPayButton)
+                        @if($showPayButton && $payment && isset($payment->id) && $payment->id)
                             @php 
                                 $renderedPaymentButtons[] = $paymentId;
                                 // Get booking count safely - default to 1 if we can't determine
                                 $bookingCount = 1;
-                                if ($payment && $payment->id) {
-                                    try {
-                                        // Check if bookings relationship is loaded
-                                        if ($payment->relationLoaded('bookings') && $payment->bookings) {
-                                            $bookingCount = $payment->bookings->count();
-                                        } elseif (method_exists($payment, 'bookings')) {
-                                            // Fallback to query if not loaded
-                                            $bookingCount = $payment->bookings()->count() ?: 1;
-                                        }
-                                    } catch (\Exception $e) {
-                                        // If anything fails, default to 1
-                                        $bookingCount = 1;
+                                try {
+                                    // Check if bookings relationship is loaded
+                                    if ($payment->relationLoaded('bookings') && $payment->bookings) {
+                                        $bookingCount = $payment->bookings->count();
+                                    } elseif (method_exists($payment, 'bookings')) {
+                                        // Fallback to query if not loaded
+                                        $bookingCount = $payment->bookings()->count() ?: 1;
                                     }
+                                } catch (\Exception $e) {
+                                    // If anything fails, default to 1
+                                    $bookingCount = 1;
+                                }
+                                
+                                // Generate route safely
+                                try {
+                                    $payUrl = route('payments.pay', $payment->id, absolute: false);
+                                } catch (\Exception $e) {
+                                    $payUrl = '#';
                                 }
                             @endphp
-                            <a href="{{ route('payments.pay', $payment, absolute: false) }}" class="px-3 py-2 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors text-sm flex items-center gap-1 shadow-sm">
-                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-                                </svg>
-                                Pay {{ $bookingCount > 1 ? '(' . $bookingCount . ')' : '' }}
-                            </a>
+                            @if($payUrl !== '#')
+                                <a href="{{ $payUrl }}" class="px-3 py-2 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors text-sm flex items-center gap-1 shadow-sm">
+                                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                                    </svg>
+                                    Pay {{ $bookingCount > 1 ? '(' . $bookingCount . ')' : '' }}
+                                </a>
+                            @endif
                         @elseif($payment && $paymentStatus === 'pending')
                             <span class="px-3 py-2 bg-gray-50 text-gray-400 rounded-lg font-medium text-sm cursor-not-allowed flex items-center gap-1" title="Included in another pending payment">
                                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">

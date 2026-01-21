@@ -468,6 +468,7 @@ class BookingController extends Controller
                 }]);
             }])
             ->where('user_id', $user->id)
+            ->whereHas('court') // Only get bookings with valid courts
             ->orderByDesc('date')
             ->orderBy('start_time')
             ->get();
