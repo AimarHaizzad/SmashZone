@@ -463,16 +463,30 @@ class BookingController extends Controller
             abort(403);
         }
 
-        $bookings = Booking::where('user_id', $user->id)
+        // Get date filter from request
+        $selectedDate = $request->query('date', null);
+        
+        // Build query
+        $query = Booking::where('user_id', $user->id)
             ->with('court')
-            ->with('payment')
-            ->orderByDesc('date')
+            ->with('payment');
+        
+        // Apply date filter if provided
+        if ($selectedDate) {
+            $query->where('date', $selectedDate);
+        }
+        
+        $bookings = $query->orderByDesc('date')
             ->orderBy('start_time')
             ->get();
 
-        // Calculate statistics
-        $totalBookings = $bookings->count();
-        $uniquePayments = $bookings->pluck('payment')->filter()->unique('id');
+        // Calculate statistics (for all bookings, not just filtered)
+        $allBookings = Booking::where('user_id', $user->id)
+            ->with('payment')
+            ->get();
+        
+        $totalBookings = $allBookings->count();
+        $uniquePayments = $allBookings->pluck('payment')->filter()->unique('id');
         $pendingPaymentsCount = $uniquePayments->where('status', 'pending')->count();
         $paidPaymentsCount = $uniquePayments->where('status', 'paid')->count();
         $totalSpent = $uniquePayments->where('status', 'paid')->sum('amount') ?? 0;
@@ -482,7 +496,8 @@ class BookingController extends Controller
             'totalBookings',
             'pendingPaymentsCount',
             'paidPaymentsCount',
-            'totalSpent'
+            'totalSpent',
+            'selectedDate'
         ));
     }
 

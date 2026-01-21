@@ -1,7 +1,84 @@
 @extends('layouts.app')
 
 @section('content')
+<!-- Hero Section with Gradient Background -->
+<div class="relative mb-12 -mx-4 sm:-mx-6 lg:-mx-8">
+    <div class="absolute inset-0 bg-gradient-to-r from-blue-900 via-blue-800 to-green-900 rounded-b-3xl"></div>
+    <div class="relative bg-gradient-to-r from-blue-600/90 via-blue-500/90 to-green-600/90 rounded-b-3xl p-8 sm:p-12 lg:p-16">
+        <!-- Top Left Badge -->
+        <div class="absolute top-4 left-4 sm:top-6 sm:left-6">
+            <span class="text-sm sm:text-base text-blue-100 font-medium">SmashZone</span>
+        </div>
+        
+        <!-- Main Hero Card -->
+        <div class="max-w-4xl mx-auto mt-8">
+            <div class="bg-white/10 backdrop-blur-md rounded-3xl p-8 sm:p-12 border border-white/20 shadow-2xl">
+                <h1 class="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-white mb-4 text-center">
+                    My Bookings
+                </h1>
+                <p class="text-lg sm:text-xl text-blue-100 text-center mb-8 font-medium">
+                    Manage your reservations • Track payments • View history
+                </p>
+                
+                <!-- Legend/Key -->
+                <div class="flex flex-wrap items-center justify-center gap-4 sm:gap-6 mt-8 pt-8 border-t border-white/20">
+                    <div class="flex items-center gap-2">
+                        <div class="w-4 h-4 rounded-full bg-green-500 border-2 border-white shadow-lg"></div>
+                        <span class="text-sm sm:text-base text-white font-medium">Paid</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <div class="w-4 h-4 rounded-full bg-yellow-500 border-2 border-white shadow-lg"></div>
+                        <span class="text-sm sm:text-base text-white font-medium">Pending Payment</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <div class="w-4 h-4 rounded-full bg-red-500 border-2 border-white shadow-lg"></div>
+                        <span class="text-sm sm:text-base text-white font-medium">Failed</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <div class="w-4 h-4 rounded-full bg-gray-400 border-2 border-white shadow-lg"></div>
+                        <span class="text-sm sm:text-base text-white font-medium">Past</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div class="max-w-7xl mx-auto py-8 px-4">
+    <!-- Date Filter Section -->
+    <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 mb-8">
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div>
+                <h3 class="text-lg font-semibold text-gray-900 mb-1">Filter by Date</h3>
+                <p class="text-sm text-gray-600">View bookings for a specific date</p>
+            </div>
+            <form method="GET" action="{{ route('bookings.my') }}" class="flex items-center gap-3">
+                <div class="relative">
+                    <input 
+                        type="date" 
+                        name="date" 
+                        value="{{ $selectedDate ?? '' }}" 
+                        class="border-2 border-blue-200 rounded-lg px-4 py-2.5 shadow-sm focus:ring-2 focus:ring-blue-300 focus:border-blue-400 text-sm font-semibold bg-white w-full sm:w-auto"
+                        onchange="this.form.submit()"
+                    >
+                </div>
+                @if($selectedDate)
+                    <a href="{{ route('bookings.my') }}" class="px-4 py-2.5 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition-colors text-sm">
+                        Clear Filter
+                    </a>
+                @endif
+            </form>
+        </div>
+        @if($selectedDate)
+            <div class="mt-4 pt-4 border-t border-gray-200">
+                <p class="text-sm text-gray-600">
+                    Showing bookings for: <span class="font-semibold text-gray-900">{{ \Carbon\Carbon::parse($selectedDate)->format('F d, Y') }}</span>
+                    <span class="text-gray-500">({{ $bookings->count() }} {{ $bookings->count() === 1 ? 'booking' : 'bookings' }})</span>
+                </p>
+            </div>
+        @endif
+    </div>
+
     <!-- Summary Statistics Cards -->
     <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
         <!-- Total Bookings -->
