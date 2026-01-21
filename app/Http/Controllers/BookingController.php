@@ -463,104 +463,14 @@ class BookingController extends Controller
             abort(403);
         }
 
-        try {
-            // Load bookings with minimal relationships first
-            $bookings = Booking::where('user_id', $user->id)
-                ->with('court')
-                ->with(['payment' => function($query) {
-                    $query->with('bookings');
-                }])
-                ->orderByDesc('date')
-                ->orderBy('start_time')
-                ->get();
+        $bookings = Booking::where('user_id', $user->id)
+            ->with('court')
+            ->with('payment')
+            ->orderByDesc('date')
+            ->orderBy('start_time')
+            ->get();
 
-            // Filter out bookings without courts
-            $bookings = $bookings->filter(function($booking) {
-                return $booking->court !== null;
-            })->values();
-
-            // Get unique payments safely
-            $uniquePayments = $bookings->pluck('payment')
-                ->filter()
-                ->unique('id');
-
-            $pendingPaymentsCount = $uniquePayments->where('status', 'pending')->count();
-            $paidPaymentsCount = $uniquePayments->where('status', 'paid')->count();
-            $totalSpent = $uniquePayments->where('status', 'paid')->sum('amount') ?? 0;
-
-            // Organize bookings
-            $now = Carbon::now();
-            $pendingPayments = collect();
-            $upcomingBookings = collect();
-            $pastBookings = collect();
-
-            foreach ($bookings as $booking) {
-                if (empty($booking->date) || empty($booking->start_time) || empty($booking->end_time)) {
-                    $pastBookings->push($booking);
-                    continue;
-                }
-
-                try {
-                    $startDateTime = Carbon::parse("{$booking->date} {$booking->start_time}");
-                    $endDateTime = Carbon::parse("{$booking->date} {$booking->end_time}");
-                    $payment = $booking->payment;
-                    $paymentStatus = $payment ? strtolower($payment->status ?? 'pending') : 'pending';
-                    $paymentExpired = $paymentStatus === 'pending' && $now->greaterThanOrEqualTo($startDateTime);
-                    
-                    if ($paymentExpired) {
-                        $paymentStatus = 'failed';
-                    }
-
-                    $isPastBooking = $now->gt($endDateTime);
-
-                    if ($paymentStatus === 'pending' && !$paymentExpired) {
-                        $pendingPayments->push($booking);
-                    } elseif ($isPastBooking) {
-                        $pastBookings->push($booking);
-                    } else {
-                        $upcomingBookings->push($booking);
-                    }
-                } catch (\Exception $e) {
-                    $pastBookings->push($booking);
-                }
-            }
-
-            // Group by date
-            $groupedPendingPayments = $pendingPayments->groupBy('date');
-            $groupedUpcoming = $upcomingBookings->groupBy('date');
-            $groupedPast = $pastBookings->groupBy('date');
-
-            $renderedPaymentButtons = [];
-
-            return view('bookings.my', compact(
-                'bookings', 
-                'pendingPaymentsCount', 
-                'paidPaymentsCount', 
-                'totalSpent',
-                'groupedPendingPayments',
-                'groupedUpcoming',
-                'groupedPast',
-                'renderedPaymentButtons'
-            ));
-        } catch (\Exception $e) {
-            Log::error('Error in BookingController@my', [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
-                'file' => $e->getFile(),
-                'line' => $e->getLine()
-            ]);
-
-            return view('bookings.my', [
-                'bookings' => collect(),
-                'pendingPaymentsCount' => 0,
-                'paidPaymentsCount' => 0,
-                'totalSpent' => 0,
-                'groupedPendingPayments' => collect(),
-                'groupedUpcoming' => collect(),
-                'groupedPast' => collect(),
-                'renderedPaymentButtons' => []
-            ]);
-        }
+        return view('bookings.my', compact('bookings'));
     }
 
     /**
