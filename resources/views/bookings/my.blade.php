@@ -27,7 +27,7 @@
         </div>
     @endif
 
-    @if($bookings->isEmpty())
+    @if(!isset($bookings) || $bookings->isEmpty())
         <div class="bg-white rounded-3xl shadow-xl border border-gray-100 p-12 text-center">
             <div class="w-32 h-32 bg-gradient-to-br from-gray-100 to-gray-200 rounded-full flex items-center justify-center mx-auto mb-6">
                 <svg class="w-16 h-16 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -242,7 +242,7 @@
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V7a2 2 0 00-2-2H6a2 2 0 00-2 2v6m16 0v6a2 2 0 01-2 2H6a2 2 0 01-2-2v-6m16 0H4" />
                                             </svg>
                                         </div>
-                                        <div class="font-semibold text-gray-900">{{ $booking->court->name }}</div>
+                                        <div class="font-semibold text-gray-900">{{ $booking->court->name ?? 'Unknown Court' }}</div>
                                     </div>
                                 </td>
                                 <td class="px-6 py-4">
