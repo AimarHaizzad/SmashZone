@@ -1,22 +1,35 @@
 @php
-    $dateCarbon = \Carbon\Carbon::parse($date);
-    $isToday = $dateCarbon->isToday();
-    $isTomorrow = $dateCarbon->isTomorrow();
-    $isPast = $dateCarbon->isPast() && !$dateCarbon->isToday();
-    
-    // Determine date label
-    if ($isToday) {
-        $dateLabel = 'Today';
-        $dateSubLabel = $dateCarbon->format('M d, Y');
-    } elseif ($isTomorrow) {
-        $dateLabel = 'Tomorrow';
-        $dateSubLabel = $dateCarbon->format('M d, Y');
-    } elseif ($isPast) {
-        $dateLabel = $dateCarbon->format('M d, Y');
-        $dateSubLabel = $dateCarbon->format('l');
-    } else {
-        $dateLabel = $dateCarbon->format('M d, Y');
-        $dateSubLabel = $dateCarbon->format('l');
+    try {
+        $dateCarbon = \Carbon\Carbon::parse($date ?? now()->toDateString());
+        $isToday = $dateCarbon->isToday();
+        $isTomorrow = $dateCarbon->isTomorrow();
+        $isPast = $dateCarbon->isPast() && !$dateCarbon->isToday();
+        
+        // Determine date label
+        if ($isToday) {
+            $dateLabel = 'Today';
+            $dateSubLabel = $dateCarbon->format('M d, Y');
+        } elseif ($isTomorrow) {
+            $dateLabel = 'Tomorrow';
+            $dateSubLabel = $dateCarbon->format('M d, Y');
+        } elseif ($isPast) {
+            $dateLabel = $dateCarbon->format('M d, Y');
+            $dateSubLabel = $dateCarbon->format('l');
+        } else {
+            $dateLabel = $dateCarbon->format('M d, Y');
+            $dateSubLabel = $dateCarbon->format('l');
+        }
+    } catch (\Exception $e) {
+        \Log::warning('Error parsing date in date-section partial', [
+            'date' => $date ?? 'missing',
+            'error' => $e->getMessage()
+        ]);
+        $dateCarbon = now();
+        $dateLabel = now()->format('M d, Y');
+        $dateSubLabel = now()->format('l');
+        $isToday = false;
+        $isTomorrow = false;
+        $isPast = false;
     }
     
     // Use the passed renderedPaymentButtons array or initialize if not set
@@ -51,22 +64,62 @@
 
     <!-- Bookings List -->
     <div class="space-y-3">
-        @foreach($bookings->sortBy('start_time') as $booking)
+        @foreach(($bookings ?? collect())->sortBy('start_time') as $booking)
+            @if(!$booking || !isset($booking->id))
+                @continue
+            @endif
             @php
-                $startDateTime = \Carbon\Carbon::parse("{$booking->date} {$booking->start_time}");
-                $endDateTime = \Carbon\Carbon::parse("{$booking->date} {$booking->end_time}");
-                $cancelDeadline = $startDateTime->copy()->subHour();
-                $isPastBooking = now()->gt($endDateTime);
-                $canCancel = !$isPastBooking && now()->lt($cancelDeadline) && $booking->status !== 'cancelled' && $booking->status !== 'completed';
-                $payment = $booking->payment;
-                $paymentStatus = $payment ? strtolower($payment->status ?? 'pending') : 'pending';
-                $paymentExpired = $paymentStatus === 'pending' && now()->greaterThanOrEqualTo($startDateTime);
-                
-                if ($paymentExpired) {
-                    $paymentStatus = 'failed';
+                try {
+                    // Safely parse dates with fallback
+                    if (empty($booking->date) || empty($booking->start_time) || empty($booking->end_time)) {
+                        $startDateTime = now();
+                        $endDateTime = now();
+                        $isPastBooking = true;
+                        $canCancel = false;
+                    } else {
+                        try {
+                            $startDateTime = \Carbon\Carbon::parse("{$booking->date} {$booking->start_time}");
+                            $endDateTime = \Carbon\Carbon::parse("{$booking->date} {$booking->end_time}");
+                        } catch (\Exception $e) {
+                            \Log::warning('Error parsing booking datetime', [
+                                'booking_id' => $booking->id ?? 'unknown',
+                                'date' => $booking->date ?? 'missing',
+                                'start_time' => $booking->start_time ?? 'missing',
+                                'end_time' => $booking->end_time ?? 'missing',
+                                'error' => $e->getMessage()
+                            ]);
+                            $startDateTime = now();
+                            $endDateTime = now();
+                        }
+                        $cancelDeadline = $startDateTime->copy()->subHour();
+                        $isPastBooking = now()->gt($endDateTime);
+                        $canCancel = !$isPastBooking && now()->lt($cancelDeadline) && $booking->status !== 'cancelled' && $booking->status !== 'completed';
+                    }
+                    
+                    $payment = $booking->payment ?? null;
+                    $paymentStatus = $payment ? strtolower($payment->status ?? 'pending') : 'pending';
+                    $paymentExpired = $paymentStatus === 'pending' && now()->greaterThanOrEqualTo($startDateTime);
+                    
+                    if ($paymentExpired) {
+                        $paymentStatus = 'failed';
+                    }
+                    $paymentId = $payment ? ($payment->id ?? null) : null;
+                    $showPayButton = $payment && $paymentStatus === 'pending' && $paymentId && !in_array($paymentId, $renderedPaymentButtons);
+                } catch (\Exception $e) {
+                    \Log::error('Error in date-section partial', [
+                        'booking_id' => $booking->id ?? 'unknown',
+                        'error' => $e->getMessage()
+                    ]);
+                    $startDateTime = now();
+                    $endDateTime = now();
+                    $isPastBooking = true;
+                    $canCancel = false;
+                    $payment = null;
+                    $paymentStatus = 'pending';
+                    $paymentExpired = false;
+                    $paymentId = null;
+                    $showPayButton = false;
                 }
-                $paymentId = $payment ? ($payment->id ?? null) : null;
-                $showPayButton = $payment && $paymentStatus === 'pending' && $paymentId && !in_array($paymentId, $renderedPaymentButtons);
             @endphp
             
             <div class="bg-gradient-to-r {{ $sectionType === 'pending' ? 'from-yellow-50 to-orange-50 border-yellow-200' : ($sectionType === 'upcoming' ? 'from-blue-50 to-green-50 border-blue-200' : 'from-gray-50 to-gray-100 border-gray-200') }} border rounded-xl p-4 hover:shadow-md transition-all">
@@ -90,10 +143,38 @@
                         <div>
                             <p class="text-xs text-gray-500 font-medium">Time</p>
                             <p class="text-sm font-bold text-gray-900">
-                                {{ \Carbon\Carbon::createFromFormat('H:i:s', $booking->start_time)->format('g:i A') }} - 
-                                {{ \Carbon\Carbon::createFromFormat('H:i:s', $booking->end_time)->format('g:i A') }}
+                                @php
+                                    try {
+                                        $startTimeFormatted = \Carbon\Carbon::createFromFormat('H:i:s', $booking->start_time)->format('g:i A');
+                                    } catch (\Exception $e) {
+                                        try {
+                                            $startTimeFormatted = \Carbon\Carbon::parse($booking->start_time)->format('g:i A');
+                                        } catch (\Exception $e2) {
+                                            $startTimeFormatted = $booking->start_time ?? 'N/A';
+                                        }
+                                    }
+                                    try {
+                                        $endTimeFormatted = \Carbon\Carbon::createFromFormat('H:i:s', $booking->end_time)->format('g:i A');
+                                    } catch (\Exception $e) {
+                                        try {
+                                            $endTimeFormatted = \Carbon\Carbon::parse($booking->end_time)->format('g:i A');
+                                        } catch (\Exception $e2) {
+                                            $endTimeFormatted = $booking->end_time ?? 'N/A';
+                                        }
+                                    }
+                                    try {
+                                        $hours = \Carbon\Carbon::createFromFormat('H:i:s', $booking->start_time)->diffInHours(\Carbon\Carbon::createFromFormat('H:i:s', $booking->end_time));
+                                    } catch (\Exception $e) {
+                                        try {
+                                            $hours = \Carbon\Carbon::parse($booking->start_time)->diffInHours(\Carbon\Carbon::parse($booking->end_time));
+                                        } catch (\Exception $e2) {
+                                            $hours = 1;
+                                        }
+                                    }
+                                @endphp
+                                {{ $startTimeFormatted }} - {{ $endTimeFormatted }}
                             </p>
-                            <p class="text-xs text-gray-500">{{ \Carbon\Carbon::createFromFormat('H:i:s', $booking->start_time)->diffInHours(\Carbon\Carbon::createFromFormat('H:i:s', $booking->end_time)) }} hour(s)</p>
+                            <p class="text-xs text-gray-500">{{ $hours }} hour(s)</p>
                         </div>
                         
                         <!-- Amount -->

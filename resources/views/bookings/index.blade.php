@@ -253,16 +253,45 @@
                                         $isPastSlot = false;
                                         
                                         try {
+                                            // Normalize the slot time format (ensure it's HH:00 format)
+                                            $slotTime = $slot;
+                                            if (preg_match('/^(\d{1,2}):(\d{2})(?::\d{2})?$/', $slot, $matches)) {
+                                                $slotTime = sprintf('%02d:%02d', (int)$matches[1], (int)$matches[2]);
+                                            }
+                                            
                                             // Create full datetime for the slot by combining date and time
-                                            // Slot format is "HH:00" (e.g., "08:00", "14:00")
-                                            $slotDateTime = \Carbon\Carbon::createFromFormat('Y-m-d H:i', "{$selectedDate} {$slot}");
+                                            // Slot format is "HH:00" (e.g., "18:00"), date format is "Y-m-d" (e.g., "2026-01-21")
+                                            $slotDateTime = \Carbon\Carbon::createFromFormat('Y-m-d H:i', "{$selectedDate} {$slotTime}");
+                                            
+                                            // Get current time
                                             $now = \Carbon\Carbon::now();
                                             
                                             // Check if the slot datetime is in the past
+                                            // A slot is past if its start time is before the current time
                                             $isPastSlot = $slotDateTime->lt($now);
+                                            
+                                            // Additional check: if it's today and the time has passed, mark as past
+                                            $isToday = $slotDateTime->isToday();
+                                            if ($isToday && $slotDateTime->format('H:i') < $now->format('H:i')) {
+                                                $isPastSlot = true;
+                                            }
                                         } catch (\Exception $e) {
-                                            // If parsing fails, default to not past
-                                            $isPastSlot = false;
+                                            // If parsing fails, try alternative method
+                                            try {
+                                                $slotDateTime = \Carbon\Carbon::parse("{$selectedDate} {$slot}");
+                                                $now = \Carbon\Carbon::now();
+                                                $isPastSlot = $slotDateTime->lt($now);
+                                            } catch (\Exception $e2) {
+                                                // If all parsing fails, default to not past
+                                                $isPastSlot = false;
+                                                // Log the error for debugging
+                                                \Log::warning('Error checking if slot is past', [
+                                                    'selectedDate' => $selectedDate ?? 'missing',
+                                                    'slot' => $slot ?? 'missing',
+                                                    'error' => $e->getMessage(),
+                                                    'error2' => $e2->getMessage()
+                                                ]);
+                                            }
                                         }
                                     @endphp
                                     @if($isPastSlot)
@@ -524,9 +553,23 @@
 
     // Multi-slot selection functions
     function isPastSlot(dateString, timeString) {
-        const slotDateTime = new Date(`${dateString}T${timeString}:00`);
-        const now = new Date();
-        return slotDateTime <= now;
+        try {
+            // Normalize time string (remove seconds if present)
+            let normalizedTime = timeString;
+            if (normalizedTime.split(':').length === 2) {
+                normalizedTime = normalizedTime + ':00';
+            }
+            
+            // Create datetime string in ISO format
+            const slotDateTime = new Date(`${dateString}T${normalizedTime}`);
+            const now = new Date();
+            
+            // Check if slot is in the past
+            return slotDateTime < now;
+        } catch (e) {
+            console.error('Error checking past slot:', e);
+            return false;
+        }
     }
 
     function toggleSlotSelection(courtId, time, courtName) {
@@ -1365,10 +1408,39 @@
     }
     
     // Setup event listeners when DOM is ready
+    // Function to mark all past slots on page load
+    function markPastSlotsOnLoad() {
+        const selectedDate = document.getElementById('date-input')?.value;
+        if (!selectedDate) return;
+        
+        const buttons = document.querySelectorAll('button.select-slot-btn[data-time]');
+        buttons.forEach(button => {
+            const time = button.dataset.time;
+            const isPast = button.dataset.past === 'true' || button.disabled;
+            
+            // Double-check with JavaScript if not already marked
+            if (!isPast && isPastSlot(selectedDate, time)) {
+                button.classList.add('past-slot');
+                button.setAttribute('data-past', 'true');
+                button.disabled = true;
+                button.style.backgroundColor = '#f3f4f6';
+                button.style.borderColor = '#d1d5db';
+                button.style.color = '#6b7280';
+                button.style.opacity = '0.75';
+                button.style.pointerEvents = 'none';
+                button.style.cursor = 'not-allowed';
+            }
+        });
+    }
+    
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', setupMultiSlotEventListeners);
+        document.addEventListener('DOMContentLoaded', function() {
+            setupMultiSlotEventListeners();
+            markPastSlotsOnLoad();
+        });
     } else {
         setupMultiSlotEventListeners();
+        markPastSlotsOnLoad();
     }
 
     // Initial event listeners setup
