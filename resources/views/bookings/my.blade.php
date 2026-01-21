@@ -113,31 +113,105 @@
             </div>
         </div>
 
-        <!-- Enhanced Table -->
-        <div class="bg-white rounded-3xl shadow-xl border border-gray-100 overflow-hidden">
-            <div class="bg-gradient-to-r from-blue-50 to-green-50 px-6 py-4 border-b border-gray-100">
-                <h2 class="text-xl font-bold text-gray-800 flex items-center gap-2">
-                    <svg class="w-6 h-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-6a2 2 0 012-2h2a2 2 0 012 2v6" />
-                    </svg>
-                    Booking History
-                </h2>
+        <!-- Pending Payments Section -->
+        @if($groupedPendingPayments->isNotEmpty())
+            <div class="bg-gradient-to-r from-yellow-50 to-orange-50 rounded-3xl shadow-xl border-2 border-yellow-200 overflow-hidden mb-8">
+                <div class="bg-gradient-to-r from-yellow-500 to-orange-500 px-6 py-4 border-b border-yellow-300">
+                    <div class="flex items-center justify-between">
+                        <h2 class="text-xl font-bold text-white flex items-center gap-2">
+                            <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 1.343-3 3s1.343 3 3 3 3-1.343 3-3-1.343-3-3-3zm0 0V4m0 7v7" />
+                            </svg>
+                            ⚠️ Action Required: Pending Payments
+                        </h2>
+                        <span class="bg-white/20 text-white px-3 py-1 rounded-full text-sm font-bold">{{ $groupedPendingPayments->flatten()->count() }} booking(s)</span>
+                    </div>
+                    <p class="text-yellow-100 text-sm mt-2">Please complete payment for these bookings to secure your reservation</p>
+                </div>
+                <div class="p-6">
+                    @foreach($groupedPendingPayments as $date => $dateBookings)
+                        @include('bookings.partials.date-section', [
+                            'date' => $date,
+                            'bookings' => $dateBookings,
+                            'sectionType' => 'pending'
+                        ])
+                    @endforeach
+                </div>
             </div>
-            <div class="overflow-x-auto">
-                <table class="min-w-full">
-                    <thead class="bg-gray-50">
-                        <tr>
-                            <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Court</th>
-                            <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Date</th>
-                            <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Time</th>
-                            <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Amount</th>
-                            <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Status</th>
-                            <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-gray-100">
-                        @php $renderedPaymentButtons = []; @endphp
-                        @foreach($bookings as $booking)
+        @endif
+
+        <!-- Upcoming Bookings Section -->
+        @if($groupedUpcoming->isNotEmpty())
+            <div class="bg-white rounded-3xl shadow-xl border border-gray-100 overflow-hidden mb-8">
+                <div class="bg-gradient-to-r from-blue-50 to-green-50 px-6 py-4 border-b border-gray-100">
+                    <h2 class="text-xl font-bold text-gray-800 flex items-center gap-2">
+                        <svg class="w-6 h-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        📅 Upcoming Bookings
+                    </h2>
+                </div>
+                <div class="p-6">
+                    @foreach($groupedUpcoming as $date => $dateBookings)
+                        @include('bookings.partials.date-section', [
+                            'date' => $date,
+                            'bookings' => $dateBookings,
+                            'sectionType' => 'upcoming'
+                        ])
+                    @endforeach
+                </div>
+            </div>
+        @endif
+
+        <!-- Past Bookings Section -->
+        @if($groupedPast->isNotEmpty())
+            <div class="bg-white rounded-3xl shadow-xl border border-gray-100 overflow-hidden">
+                <div class="bg-gradient-to-r from-gray-50 to-gray-100 px-6 py-4 border-b border-gray-200">
+                    <h2 class="text-xl font-bold text-gray-700 flex items-center gap-2">
+                        <svg class="w-6 h-6 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        📜 Past Bookings
+                    </h2>
+                </div>
+                <div class="p-6">
+                    @foreach($groupedPast as $date => $dateBookings)
+                        @include('bookings.partials.date-section', [
+                            'date' => $date,
+                            'bookings' => $dateBookings,
+                            'sectionType' => 'past'
+                        ])
+                    @endforeach
+                </div>
+            </div>
+        @endif
+
+        <!-- Legacy Table (fallback if no sections) -->
+        @if($groupedPendingPayments->isEmpty() && $groupedUpcoming->isEmpty() && $groupedPast->isEmpty())
+            <div class="bg-white rounded-3xl shadow-xl border border-gray-100 overflow-hidden">
+                <div class="bg-gradient-to-r from-blue-50 to-green-50 px-6 py-4 border-b border-gray-100">
+                    <h2 class="text-xl font-bold text-gray-800 flex items-center gap-2">
+                        <svg class="w-6 h-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-6a2 2 0 012-2h2a2 2 0 012 2v6" />
+                        </svg>
+                        Booking History
+                    </h2>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Court</th>
+                                <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Date</th>
+                                <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Time</th>
+                                <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Amount</th>
+                                <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Status</th>
+                                <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-100">
+                            @php $renderedPaymentButtons = []; @endphp
+                            @foreach($bookings as $booking)
                             @php
                                 $startDateTime = \Carbon\Carbon::parse("{$booking->date} {$booking->start_time}");
                                 $endDateTime = \Carbon\Carbon::parse("{$booking->date} {$booking->end_time}");

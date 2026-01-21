@@ -22,6 +22,10 @@
                     <div class="w-2 h-2 md:w-3 md:h-3 bg-blue-400 rounded-full"></div>
                     <span class="text-xs md:text-sm font-medium">My Booking</span>
                 </div>
+                <div class="flex items-center gap-1 md:gap-2">
+                    <div class="w-2 h-2 md:w-3 md:h-3 bg-gray-400 rounded-full"></div>
+                    <span class="text-xs md:text-sm font-medium">Past</span>
+                </div>
             </div>
         </div>
     </div>
@@ -245,20 +249,47 @@
                                 @else
                                     @php
                                         $slotRate = $court->hourlyRateForSlot($selectedDate, $slot);
+                                        // Check if this time slot has passed
+                                        $isPastSlot = false;
+                                        $today = \Carbon\Carbon::today()->format('Y-m-d');
+                                        if ($selectedDate === $today) {
+                                            $slotTime = \Carbon\Carbon::createFromFormat('H:i', $slot);
+                                            $now = \Carbon\Carbon::now();
+                                            $isPastSlot = $slotTime->lt($now);
+                                        } elseif ($selectedDate < $today) {
+                                            $isPastSlot = true;
+                                        }
                                     @endphp
-                                    <button class="select-slot-btn w-full py-1.5 sm:py-2 md:py-3 px-2 sm:px-3 md:px-4 font-semibold rounded-lg sm:rounded-xl border-2 border-green-200 bg-green-50 text-green-800 hover:bg-green-100 hover:border-green-300 transition-all transform hover:scale-105 shadow-sm text-xs sm:text-sm" 
-                                            data-court="{{ $court->id }}" data-time="{{ $slot }}" data-variant="desktop"
-                                            data-price="{{ $slotRate }}" data-price-label="RM {{ number_format($slotRate, 2) }}"
-                                            title="Select {{ $court->name }} at {{ \Carbon\Carbon::createFromFormat('H:i', $slot)->format('g:i A') }}"
-                                            aria-label="Select {{ $court->name }} at {{ \Carbon\Carbon::createFromFormat('H:i', $slot)->format('g:i A') }}">
-                                        <div class="flex items-center justify-center gap-1 sm:gap-2">
-                                            <svg class="h-3 w-3 sm:h-4 sm:w-4 md:h-5 md:w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                                            </svg>
-                                            <span class="hidden sm:inline">Select</span>
-                                            <span class="text-[10px] sm:text-xs text-blue-600 font-semibold">{{ 'RM ' . number_format($slotRate, 2) }}/hr</span>
-                                        </div>
-                                    </button>
+                                    @if($isPastSlot)
+                                        <button class="select-slot-btn w-full py-1.5 sm:py-2 md:py-3 px-2 sm:px-3 md:px-4 font-semibold rounded-lg sm:rounded-xl border-2 border-gray-300 bg-gray-100 text-gray-500 cursor-not-allowed shadow-sm text-xs sm:text-sm" 
+                                                data-court="{{ $court->id }}" data-time="{{ $slot }}" data-variant="desktop"
+                                                data-price="{{ $slotRate }}" data-price-label="RM {{ number_format($slotRate, 2) }}"
+                                                title="This time slot has passed"
+                                                aria-label="This time slot has passed"
+                                                disabled>
+                                            <div class="flex items-center justify-center gap-1 sm:gap-2">
+                                                <svg class="h-3 w-3 sm:h-4 sm:w-4 md:h-5 md:w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                                </svg>
+                                                <span class="hidden sm:inline">Past</span>
+                                                <span class="text-[10px] sm:text-xs text-gray-400 font-semibold">{{ 'RM ' . number_format($slotRate, 2) }}/hr</span>
+                                            </div>
+                                        </button>
+                                    @else
+                                        <button class="select-slot-btn w-full py-1.5 sm:py-2 md:py-3 px-2 sm:px-3 md:px-4 font-semibold rounded-lg sm:rounded-xl border-2 border-green-200 bg-green-50 text-green-800 hover:bg-green-100 hover:border-green-300 transition-all transform hover:scale-105 shadow-sm text-xs sm:text-sm" 
+                                                data-court="{{ $court->id }}" data-time="{{ $slot }}" data-variant="desktop"
+                                                data-price="{{ $slotRate }}" data-price-label="RM {{ number_format($slotRate, 2) }}"
+                                                title="Select {{ $court->name }} at {{ \Carbon\Carbon::createFromFormat('H:i', $slot)->format('g:i A') }}"
+                                                aria-label="Select {{ $court->name }} at {{ \Carbon\Carbon::createFromFormat('H:i', $slot)->format('g:i A') }}">
+                                            <div class="flex items-center justify-center gap-1 sm:gap-2">
+                                                <svg class="h-3 w-3 sm:h-4 sm:w-4 md:h-5 md:w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                                                </svg>
+                                                <span class="hidden sm:inline">Select</span>
+                                                <span class="text-[10px] sm:text-xs text-blue-600 font-semibold">{{ 'RM ' . number_format($slotRate, 2) }}/hr</span>
+                                            </div>
+                                        </button>
+                                    @endif
                                 @endif
                             </td>
                         @endforeach
@@ -530,6 +561,11 @@
         if (!buttons.length) return;
 
         buttons.forEach(button => {
+            // Don't update past slots (disabled buttons)
+            if (button.disabled) {
+                return;
+            }
+            
             const variant = button.dataset.variant === 'mobile' ? 'mobile' : 'desktop';
             const priceLabelText = button.dataset.priceLabel ? `<span class="slot-price text-xs text-blue-600 font-semibold">${button.dataset.priceLabel}/hr</span>` : '';
 
@@ -1130,6 +1166,10 @@
             
             btn.onclick = function(e) {
                 e.preventDefault();
+                // Don't allow clicking on disabled (past) slots
+                if (this.disabled) {
+                    return;
+                }
                 console.log('Select button clicked!');
                 const courtId = this.getAttribute('data-court');
                 const slot = this.getAttribute('data-time');

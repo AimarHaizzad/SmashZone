@@ -473,7 +473,50 @@ class BookingController extends Controller
         $paidPaymentsCount = $uniquePayments->where('status', 'paid')->count();
         $totalSpent = $uniquePayments->where('status', 'paid')->sum('amount');
 
-        return view('bookings.my', compact('bookings', 'pendingPaymentsCount', 'paidPaymentsCount', 'totalSpent'));
+        // Organize bookings into sections
+        $now = \Carbon\Carbon::now();
+        $pendingPayments = collect();
+        $upcomingBookings = collect();
+        $pastBookings = collect();
+
+        foreach ($bookings as $booking) {
+            $startDateTime = \Carbon\Carbon::parse("{$booking->date} {$booking->start_time}");
+            $endDateTime = \Carbon\Carbon::parse("{$booking->date} {$booking->end_time}");
+            $payment = $booking->payment;
+            $paymentStatus = strtolower($payment->status ?? 'pending');
+            $paymentExpired = $paymentStatus === 'pending' && $now->greaterThanOrEqualTo($startDateTime);
+            
+            if ($paymentExpired) {
+                $paymentStatus = 'failed';
+            }
+
+            // Check if booking time has completely passed
+            $isPastBooking = $now->gt($endDateTime);
+
+            // Prioritize: Pending payments first (even if past, they still need payment)
+            if ($paymentStatus === 'pending' && !$paymentExpired) {
+                $pendingPayments->push($booking);
+            } elseif ($isPastBooking) {
+                $pastBookings->push($booking);
+            } else {
+                $upcomingBookings->push($booking);
+            }
+        }
+
+        // Group by date within each section
+        $groupedPendingPayments = $pendingPayments->groupBy('date');
+        $groupedUpcoming = $upcomingBookings->groupBy('date');
+        $groupedPast = $pastBookings->groupBy('date');
+
+        return view('bookings.my', compact(
+            'bookings', 
+            'pendingPaymentsCount', 
+            'paidPaymentsCount', 
+            'totalSpent',
+            'groupedPendingPayments',
+            'groupedUpcoming',
+            'groupedPast'
+        ));
     }
 
     /**
