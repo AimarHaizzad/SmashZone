@@ -463,14 +463,20 @@ class BookingController extends Controller
         }
 
         $bookings = Booking::with(['court', 'payment' => function($query) {
-                $query->with('bookings');
+                $query->with(['bookings' => function($bookingQuery) {
+                    $bookingQuery->where('status', '!=', 'cancelled');
+                }]);
             }])
             ->where('user_id', $user->id)
             ->orderByDesc('date')
             ->orderBy('start_time')
             ->get();
 
-        $uniquePayments = $bookings->pluck('payment')->filter()->unique('id');
+        $uniquePayments = $bookings->pluck('payment')
+            ->filter(function($payment) {
+                return $payment !== null && isset($payment->id);
+            })
+            ->unique('id');
         $pendingPaymentsCount = $uniquePayments->where('status', 'pending')->count();
         $paidPaymentsCount = $uniquePayments->where('status', 'paid')->count();
         $totalSpent = $uniquePayments->where('status', 'paid')->sum('amount');
@@ -482,33 +488,44 @@ class BookingController extends Controller
         $pastBookings = collect();
 
         foreach ($bookings as $booking) {
-            $startDateTime = \Carbon\Carbon::parse("{$booking->date} {$booking->start_time}");
-            $endDateTime = \Carbon\Carbon::parse("{$booking->date} {$booking->end_time}");
-            $payment = $booking->payment;
-            $paymentStatus = strtolower($payment->status ?? 'pending');
-            $paymentExpired = $paymentStatus === 'pending' && $now->greaterThanOrEqualTo($startDateTime);
-            
-            if ($paymentExpired) {
-                $paymentStatus = 'failed';
-            }
+            try {
+                $startDateTime = \Carbon\Carbon::parse("{$booking->date} {$booking->start_time}");
+                $endDateTime = \Carbon\Carbon::parse("{$booking->date} {$booking->end_time}");
+                $payment = $booking->payment;
+                $paymentStatus = $payment ? strtolower($payment->status ?? 'pending') : 'pending';
+                $paymentExpired = $paymentStatus === 'pending' && $now->greaterThanOrEqualTo($startDateTime);
+                
+                if ($paymentExpired) {
+                    $paymentStatus = 'failed';
+                }
 
-            // Check if booking time has completely passed
-            $isPastBooking = $now->gt($endDateTime);
+                // Check if booking time has completely passed
+                $isPastBooking = $now->gt($endDateTime);
 
-            // Prioritize: Pending payments first (even if past, they still need payment)
-            if ($paymentStatus === 'pending' && !$paymentExpired) {
-                $pendingPayments->push($booking);
-            } elseif ($isPastBooking) {
+                // Prioritize: Pending payments first (even if past, they still need payment)
+                if ($paymentStatus === 'pending' && !$paymentExpired) {
+                    $pendingPayments->push($booking);
+                } elseif ($isPastBooking) {
+                    $pastBookings->push($booking);
+                } else {
+                    $upcomingBookings->push($booking);
+                }
+            } catch (\Exception $e) {
+                // Log error and skip this booking to prevent 500 error
+                \Log::error('Error processing booking in my() method', [
+                    'booking_id' => $booking->id ?? 'unknown',
+                    'error' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString()
+                ]);
+                // Add to past bookings as fallback
                 $pastBookings->push($booking);
-            } else {
-                $upcomingBookings->push($booking);
             }
         }
 
-        // Group by date within each section
-        $groupedPendingPayments = $pendingPayments->groupBy('date');
-        $groupedUpcoming = $upcomingBookings->groupBy('date');
-        $groupedPast = $pastBookings->groupBy('date');
+        // Group by date within each section - ensure they're collections
+        $groupedPendingPayments = $pendingPayments->groupBy('date') ?? collect();
+        $groupedUpcoming = $upcomingBookings->groupBy('date') ?? collect();
+        $groupedPast = $pastBookings->groupBy('date') ?? collect();
 
         // Initialize renderedPaymentButtons array to track which payment buttons have been shown
         $renderedPaymentButtons = [];

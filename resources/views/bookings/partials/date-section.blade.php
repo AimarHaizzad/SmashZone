@@ -147,16 +147,19 @@
                         @if($showPayButton)
                             @php 
                                 $renderedPaymentButtons[] = $paymentId;
-                                // Get booking count safely
+                                // Get booking count safely - default to 1 if we can't determine
                                 $bookingCount = 1;
-                                if ($payment) {
+                                if ($payment && $payment->id) {
                                     try {
-                                        if ($payment->relationLoaded('bookings')) {
+                                        // Check if bookings relationship is loaded
+                                        if ($payment->relationLoaded('bookings') && $payment->bookings) {
                                             $bookingCount = $payment->bookings->count();
-                                        } else {
-                                            $bookingCount = $payment->bookings()->count();
+                                        } elseif (method_exists($payment, 'bookings')) {
+                                            // Fallback to query if not loaded
+                                            $bookingCount = $payment->bookings()->count() ?: 1;
                                         }
                                     } catch (\Exception $e) {
+                                        // If anything fails, default to 1
                                         $bookingCount = 1;
                                     }
                                 }

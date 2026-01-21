@@ -251,22 +251,32 @@
                                         $slotRate = $court->hourlyRateForSlot($selectedDate, $slot);
                                         // Check if this time slot has passed
                                         $isPastSlot = false;
-                                        $today = \Carbon\Carbon::today()->format('Y-m-d');
                                         
-                                        // Create full datetime for the slot by combining date and time
-                                        $slotDateTime = \Carbon\Carbon::createFromFormat('Y-m-d H:i', "{$selectedDate} {$slot}");
-                                        $now = \Carbon\Carbon::now();
-                                        
-                                        // Check if the slot datetime is in the past
-                                        $isPastSlot = $slotDateTime->lt($now);
+                                        try {
+                                            // Create full datetime for the slot by combining date and time
+                                            // Slot format is "HH:00" (e.g., "08:00", "14:00")
+                                            $slotDateTime = \Carbon\Carbon::createFromFormat('Y-m-d H:i', "{$selectedDate} {$slot}");
+                                            $now = \Carbon\Carbon::now();
+                                            
+                                            // Check if the slot datetime is in the past
+                                            $isPastSlot = $slotDateTime->lt($now);
+                                        } catch (\Exception $e) {
+                                            // If parsing fails, default to not past
+                                            $isPastSlot = false;
+                                        }
                                     @endphp
                                     @if($isPastSlot)
-                                        <button class="select-slot-btn w-full py-1.5 sm:py-2 md:py-3 px-2 sm:px-3 md:px-4 font-semibold rounded-lg sm:rounded-xl border-2 border-gray-300 bg-gray-100 text-gray-500 cursor-not-allowed shadow-sm text-xs sm:text-sm" 
-                                                data-court="{{ $court->id }}" data-time="{{ $slot }}" data-variant="desktop"
-                                                data-price="{{ $slotRate }}" data-price-label="RM {{ number_format($slotRate, 2) }}"
+                                        <button class="select-slot-btn past-slot w-full py-1.5 sm:py-2 md:py-3 px-2 sm:px-3 md:px-4 font-semibold rounded-lg sm:rounded-xl border-2 border-gray-300 bg-gray-100 text-gray-500 cursor-not-allowed shadow-sm text-xs sm:text-sm opacity-75" 
+                                                data-court="{{ $court->id }}" 
+                                                data-time="{{ $slot }}" 
+                                                data-variant="desktop"
+                                                data-past="true"
+                                                data-price="{{ $slotRate }}" 
+                                                data-price-label="RM {{ number_format($slotRate, 2) }}"
                                                 title="This time slot has passed"
                                                 aria-label="This time slot has passed"
-                                                disabled>
+                                                disabled
+                                                style="background-color: #f3f4f6 !important; border-color: #d1d5db !important; color: #6b7280 !important;">
                                             <div class="flex items-center justify-center gap-1 sm:gap-2">
                                                 <svg class="h-3 w-3 sm:h-4 sm:w-4 md:h-5 md:w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -561,8 +571,8 @@
         if (!buttons.length) return;
 
         buttons.forEach(button => {
-            // Don't update past slots (disabled buttons)
-            if (button.disabled) {
+            // Don't update past slots (disabled buttons or marked as past)
+            if (button.disabled || button.dataset.past === 'true' || button.classList.contains('past-slot')) {
                 return;
             }
             
@@ -1368,6 +1378,24 @@
 </script>
 
 <style>
+    /* Ensure past slots stay grey and cannot be overridden */
+    button.select-slot-btn.past-slot,
+    button.select-slot-btn[data-past="true"],
+    button.select-slot-btn:disabled[data-past="true"] {
+        background-color: #f3f4f6 !important;
+        border-color: #d1d5db !important;
+        color: #6b7280 !important;
+        opacity: 0.75 !important;
+        cursor: not-allowed !important;
+        pointer-events: none !important;
+    }
+    
+    button.select-slot-btn.past-slot:hover,
+    button.select-slot-btn[data-past="true"]:hover {
+        background-color: #f3f4f6 !important;
+        border-color: #d1d5db !important;
+        transform: none !important;
+    }
 @keyframes fade-in {
     from { opacity: 0; transform: translateY(20px) scale(0.95); }
     to { opacity: 1; transform: translateY(0) scale(1); }
