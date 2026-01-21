@@ -7,6 +7,7 @@ use App\Models\Booking;
 use App\Models\Court;
 use App\Models\Payment;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use App\Notifications\BookingConfirmation;
 use App\Notifications\BookingCancellation;
 use App\Services\RefundService;
@@ -470,7 +471,7 @@ class BookingController extends Controller
                             $bookingQuery->where('status', '!=', 'cancelled');
                         }]);
                     } catch (\Exception $e) {
-                        \Log::warning('Error loading payment bookings relationship', [
+                        Log::warning('Error loading payment bookings relationship', [
                             'error' => $e->getMessage()
                         ]);
                     }
@@ -482,7 +483,8 @@ class BookingController extends Controller
                 ->filter(function($booking) {
                     // Filter out bookings without courts after loading
                     return $booking->court !== null;
-                });
+                })
+                ->values(); // Re-index the collection after filtering
 
             // Safely get unique payments
             $uniquePayments = collect();
@@ -493,7 +495,7 @@ class BookingController extends Controller
                     })
                     ->unique('id');
             } catch (\Exception $e) {
-                \Log::warning('Error processing unique payments', [
+                Log::warning('Error processing unique payments', [
                     'error' => $e->getMessage()
                 ]);
             }
@@ -512,7 +514,7 @@ class BookingController extends Controller
                 try {
                     // Validate booking has required fields
                     if (empty($booking->date) || empty($booking->start_time) || empty($booking->end_time)) {
-                        \Log::warning('Booking missing required date/time fields', [
+                        Log::warning('Booking missing required date/time fields', [
                             'booking_id' => $booking->id ?? 'unknown'
                         ]);
                         $pastBookings->push($booking);
@@ -542,7 +544,7 @@ class BookingController extends Controller
                     }
                 } catch (\Exception $e) {
                     // Log error and skip this booking to prevent 500 error
-                    \Log::error('Error processing booking in my() method', [
+                    Log::error('Error processing booking in my() method', [
                         'booking_id' => $booking->id ?? 'unknown',
                         'error' => $e->getMessage(),
                         'trace' => $e->getTraceAsString()
@@ -571,7 +573,7 @@ class BookingController extends Controller
                 'renderedPaymentButtons'
             ));
         } catch (\Exception $e) {
-            \Log::error('Fatal error in BookingController@my', [
+            Log::error('Fatal error in BookingController@my', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
                 'user_id' => Auth::id()

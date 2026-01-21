@@ -20,10 +20,11 @@
             $dateSubLabel = $dateCarbon->format('l');
         }
     } catch (\Exception $e) {
-        \Log::warning('Error parsing date in date-section partial', [
-            'date' => $date ?? 'missing',
-            'error' => $e->getMessage()
-        ]);
+        // Log warning (commented out to avoid issues in Blade)
+        // \Illuminate\Support\Facades\Log::warning('Error parsing date in date-section partial', [
+        //     'date' => $date ?? 'missing',
+        //     'error' => $e->getMessage()
+        // ]);
         $dateCarbon = now();
         $dateLabel = now()->format('M d, Y');
         $dateSubLabel = now()->format('l');
@@ -81,13 +82,14 @@
                             $startDateTime = \Carbon\Carbon::parse("{$booking->date} {$booking->start_time}");
                             $endDateTime = \Carbon\Carbon::parse("{$booking->date} {$booking->end_time}");
                         } catch (\Exception $e) {
-                            \Log::warning('Error parsing booking datetime', [
-                                'booking_id' => $booking->id ?? 'unknown',
-                                'date' => $booking->date ?? 'missing',
-                                'start_time' => $booking->start_time ?? 'missing',
-                                'end_time' => $booking->end_time ?? 'missing',
-                                'error' => $e->getMessage()
-                            ]);
+                            // Log warning (commented out to avoid issues in Blade)
+                            // \Illuminate\Support\Facades\Log::warning('Error parsing booking datetime', [
+                            //     'booking_id' => $booking->id ?? 'unknown',
+                            //     'date' => $booking->date ?? 'missing',
+                            //     'start_time' => $booking->start_time ?? 'missing',
+                            //     'end_time' => $booking->end_time ?? 'missing',
+                            //     'error' => $e->getMessage()
+                            // ]);
                             $startDateTime = now();
                             $endDateTime = now();
                         }
@@ -106,10 +108,11 @@
                     $paymentId = $payment ? ($payment->id ?? null) : null;
                     $showPayButton = $payment && $paymentStatus === 'pending' && $paymentId && !in_array($paymentId, $renderedPaymentButtons);
                 } catch (\Exception $e) {
-                    \Log::error('Error in date-section partial', [
-                        'booking_id' => $booking->id ?? 'unknown',
-                        'error' => $e->getMessage()
-                    ]);
+                    // Log error (commented out to avoid issues in Blade)
+                    // \Illuminate\Support\Facades\Log::error('Error in date-section partial', [
+                    //     'booking_id' => $booking->id ?? 'unknown',
+                    //     'error' => $e->getMessage()
+                    // ]);
                     $startDateTime = now();
                     $endDateTime = now();
                     $isPastBooking = true;
