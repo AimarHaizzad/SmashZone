@@ -114,7 +114,7 @@
         </div>
 
         <!-- Pending Payments Section -->
-        @if($groupedPendingPayments->isNotEmpty())
+        @if(isset($groupedPendingPayments) && $groupedPendingPayments->isNotEmpty())
             <div class="bg-gradient-to-r from-yellow-50 to-orange-50 rounded-3xl shadow-xl border-2 border-yellow-200 overflow-hidden mb-8">
                 <div class="bg-gradient-to-r from-yellow-500 to-orange-500 px-6 py-4 border-b border-yellow-300">
                     <div class="flex items-center justify-between">
@@ -129,11 +129,13 @@
                     <p class="text-yellow-100 text-sm mt-2">Please complete payment for these bookings to secure your reservation</p>
                 </div>
                 <div class="p-6">
+                    @php $renderedPaymentButtons = $renderedPaymentButtons ?? []; @endphp
                     @foreach($groupedPendingPayments as $date => $dateBookings)
                         @include('bookings.partials.date-section', [
                             'date' => $date,
                             'bookings' => $dateBookings,
-                            'sectionType' => 'pending'
+                            'sectionType' => 'pending',
+                            'renderedPaymentButtons' => $renderedPaymentButtons
                         ])
                     @endforeach
                 </div>
@@ -141,7 +143,7 @@
         @endif
 
         <!-- Upcoming Bookings Section -->
-        @if($groupedUpcoming->isNotEmpty())
+        @if(isset($groupedUpcoming) && $groupedUpcoming->isNotEmpty())
             <div class="bg-white rounded-3xl shadow-xl border border-gray-100 overflow-hidden mb-8">
                 <div class="bg-gradient-to-r from-blue-50 to-green-50 px-6 py-4 border-b border-gray-100">
                     <h2 class="text-xl font-bold text-gray-800 flex items-center gap-2">
@@ -152,11 +154,13 @@
                     </h2>
                 </div>
                 <div class="p-6">
+                    @php $renderedPaymentButtons = $renderedPaymentButtons ?? []; @endphp
                     @foreach($groupedUpcoming as $date => $dateBookings)
                         @include('bookings.partials.date-section', [
                             'date' => $date,
                             'bookings' => $dateBookings,
-                            'sectionType' => 'upcoming'
+                            'sectionType' => 'upcoming',
+                            'renderedPaymentButtons' => $renderedPaymentButtons
                         ])
                     @endforeach
                 </div>
@@ -164,7 +168,7 @@
         @endif
 
         <!-- Past Bookings Section -->
-        @if($groupedPast->isNotEmpty())
+        @if(isset($groupedPast) && $groupedPast->isNotEmpty())
             <div class="bg-white rounded-3xl shadow-xl border border-gray-100 overflow-hidden">
                 <div class="bg-gradient-to-r from-gray-50 to-gray-100 px-6 py-4 border-b border-gray-200">
                     <h2 class="text-xl font-bold text-gray-700 flex items-center gap-2">
@@ -175,11 +179,13 @@
                     </h2>
                 </div>
                 <div class="p-6">
+                    @php $renderedPaymentButtons = $renderedPaymentButtons ?? []; @endphp
                     @foreach($groupedPast as $date => $dateBookings)
                         @include('bookings.partials.date-section', [
                             'date' => $date,
                             'bookings' => $dateBookings,
-                            'sectionType' => 'past'
+                            'sectionType' => 'past',
+                            'renderedPaymentButtons' => $renderedPaymentButtons
                         ])
                     @endforeach
                 </div>
@@ -187,7 +193,7 @@
         @endif
 
         <!-- Legacy Table (fallback if no sections) -->
-        @if($groupedPendingPayments->isEmpty() && $groupedUpcoming->isEmpty() && $groupedPast->isEmpty())
+        @if((!isset($groupedPendingPayments) || $groupedPendingPayments->isEmpty()) && (!isset($groupedUpcoming) || $groupedUpcoming->isEmpty()) && (!isset($groupedPast) || $groupedPast->isEmpty()))
             <div class="bg-white rounded-3xl shadow-xl border border-gray-100 overflow-hidden">
                 <div class="bg-gradient-to-r from-blue-50 to-green-50 px-6 py-4 border-b border-gray-100">
                     <h2 class="text-xl font-bold text-gray-800 flex items-center gap-2">

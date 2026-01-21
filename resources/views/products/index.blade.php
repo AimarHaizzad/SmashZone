@@ -179,13 +179,23 @@
                     <h3 class="text-lg font-bold text-gray-900 mb-3 line-clamp-2">{{ $product->name }}</h3>
                     
                     <!-- Price Section -->
-                    <div class="flex items-center gap-3 mb-4">
-                        <span class="text-2xl font-bold text-red-600">RM {{ number_format($product->price ?? 0, 2) }}</span>
-                        @if(!empty($product->old_price) && $product->old_price > $product->price)
-                            <span class="text-lg text-gray-400 line-through">RM {{ number_format($product->old_price, 2) }}</span>
-                            <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">
-                                {{ round((($product->old_price - $product->price) / $product->old_price) * 100) }}% OFF
-                            </span>
+                    <div class="flex items-center gap-3 mb-4 flex-wrap">
+                        @php
+                            $hasDiscount = $product->old_price && $product->old_price > 0 && $product->old_price > $product->price;
+                        @endphp
+                        
+                        @if($hasDiscount)
+                            <!-- Show original price crossed out, then sale price -->
+                            <div class="flex items-center gap-2 flex-wrap">
+                                <span class="text-lg text-gray-400 line-through">RM {{ number_format($product->old_price, 2) }}</span>
+                                <span class="text-2xl font-bold text-red-600">RM {{ number_format($product->price ?? 0, 2) }}</span>
+                                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">
+                                    {{ round((($product->old_price - $product->price) / $product->old_price) * 100) }}% OFF
+                                </span>
+                            </div>
+                        @else
+                            <!-- Show only current price if no discount -->
+                            <span class="text-2xl font-bold text-red-600">RM {{ number_format($product->price ?? 0, 2) }}</span>
                         @endif
                     </div>
 

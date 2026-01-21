@@ -19,7 +19,8 @@
         $dateSubLabel = $dateCarbon->format('l');
     }
     
-    $renderedPaymentButtons = [];
+    // Use the passed renderedPaymentButtons array or initialize if not set
+    $renderedPaymentButtons = $renderedPaymentButtons ?? [];
 @endphp
 
 <div class="mb-6 last:mb-0">
@@ -58,13 +59,13 @@
                 $isPastBooking = now()->gt($endDateTime);
                 $canCancel = !$isPastBooking && now()->lt($cancelDeadline) && $booking->status !== 'cancelled' && $booking->status !== 'completed';
                 $payment = $booking->payment;
-                $paymentStatus = strtolower($payment->status ?? 'pending');
+                $paymentStatus = $payment ? strtolower($payment->status ?? 'pending') : 'pending';
                 $paymentExpired = $paymentStatus === 'pending' && now()->greaterThanOrEqualTo($startDateTime);
                 
                 if ($paymentExpired) {
                     $paymentStatus = 'failed';
                 }
-                $paymentId = $payment->id ?? null;
+                $paymentId = $payment ? ($payment->id ?? null) : null;
                 $showPayButton = $payment && $paymentStatus === 'pending' && $paymentId && !in_array($paymentId, $renderedPaymentButtons);
             @endphp
             
@@ -144,12 +145,27 @@
                         </button>
                         
                         @if($showPayButton)
-                            @php $renderedPaymentButtons[] = $paymentId; @endphp
+                            @php 
+                                $renderedPaymentButtons[] = $paymentId;
+                                // Get booking count safely
+                                $bookingCount = 1;
+                                if ($payment) {
+                                    try {
+                                        if ($payment->relationLoaded('bookings')) {
+                                            $bookingCount = $payment->bookings->count();
+                                        } else {
+                                            $bookingCount = $payment->bookings()->count();
+                                        }
+                                    } catch (\Exception $e) {
+                                        $bookingCount = 1;
+                                    }
+                                }
+                            @endphp
                             <a href="{{ route('payments.pay', $payment, absolute: false) }}" class="px-3 py-2 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors text-sm flex items-center gap-1 shadow-sm">
                                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
                                 </svg>
-                                Pay {{ $payment->bookings->count() > 1 ? '(' . $payment->bookings->count() . ')' : '' }}
+                                Pay {{ $bookingCount > 1 ? '(' . $bookingCount . ')' : '' }}
                             </a>
                         @elseif($payment && $paymentStatus === 'pending')
                             <span class="px-3 py-2 bg-gray-50 text-gray-400 rounded-lg font-medium text-sm cursor-not-allowed flex items-center gap-1" title="Included in another pending payment">

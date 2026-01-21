@@ -154,6 +154,10 @@ class ProductController extends Controller
             }
 
             try {
+                // Convert empty old_price to null
+                if (isset($validated['old_price']) && ($validated['old_price'] === '' || $validated['old_price'] == 0)) {
+                    $validated['old_price'] = null;
+                }
                 Product::create($validated);
                 return redirect('/products')->with('success', 'Product created successfully.');
             } catch (\Throwable $e) {
@@ -324,6 +328,10 @@ class ProductController extends Controller
             }
 
             try {
+                // Convert empty old_price to null
+                if (isset($validated['old_price']) && ($validated['old_price'] === '' || $validated['old_price'] == 0)) {
+                    $validated['old_price'] = null;
+                }
                 $product->update($validated);
                 return redirect('/products')->with('success', 'Product updated successfully.');
             } catch (\Throwable $e) {

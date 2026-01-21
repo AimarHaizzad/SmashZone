@@ -252,13 +252,13 @@
                                         // Check if this time slot has passed
                                         $isPastSlot = false;
                                         $today = \Carbon\Carbon::today()->format('Y-m-d');
-                                        if ($selectedDate === $today) {
-                                            $slotTime = \Carbon\Carbon::createFromFormat('H:i', $slot);
-                                            $now = \Carbon\Carbon::now();
-                                            $isPastSlot = $slotTime->lt($now);
-                                        } elseif ($selectedDate < $today) {
-                                            $isPastSlot = true;
-                                        }
+                                        
+                                        // Create full datetime for the slot by combining date and time
+                                        $slotDateTime = \Carbon\Carbon::createFromFormat('Y-m-d H:i', "{$selectedDate} {$slot}");
+                                        $now = \Carbon\Carbon::now();
+                                        
+                                        // Check if the slot datetime is in the past
+                                        $isPastSlot = $slotDateTime->lt($now);
                                     @endphp
                                     @if($isPastSlot)
                                         <button class="select-slot-btn w-full py-1.5 sm:py-2 md:py-3 px-2 sm:px-3 md:px-4 font-semibold rounded-lg sm:rounded-xl border-2 border-gray-300 bg-gray-100 text-gray-500 cursor-not-allowed shadow-sm text-xs sm:text-sm" 

@@ -462,7 +462,9 @@ class BookingController extends Controller
             abort(403);
         }
 
-        $bookings = Booking::with(['court', 'payment.bookings.court'])
+        $bookings = Booking::with(['court', 'payment' => function($query) {
+                $query->with('bookings');
+            }])
             ->where('user_id', $user->id)
             ->orderByDesc('date')
             ->orderBy('start_time')
@@ -508,6 +510,9 @@ class BookingController extends Controller
         $groupedUpcoming = $upcomingBookings->groupBy('date');
         $groupedPast = $pastBookings->groupBy('date');
 
+        // Initialize renderedPaymentButtons array to track which payment buttons have been shown
+        $renderedPaymentButtons = [];
+
         return view('bookings.my', compact(
             'bookings', 
             'pendingPaymentsCount', 
@@ -515,7 +520,8 @@ class BookingController extends Controller
             'totalSpent',
             'groupedPendingPayments',
             'groupedUpcoming',
-            'groupedPast'
+            'groupedPast',
+            'renderedPaymentButtons'
         ));
     }
 
