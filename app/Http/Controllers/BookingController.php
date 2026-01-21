@@ -470,7 +470,20 @@ class BookingController extends Controller
             ->orderBy('start_time')
             ->get();
 
-        return view('bookings.my', compact('bookings'));
+        // Calculate statistics
+        $totalBookings = $bookings->count();
+        $uniquePayments = $bookings->pluck('payment')->filter()->unique('id');
+        $pendingPaymentsCount = $uniquePayments->where('status', 'pending')->count();
+        $paidPaymentsCount = $uniquePayments->where('status', 'paid')->count();
+        $totalSpent = $uniquePayments->where('status', 'paid')->sum('amount') ?? 0;
+
+        return view('bookings.my', compact(
+            'bookings',
+            'totalBookings',
+            'pendingPaymentsCount',
+            'paidPaymentsCount',
+            'totalSpent'
+        ));
     }
 
     /**
