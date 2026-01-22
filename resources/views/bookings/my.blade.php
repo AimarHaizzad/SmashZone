@@ -2,43 +2,32 @@
 
 @section('content')
 <!-- Hero Section with Gradient Background -->
-<div class="relative mb-12 -mx-4 sm:-mx-6 lg:-mx-8">
-    <div class="absolute inset-0 bg-gradient-to-r from-blue-900 via-blue-800 to-green-900 rounded-b-3xl"></div>
-    <div class="relative bg-gradient-to-r from-blue-600/90 via-blue-500/90 to-green-600/90 rounded-b-3xl p-8 sm:p-12 lg:p-16">
-        <!-- Top Left Badge -->
-        <div class="absolute top-4 left-4 sm:top-6 sm:left-6">
-            <span class="text-sm sm:text-base text-blue-100 font-medium">SmashZone</span>
+<div class="relative mb-8 sm:mb-12">
+    <div class="absolute inset-0 bg-gradient-to-r from-blue-900/90 to-green-900/90 rounded-3xl"></div>
+    <div class="relative bg-gradient-to-r from-blue-600 to-green-600 rounded-3xl p-4 sm:p-6 lg:p-8 text-center">
+        <div class="w-16 h-16 sm:w-20 sm:h-20 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
+            <svg class="w-8 h-8 sm:w-10 sm:h-10 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-6a2 2 0 012-2h2a2 2 0 012 2v6" />
+            </svg>
         </div>
-        
-        <!-- Main Hero Card -->
-        <div class="max-w-4xl mx-auto mt-8">
-            <div class="bg-white/10 backdrop-blur-md rounded-3xl p-8 sm:p-12 border border-white/20 shadow-2xl">
-                <h1 class="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-white mb-4 text-center">
-                    My Bookings
-                </h1>
-                <p class="text-lg sm:text-xl text-blue-100 text-center mb-8 font-medium">
-                    Manage your reservations • Track payments • View history
-                </p>
-                
-                <!-- Legend/Key -->
-                <div class="flex flex-wrap items-center justify-center gap-4 sm:gap-6 mt-8 pt-8 border-t border-white/20">
-                    <div class="flex items-center gap-2">
-                        <div class="w-4 h-4 rounded-full bg-green-500 border-2 border-white shadow-lg"></div>
-                        <span class="text-sm sm:text-base text-white font-medium">Paid</span>
-                    </div>
-                    <div class="flex items-center gap-2">
-                        <div class="w-4 h-4 rounded-full bg-yellow-500 border-2 border-white shadow-lg"></div>
-                        <span class="text-sm sm:text-base text-white font-medium">Pending Payment</span>
-                    </div>
-                    <div class="flex items-center gap-2">
-                        <div class="w-4 h-4 rounded-full bg-red-500 border-2 border-white shadow-lg"></div>
-                        <span class="text-sm sm:text-base text-white font-medium">Failed</span>
-                    </div>
-                    <div class="flex items-center gap-2">
-                        <div class="w-4 h-4 rounded-full bg-gray-400 border-2 border-white shadow-lg"></div>
-                        <span class="text-sm sm:text-base text-white font-medium">Past</span>
-                    </div>
-                </div>
+        <h1 class="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-white mb-2">My Bookings</h1>
+        <p class="text-base sm:text-lg lg:text-xl text-blue-100 font-medium mb-4">Manage your reservations • Track payments • View history</p>
+        <div class="flex flex-wrap items-center justify-center gap-3 md:gap-6 text-white/90 mt-4">
+            <div class="flex items-center gap-1 md:gap-2">
+                <div class="w-2 h-2 md:w-3 md:h-3 bg-green-400 rounded-full"></div>
+                <span class="text-xs md:text-sm font-medium">Paid</span>
+            </div>
+            <div class="flex items-center gap-1 md:gap-2">
+                <div class="w-2 h-2 md:w-3 md:h-3 bg-yellow-400 rounded-full"></div>
+                <span class="text-xs md:text-sm font-medium">Pending Payment</span>
+            </div>
+            <div class="flex items-center gap-1 md:gap-2">
+                <div class="w-2 h-2 md:w-3 md:h-3 bg-red-400 rounded-full"></div>
+                <span class="text-xs md:text-sm font-medium">Failed</span>
+            </div>
+            <div class="flex items-center gap-1 md:gap-2">
+                <div class="w-2 h-2 md:w-3 md:h-3 bg-gray-400 rounded-full"></div>
+                <span class="text-xs md:text-sm font-medium">Past</span>
             </div>
         </div>
     </div>

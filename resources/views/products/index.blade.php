@@ -2,13 +2,13 @@
 
 @section('content')
 <!-- Enhanced Hero Section -->
-<div class="relative mb-12">
+<div class="relative mb-8 sm:mb-12">
     <div class="absolute inset-0 bg-gradient-to-r from-green-900/90 to-blue-900/90 rounded-3xl"></div>
-    <img src="/images/badminton-hero.jpg" alt="Badminton Products" class="w-full h-64 object-cover rounded-3xl shadow-2xl">
+    <img src="/images/badminton-hero.jpg" alt="Badminton Products" class="w-full h-48 sm:h-64 md:h-72 object-cover rounded-3xl shadow-2xl">
     <div class="absolute inset-0 flex flex-col justify-center items-center text-center px-4">
-        <div class="bg-white/10 backdrop-blur-sm rounded-2xl p-8 border border-white/20">
-            <h1 class="text-5xl font-extrabold text-white drop-shadow-lg mb-4">Badminton Gear</h1>
-            <p class="text-xl text-green-100 font-medium drop-shadow mb-6">Premium equipment • Professional quality • Best prices</p>
+        <div class="bg-white/10 backdrop-blur-sm rounded-2xl p-4 sm:p-6 lg:p-8 border border-white/20">
+            <h1 class="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-white drop-shadow-lg mb-2">Badminton Gear</h1>
+            <p class="text-base sm:text-lg lg:text-xl text-green-100 font-medium drop-shadow mb-3 sm:mb-4">Premium equipment • Professional quality • Best prices</p>
             <div class="flex items-center justify-center gap-6 text-white/90">
                 <div class="flex items-center gap-2">
                     <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
