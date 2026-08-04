@@ -22,8 +22,8 @@
                         </div>
                     @endif
                     <div>
-                        <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 mb-1 sm:mb-2">Owner Dashboard</h1>
-                        <p class="text-sm sm:text-base text-gray-600">Welcome back, {{ $user->name }}! Manage your courts and monitor business performance.</p>
+                        <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 mb-1 sm:mb-2">Facility Overview</h1>
+                        <p class="text-sm sm:text-base text-gray-600">Welcome back, {{ $user->name }}. Monitor court performance, revenue, and retail activity.</p>
                     </div>
                 </div>
                 <div class="flex items-center gap-3">
@@ -44,22 +44,22 @@
                 <div class="bg-blue-500 text-white rounded-full p-3 sm:p-4 mb-2 sm:mb-3">
                     <svg class="w-5 h-5 sm:w-6 sm:h-6 lg:w-7 lg:h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 21m5.25-4l.75 4m-7.5-4h10.5a2.25 2.25 0 002.25-2.25V7.5A2.25 2.25 0 0017.25 5.25H6.75A2.25 2.25 0 004.5 7.5v7.25A2.25 2.25 0 006.75 17z"/></svg>
                 </div>
-                <div class="text-2xl sm:text-3xl font-bold text-blue-800">{{ $user->courts->count() }}</div>
-                <div class="text-gray-700 mt-1 font-medium text-sm sm:text-base">Courts Owned</div>
+                <div class="text-2xl sm:text-3xl font-bold text-blue-800">{{ $metrics['court_count'] ?? $user->courts->count() }}</div>
+                <div class="text-gray-700 mt-1 font-medium text-sm sm:text-base">Active Courts</div>
             </div>
             <div class="bg-gradient-to-br from-green-100 to-green-300 rounded-2xl shadow-lg p-4 sm:p-6 lg:p-8 flex flex-col items-center border-t-4 border-green-200 animate-fade-in">
                 <div class="bg-green-500 text-white rounded-full p-3 sm:p-4 mb-2 sm:mb-3">
                     <svg class="w-5 h-5 sm:w-6 sm:h-6 lg:w-7 lg:h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 17l4-4 4 4m0 0V3m0 14a4 4 0 01-8 0"/></svg>
                 </div>
-                <div class="text-2xl sm:text-3xl font-bold text-green-800">{{ $user->courts->flatMap->bookings->count() }}</div>
-                <div class="text-gray-700 mt-1 font-medium text-sm sm:text-base">Total Bookings</div>
+                <div class="text-2xl sm:text-3xl font-bold text-green-800">{{ $metrics['today_bookings'] ?? 0 }}</div>
+                <div class="text-gray-700 mt-1 font-medium text-sm sm:text-base">Today's Bookings</div>
             </div>
             <div class="bg-gradient-to-br from-yellow-100 to-yellow-300 rounded-2xl shadow-lg p-4 sm:p-6 lg:p-8 flex flex-col items-center border-t-4 border-yellow-200 animate-fade-in sm:col-span-2 lg:col-span-1">
                 <div class="bg-yellow-500 text-white rounded-full p-3 sm:p-4 mb-2 sm:mb-3">
                     <svg class="w-5 h-5 sm:w-6 sm:h-6 lg:w-7 lg:h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 1.343-3 3s1.343 3 3 3 3-1.343 3-3-1.343-3-3-3zm0 0V4m0 7v7"/></svg>
                 </div>
-                <div class="text-2xl sm:text-3xl font-bold text-yellow-800">RM {{ number_format($user->courts->flatMap->bookings->sum('total_price'), 2) }}</div>
-                <div class="text-gray-700 mt-1 font-medium text-sm sm:text-base">Total Revenue</div>
+                <div class="text-2xl sm:text-3xl font-bold text-yellow-800">RM {{ number_format($metrics['monthly_revenue'] ?? 0, 2) }}</div>
+                <div class="text-gray-700 mt-1 font-medium text-sm sm:text-base">Revenue This Month</div>
             </div>
         </div>
         <!-- Recent Bookings Table -->
@@ -116,7 +116,7 @@
                     <svg class="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13l-1.35 2.7A2 2 0 007.52 19h8.96a2 2 0 001.87-2.3L17 13M7 13V6a1 1 0 011-1h5a1 1 0 011 1v7"/>
                     </svg>
-                    Recent Product Buy Activity
+                    Recent Product Orders
                 </h2>
                 <div class="overflow-x-auto">
                     @if(isset($recentOrders) && $recentOrders->count() > 0)
@@ -198,8 +198,8 @@
                         </div>
                     @endif
                     <div>
-                        <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 mb-1 sm:mb-2">Staff Dashboard</h1>
-                        <p class="text-sm sm:text-base text-gray-600">Welcome back, {{ $user->name }}! Manage bookings and monitor court operations.</p>
+                        <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 mb-1 sm:mb-2">Operations Dashboard</h1>
+                        <p class="text-sm sm:text-base text-gray-600">Welcome back, {{ $user->name }}. Manage daily court operations and member services.</p>
                     </div>
                 </div>
                 <div class="flex items-center gap-3">
@@ -214,21 +214,14 @@
             </div>
         </div>
 
-        <!-- Analytics Cards -->
-        @php
-            $allBookings = \App\Models\Booking::with(['court', 'user', 'payment'])->get();
-            $todayBookings = $allBookings->where('date', now()->toDateString());
-            $pendingPayments = $allBookings->where('payment.status', 'pending');
-            $totalRevenue = $allBookings->where('payment.status', 'paid')->sum('payment.amount');
-        @endphp
-        
+        <!-- Operations metrics -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8">
             <!-- Total Bookings Card -->
             <div class="bg-white rounded-2xl shadow-lg p-4 sm:p-6 border-t-4 border-blue-200 hover:shadow-xl transition-shadow">
                 <div class="flex items-center justify-between">
                     <div>
                         <p class="text-xs sm:text-sm font-medium text-gray-600 mb-1">Total Bookings</p>
-                        <p class="text-2xl sm:text-3xl font-bold text-gray-900">{{ $allBookings->count() }}</p>
+                        <p class="text-2xl sm:text-3xl font-bold text-gray-900">{{ $metrics['total_bookings'] ?? $allBookings->count() }}</p>
                         <p class="text-xs sm:text-sm text-gray-500 mt-1">All time</p>
                     </div>
                     <div class="w-10 h-10 sm:w-12 sm:h-12 bg-blue-100 rounded-xl flex items-center justify-center">
@@ -244,7 +237,7 @@
                 <div class="flex items-center justify-between">
                     <div>
                         <p class="text-xs sm:text-sm font-medium text-gray-600 mb-1">Today's Bookings</p>
-                        <p class="text-2xl sm:text-3xl font-bold text-gray-900">{{ $todayBookings->count() }}</p>
+                        <p class="text-2xl sm:text-3xl font-bold text-gray-900">{{ $metrics['today_bookings'] ?? 0 }}</p>
                         <p class="text-xs sm:text-sm text-gray-500 mt-1">{{ now()->format('M d, Y') }}</p>
                     </div>
                     <div class="w-10 h-10 sm:w-12 sm:h-12 bg-green-100 rounded-xl flex items-center justify-center">
@@ -260,7 +253,7 @@
                 <div class="flex items-center justify-between">
                     <div>
                         <p class="text-xs sm:text-sm font-medium text-gray-600 mb-1">Pending Payments</p>
-                        <p class="text-2xl sm:text-3xl font-bold text-gray-900">{{ $pendingPayments->count() }}</p>
+                        <p class="text-2xl sm:text-3xl font-bold text-gray-900">{{ $metrics['pending_payments'] ?? 0 }}</p>
                         <p class="text-xs sm:text-sm text-gray-500 mt-1">Requires attention</p>
                     </div>
                     <div class="w-10 h-10 sm:w-12 sm:h-12 bg-yellow-100 rounded-xl flex items-center justify-center">
@@ -276,7 +269,7 @@
                 <div class="flex items-center justify-between">
                     <div>
                         <p class="text-xs sm:text-sm font-medium text-gray-600 mb-1">Total Revenue</p>
-                        <p class="text-2xl sm:text-3xl font-bold text-gray-900">RM {{ number_format($totalRevenue, 2) }}</p>
+                        <p class="text-2xl sm:text-3xl font-bold text-gray-900">RM {{ number_format($metrics['total_revenue'] ?? 0, 2) }}</p>
                         <p class="text-xs sm:text-sm text-gray-500 mt-1">From paid bookings</p>
                     </div>
                     <div class="w-10 h-10 sm:w-12 sm:h-12 bg-purple-100 rounded-xl flex items-center justify-center">
@@ -432,7 +425,7 @@
                 <svg class="w-5 h-5 mr-2 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13l-1.35 2.7A2 2 0 007.52 19h8.96a2 2 0 001.87-2.3L17 13M7 13V6a1 1 0 011-1h5a1 1 0 011 1v7" />
                 </svg>
-                Recent Buy Product
+                Recent Product Orders
             </h2>
             
             <div class="space-y-4">
@@ -528,7 +521,7 @@
                         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 17l4-4 4 4m0 0V3m0 14a4 4 0 01-8 0"/></svg>
                         Book a Court
                     </a>
-                    <a href="{{ route('bookings.index') }}" class="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-xl font-semibold shadow hover:bg-green-700 transition" data-tutorial="my-bookings-btn">
+                    <a href="{{ route('bookings.my') }}" class="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-xl font-semibold shadow hover:bg-green-700 transition" data-tutorial="my-bookings-btn">
                         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-6a2 2 0 012-2h2a2 2 0 012 2v6"/></svg>
                         My Bookings
                     </a>
@@ -576,7 +569,7 @@
             Shop Badminton Gear
         </h2>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
-            @foreach(\App\Models\Product::take(3)->get() as $product)
+            @forelse(($featuredProducts ?? collect()) as $product)
                 <div class="bg-white rounded-2xl shadow-lg p-6 flex flex-col items-center border-t-4 border-green-200 hover:shadow-xl transition" data-tutorial="product-card">
                     <img src="{{ $product->image_url ?? asset('images/default-badminton-court.jpg') }}" class="h-24 w-24 object-cover rounded-xl border border-green-100 mb-4" alt="Product" onerror="this.onerror=null; this.src='{{ asset('images/default-badminton-court.jpg') }}';">
                     <div class="text-lg font-bold text-green-700 mb-2">{{ $product->name }}</div>
@@ -591,7 +584,12 @@
                         <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded shadow hover:bg-green-700 font-semibold">Add to Cart</button>
                     </form>
                 </div>
-            @endforeach
+            @empty
+                <div class="md:col-span-3 sz-empty-state">
+                    <p class="font-semibold text-slate-700">No products available</p>
+                    <p class="mt-1 text-sm text-slate-500">Check back soon for new equipment arrivals.</p>
+                </div>
+            @endforelse
         </div>
     </div>
 @endif

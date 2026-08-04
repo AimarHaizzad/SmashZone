@@ -2,74 +2,100 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
-use App\Models\User;
 use App\Models\Court;
 use App\Models\Product;
-use App\Models\Booking;
-use App\Models\Payment;
+use App\Models\User;
+use Illuminate\Database\Seeder;
 use Illuminate\Support\Str;
 
 class DatabaseSeeder extends Seeder
 {
-    /**
-     * Seed the application's database.
-     */
     public function run(): void
     {
-        // --- Create 1 Owner ---
         $owner = User::firstOrCreate(
-            ['email' => 'AimarHaizzad@gmail.com'],
+            ['email' => 'admin@smashzone.my'],
             [
-                'name' => 'Owner',
-                'password' => bcrypt('Aimar123'),
+                'name' => 'Ahmad Razif',
+                'password' => bcrypt('SmashZone2026!'),
                 'role' => 'owner',
+                'phone' => '+60 12-345 6789',
+                'position' => 'Facility Director',
                 'email_verified_at' => now(),
                 'remember_token' => Str::random(10),
             ]
         );
 
-        // --- Create 2 Staff ---
-        $staff = User::factory(2)->create([
-            'role' => 'staff',
-        ]);
+        $staffMembers = [
+            ['name' => 'Siti Nurhaliza', 'email' => 'siti@smashzone.my', 'position' => 'Front Desk Supervisor'],
+            ['name' => 'Raj Kumar', 'email' => 'raj@smashzone.my', 'position' => 'Court Operations'],
+        ];
 
-        // --- Create 5 Customers ---
-        $customers = User::factory(5)->create([
-            'role' => 'customer',
-        ]);
-
-        // --- Create 3 Courts owned by the Owner ---
-        $courts = Court::factory(3)->create([
-            'owner_id' => $owner->id,
-        ]);
-
-        // --- Create 10 Products ---
-        Product::factory(10)->create();
-
-        // --- Create 10 Bookings for random customers and courts ---
-        $bookings = collect();
-
-        foreach (range(1, 10) as $i) {
-            $bookings->push(
-                Booking::factory()->create([
-                    'user_id' => $customers->random()->id,
-                    'court_id' => $courts->random()->id,
-                ])
+        foreach ($staffMembers as $staffData) {
+            User::firstOrCreate(
+                ['email' => $staffData['email']],
+                [
+                    'name' => $staffData['name'],
+                    'password' => bcrypt('Staff2026!'),
+                    'role' => 'staff',
+                    'position' => $staffData['position'],
+                    'phone' => '+60 11-000 0000',
+                    'email_verified_at' => now(),
+                ]
             );
         }
 
-        // --- Create Payments for each Booking ---
-        foreach ($bookings as $booking) {
-            Payment::factory()->create([
-                'user_id' => $booking->user_id,
-                'booking_id' => $booking->id,
-                'amount' => $booking->total_price ?? 50.00, // fallback value
-                'status' => 'paid',
-                'payment_date' => now(),
-            ]);
+        $courts = [
+            [
+                'name' => 'Premier Court A',
+                'description' => 'International-grade wooden flooring with professional lighting. Ideal for competitive play and tournaments.',
+                'location' => 'center',
+                'status' => 'active',
+            ],
+            [
+                'name' => 'Premier Court B',
+                'description' => 'Premium synthetic surface with climate control. Preferred for training sessions and league matches.',
+                'location' => 'center',
+                'status' => 'active',
+            ],
+            [
+                'name' => 'Standard Court C',
+                'description' => 'Well-maintained court suitable for recreational play, coaching clinics, and corporate bookings.',
+                'location' => 'middle',
+                'status' => 'active',
+            ],
+            [
+                'name' => 'Standard Court D',
+                'description' => 'Accessible court with equipment storage nearby. Perfect for beginners and casual doubles.',
+                'location' => 'middle',
+                'status' => 'active',
+            ],
+        ];
+
+        $createdCourts = collect();
+        foreach ($courts as $courtData) {
+            $createdCourts->push(
+                Court::firstOrCreate(
+                    ['name' => $courtData['name'], 'owner_id' => $owner->id],
+                    $courtData
+                )
+            );
         }
 
-        $this->command->info('✅ Database seeding completed successfully!');
+        $products = [
+            ['name' => 'Yonex Power Cushion 65 Z3', 'description' => 'Professional badminton shoes with power cushion technology.', 'price' => 449.00, 'quantity' => 12, 'category' => 'shoes', 'brand' => 'Yonex'],
+            ['name' => 'Li-Ning Aeronaut 9000', 'description' => 'High-speed racket engineered for offensive players.', 'price' => 899.00, 'quantity' => 8, 'category' => 'rackets', 'brand' => 'Li-Ning'],
+            ['name' => 'Victor Master No.1', 'description' => 'Tournament shuttlecocks, tube of 12.', 'price' => 89.00, 'quantity' => 40, 'category' => 'shuttlecocks', 'brand' => 'Victor'],
+            ['name' => 'Yonex Pro Racket Bag 9', 'description' => 'Thermo-guard racket bag with shoe compartment.', 'price' => 329.00, 'quantity' => 15, 'category' => 'bags', 'brand' => 'Yonex'],
+            ['name' => 'Apacs Dri-Fit Jersey', 'description' => 'Breathable competition jersey, unisex fit.', 'price' => 79.00, 'quantity' => 30, 'category' => 'clothing', 'brand' => 'Apacs'],
+            ['name' => 'Yonex Super Grap', 'description' => 'Overgrip tape, pack of 3.', 'price' => 18.00, 'quantity' => 100, 'category' => 'accessories', 'brand' => 'Yonex'],
+        ];
+
+        foreach ($products as $productData) {
+            Product::firstOrCreate(['name' => $productData['name']], $productData);
+        }
+
+        $this->command->info('SmashZone facility data seeded successfully.');
+        $this->command->info('Owner: admin@smashzone.my / SmashZone2026!');
+        $this->command->info('Staff: siti@smashzone.my or raj@smashzone.my / Staff2026!');
     }
 }

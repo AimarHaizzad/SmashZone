@@ -57,8 +57,8 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
                     </svg>
                 </div>
-                <h2 class="text-3xl font-bold text-gray-900 mb-2">Welcome Back</h2>
-                <p class="text-gray-600">Sign in to your SmashZone account</p>
+                <h2 class="text-3xl font-bold text-gray-900 mb-2">Sign In</h2>
+                <p class="text-gray-600">Access your SmashZone facility account</p>
             </div>
 
             <!-- Login Form -->
@@ -121,33 +121,6 @@
                                class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-green-300 focus:border-green-500 transition-colors text-lg"
                                placeholder="Enter your password">
                         @error('password')
-                            <div class="text-red-500 text-sm flex items-center gap-1">
-                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                </svg>
-                                {{ $message }}
-                            </div>
-                        @enderror
-                    </div>
-
-                    <!-- Role Selection -->
-                    <div class="space-y-2">
-                        <label for="role" class="block text-sm font-semibold text-gray-700 flex items-center gap-2">
-                            <svg class="w-4 h-4 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                            </svg>
-                            Login as *
-                        </label>
-                        <select name="role" 
-                                id="role" 
-                                required
-                                class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-purple-300 focus:border-purple-500 transition-colors text-lg">
-                            <option value="">Select your role</option>
-                            <option value="customer" {{ old('role') == 'customer' ? 'selected' : '' }}>🏸 Customer</option>
-                            <option value="owner" {{ old('role') == 'owner' ? 'selected' : '' }}>🏢 Owner</option>
-                            <option value="staff" {{ old('role') == 'staff' ? 'selected' : '' }}>👥 Staff</option>
-                        </select>
-                        @error('role')
                             <div class="text-red-500 text-sm flex items-center gap-1">
                                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />

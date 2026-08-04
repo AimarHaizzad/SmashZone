@@ -3,340 +3,157 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SmashZone - Professional Badminton Court Booking & Equipment</title>
-    <meta name="description" content="Book premium badminton courts, shop professional equipment, and join the ultimate badminton community at SmashZone. Your one-stop destination for everything badminton.">
+    <title>SmashZone — Premier Badminton Facility Management</title>
+    <meta name="description" content="SmashZone is a professional badminton facility platform for court reservations, pro shop retail, facility operations, and member services across Malaysia.">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-    <style>
-        body { font-family: 'Inter', sans-serif; }
-        .gradient-bg { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
-        .hero-gradient { background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 50%, #06b6d4 100%); }
-        .card-shadow { box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04); }
-        .floating { animation: floating 3s ease-in-out infinite; }
-        @keyframes floating {
-            0%, 100% { transform: translateY(0px); }
-            50% { transform: translateY(-20px); }
-        }
-        .bounce-in { animation: bounceIn 1s ease-out; }
-        @keyframes bounceIn {
-            0% { transform: scale(0.3); opacity: 0; }
-            50% { transform: scale(1.05); }
-            70% { transform: scale(0.9); }
-            100% { transform: scale(1); opacity: 1; }
-        }
-    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 </head>
-<body class="bg-gray-50">
-    <!-- Navigation -->
-    <nav class="bg-white shadow-lg fixed w-full z-50">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between items-center h-16">
-                <!-- Logo -->
-                <div class="flex items-center">
-                    <div class="flex-shrink-0">
-                        <div class="flex items-center space-x-2">
-                            <div class="w-10 h-10 bg-gradient-to-r from-green-500 to-blue-600 rounded-lg flex items-center justify-center">
-                                <svg class="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                                </svg>
-                            </div>
-                            <span class="text-2xl font-bold bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent">SmashZone</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Navigation Links -->
-                <div class="hidden md:block">
-                    <div class="ml-10 flex items-baseline space-x-8">
-                        <a href="#home" class="text-gray-700 hover:text-green-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">Home</a>
-                        <a href="#features" class="text-gray-700 hover:text-green-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">Features</a>
-                        <a href="#about" class="text-gray-700 hover:text-green-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">About</a>
-                        <a href="#contact" class="text-gray-700 hover:text-green-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">Contact</a>
-                    </div>
-                </div>
-
-                <!-- Auth Buttons -->
-                <div class="flex items-center space-x-4">
-                    <a href="{{ route('login', absolute: false) }}" class="text-gray-700 hover:text-green-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">Login</a>
-                    <a href="{{ route('register', absolute: false) }}" class="bg-gradient-to-r from-green-600 to-blue-600 text-white px-6 py-2 rounded-lg font-semibold hover:from-green-700 hover:to-blue-700 transition-all transform hover:scale-105 shadow-lg">Get Started</a>
-                </div>
+<body class="bg-slate-50">
+    <nav class="fixed inset-x-0 top-0 z-50 border-b border-slate-200 bg-white/95 backdrop-blur">
+        <div class="sz-container flex h-16 items-center justify-between">
+            <a href="{{ route('welcome') }}" class="flex items-center gap-3">
+                <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-600 text-white font-bold">SZ</div>
+                <span class="text-xl font-bold text-slate-900">SmashZone</span>
+            </a>
+            <div class="hidden items-center gap-8 md:flex">
+                <a href="#facilities" class="text-sm font-medium text-slate-600 hover:text-emerald-700">Facilities</a>
+                <a href="#services" class="text-sm font-medium text-slate-600 hover:text-emerald-700">Services</a>
+                <a href="#operations" class="text-sm font-medium text-slate-600 hover:text-emerald-700">Operations</a>
+                <a href="#contact" class="text-sm font-medium text-slate-600 hover:text-emerald-700">Contact</a>
+            </div>
+            <div class="flex items-center gap-3">
+                <a href="{{ route('login') }}" class="text-sm font-semibold text-slate-700 hover:text-emerald-700">Sign In</a>
+                <a href="{{ route('register') }}" class="sz-btn-primary">Create Account</a>
             </div>
         </div>
     </nav>
 
-    <!-- Hero Section -->
-    <section id="home" class="pt-16">
-        <div class="hero-gradient min-h-screen flex items-center">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-                    <!-- Left Content -->
-                    <div class="text-white space-y-8 bounce-in">
-                        <div class="space-y-4">
-                            <h1 class="text-5xl lg:text-6xl font-bold leading-tight">
-                                Welcome to
-                                <span class="block text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 to-orange-300">SmashZone</span>
-                            </h1>
-                            <p class="text-xl lg:text-2xl text-blue-100 font-medium">
-                                Your Ultimate Badminton Destination
-                            </p>
-                        </div>
-                        
-                        <p class="text-lg text-blue-100 leading-relaxed">
-                            Book premium badminton courts, shop professional equipment, and join a community of passionate players. 
-                            Experience the perfect blend of convenience and excellence in badminton.
-                        </p>
-
-                        <div class="flex flex-col sm:flex-row gap-4">
-                            <a href="{{ route('register', absolute: false) }}" 
-                               class="bg-white text-green-600 px-8 py-4 rounded-xl font-bold text-lg hover:bg-gray-100 transition-all transform hover:scale-105 shadow-lg text-center">
-                                Start Playing Today
-                            </a>
-                            <a href="#features" 
-                               class="border-2 border-white text-white px-8 py-4 rounded-xl font-bold text-lg hover:bg-white hover:text-green-600 transition-all transform hover:scale-105 text-center">
-                                Learn More
-                            </a>
-                        </div>
-                    </div>
-
-                    <!-- Right Illustration -->
-                    <div class="relative floating">
-                        <div class="bg-white/10 backdrop-blur-sm rounded-3xl p-8 card-shadow">
-                            <!-- Badminton Players Illustration -->
-                            <div class="relative">
-                                <!-- Court Background -->
-                                <div class="w-full h-64 bg-gradient-to-b from-green-400 to-green-600 rounded-2xl relative overflow-hidden">
-                                    <!-- Court Lines -->
-                                    <div class="absolute inset-0 flex items-center justify-center">
-                                        <div class="w-32 h-24 border-2 border-white rounded-lg relative">
-                                            <div class="absolute top-1/2 left-0 right-0 h-0.5 bg-white"></div>
-                                            <div class="absolute top-1/4 left-1/2 w-0.5 h-1/2 bg-white"></div>
-                                            <div class="absolute bottom-1/4 left-1/2 w-0.5 h-1/2 bg-white"></div>
-                                        </div>
-                                    </div>
-                                    
-                                    <!-- Net -->
-                                    <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-1 h-16 bg-white"></div>
-                                    
-                                    <!-- Player 1 (Foreground) -->
-                                    <div class="absolute bottom-4 left-8">
-                                        <div class="w-16 h-20 bg-purple-500 rounded-full relative">
-                                            <!-- Head -->
-                                            <div class="absolute -top-2 left-1/2 transform -translate-x-1/2 w-8 h-8 bg-yellow-300 rounded-full"></div>
-                                            <!-- Racket -->
-                                            <div class="absolute -top-4 -right-2 w-12 h-1 bg-green-500 rounded-full transform rotate-45"></div>
-                                            <div class="absolute -top-6 -right-1 w-8 h-8 bg-green-400 rounded-full"></div>
-                                        </div>
-                                    </div>
-                                    
-                                    <!-- Player 2 (Background) -->
-                                    <div class="absolute bottom-4 right-8">
-                                        <div class="w-14 h-18 bg-purple-600 rounded-full relative opacity-80">
-                                            <!-- Head -->
-                                            <div class="absolute -top-2 left-1/2 transform -translate-x-1/2 w-7 h-7 bg-yellow-300 rounded-full"></div>
-                                            <!-- Racket -->
-                                            <div class="absolute -top-3 -left-2 w-10 h-1 bg-green-500 rounded-full transform -rotate-45"></div>
-                                            <div class="absolute -top-5 -left-1 w-6 h-6 bg-green-400 rounded-full"></div>
-                                        </div>
-                                    </div>
-                                    
-                                    <!-- Shuttlecock -->
-                                    <div class="absolute top-1/3 left-1/2 transform -translate-x-1/2 animate-bounce">
-                                        <div class="w-4 h-6 bg-white rounded-full relative">
-                                            <div class="absolute -top-2 left-1/2 transform -translate-x-1/2 w-6 h-2 bg-orange-400 rounded-full"></div>
-                                        </div>
-                                    </div>
-                                </div>
-                                
-                                <!-- Decorative Elements -->
-                                <div class="absolute -top-4 -right-4 w-20 h-20 bg-pink-400 rounded-full opacity-30"></div>
-                                <div class="absolute -bottom-4 -left-4 w-16 h-16 bg-blue-400 rounded-full opacity-30"></div>
-                                <div class="absolute top-1/4 -left-2 w-12 h-12 bg-yellow-400 rounded-full opacity-30"></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Features Section -->
-    <section id="features" class="py-20 bg-white">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="text-center mb-16">
-                <h2 class="text-4xl font-bold text-gray-900 mb-4">Why Choose SmashZone?</h2>
-                <p class="text-xl text-gray-600 max-w-3xl mx-auto">
-                    Experience the perfect blend of convenience, quality, and community in badminton
+    <header class="relative overflow-hidden pt-16">
+        <div class="absolute inset-0 bg-gradient-to-br from-emerald-700 via-emerald-600 to-sky-700"></div>
+        <div class="absolute inset-0 opacity-20" style="background-image: radial-gradient(circle at 20% 20%, white 1px, transparent 1px); background-size: 24px 24px;"></div>
+        <div class="relative sz-container grid gap-12 py-20 lg:grid-cols-2 lg:items-center lg:py-28">
+            <div class="text-white">
+                <p class="mb-4 inline-flex rounded-full border border-white/30 bg-white/10 px-4 py-1 text-sm font-medium backdrop-blur">
+                    Enterprise Badminton Facility Platform
                 </p>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                <!-- Feature 1 -->
-                <div class="bg-gradient-to-br from-green-50 to-blue-50 rounded-2xl p-8 card-shadow hover:transform hover:scale-105 transition-all">
-                    <div class="w-16 h-16 bg-gradient-to-r from-green-500 to-blue-600 rounded-xl flex items-center justify-center mb-6">
-                        <svg class="w-8 h-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                        </svg>
-                    </div>
-                    <h3 class="text-2xl font-bold text-gray-900 mb-4">Easy Court Booking</h3>
-                    <p class="text-gray-600">Book your preferred court with just a few clicks. Real-time availability and instant confirmation.</p>
-                </div>
-
-                <!-- Feature 2 -->
-                <div class="bg-gradient-to-br from-blue-50 to-purple-50 rounded-2xl p-8 card-shadow hover:transform hover:scale-105 transition-all">
-                    <div class="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl flex items-center justify-center mb-6">
-                        <svg class="w-8 h-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-                        </svg>
-                    </div>
-                    <h3 class="text-2xl font-bold text-gray-900 mb-4">Premium Equipment</h3>
-                    <p class="text-gray-600">Shop the latest badminton equipment from top brands. Rackets, shoes, and accessories.</p>
-                </div>
-
-                <!-- Feature 3 -->
-                <div class="bg-gradient-to-br from-purple-50 to-pink-50 rounded-2xl p-8 card-shadow hover:transform hover:scale-105 transition-all">
-                    <div class="w-16 h-16 bg-gradient-to-r from-purple-500 to-pink-600 rounded-xl flex items-center justify-center mb-6">
-                        <svg class="w-8 h-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                        </svg>
-                    </div>
-                    <h3 class="text-2xl font-bold text-gray-900 mb-4">Community</h3>
-                    <p class="text-gray-600">Join a community of passionate badminton players. Connect, compete, and grow together.</p>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- About Section -->
-    <section id="about" class="py-20 bg-gray-50">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-                <div>
-                    <h2 class="text-4xl font-bold text-gray-900 mb-6">About SmashZone</h2>
-                    <p class="text-lg text-gray-600 mb-6">
-                        SmashZone is your ultimate destination for everything badminton. We provide premium court booking services, 
-                        professional equipment, and a vibrant community for players of all levels.
-                    </p>
-                    <p class="text-lg text-gray-600 mb-8">
-                        Whether you're a beginner looking to start your badminton journey or a professional player seeking the best facilities, 
-                        SmashZone has everything you need to excel in this amazing sport.
-                    </p>
-                    <a href="{{ route('register', absolute: false) }}" 
-                       class="bg-gradient-to-r from-green-600 to-blue-600 text-white px-8 py-4 rounded-xl font-bold text-lg hover:from-green-700 hover:to-blue-700 transition-all transform hover:scale-105 shadow-lg inline-block">
-                        Join SmashZone Today
+                <h1 class="text-4xl font-extrabold tracking-tight sm:text-5xl lg:text-6xl">
+                    Manage courts, bookings, and retail in one professional system
+                </h1>
+                <p class="mt-6 max-w-xl text-lg text-emerald-50">
+                    SmashZone powers modern badminton centres with real-time court scheduling,
+                    integrated payments, pro shop operations, staff workflows, and facility analytics.
+                </p>
+                <div class="mt-8 flex flex-wrap gap-4">
+                    <a href="{{ route('register') }}" class="inline-flex items-center rounded-xl bg-white px-6 py-3 text-sm font-bold text-emerald-700 shadow-lg hover:bg-emerald-50">
+                        Book Your First Court
+                    </a>
+                    <a href="{{ route('login') }}" class="inline-flex items-center rounded-xl border border-white/40 px-6 py-3 text-sm font-bold text-white hover:bg-white/10">
+                        Facility Staff Login
                     </a>
                 </div>
-                <div class="bg-white rounded-2xl p-8 card-shadow">
-                    <div class="grid grid-cols-2 gap-6">
-                        <div class="text-center">
-                            <div class="text-3xl font-bold text-green-600 mb-2">100+</div>
-                            <div class="text-gray-600">Courts Available</div>
-                        </div>
-                        <div class="text-center">
-                            <div class="text-3xl font-bold text-blue-600 mb-2">500+</div>
-                            <div class="text-gray-600">Happy Players</div>
-                        </div>
-                        <div class="text-center">
-                            <div class="text-3xl font-bold text-purple-600 mb-2">24/7</div>
-                            <div class="text-gray-600">Booking Support</div>
-                        </div>
-                        <div class="text-center">
-                            <div class="text-3xl font-bold text-pink-600 mb-2">50+</div>
-                            <div class="text-gray-600">Equipment Items</div>
-                        </div>
+            </div>
+            <div class="relative">
+                <img src="{{ asset('images/badminton-hero.jpg') }}" alt="SmashZone badminton facility" class="rounded-3xl border border-white/20 shadow-2xl">
+                <div class="absolute -bottom-6 -left-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-soft">
+                    <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Operating Hours</p>
+                    <p class="mt-1 text-lg font-bold text-slate-900">8:00 AM – 11:00 PM</p>
+                    <p class="text-sm text-slate-600">Daily · Including public holidays</p>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <section id="facilities" class="py-20">
+        <div class="sz-container">
+            <div class="mx-auto max-w-3xl text-center">
+                <h2 class="text-3xl font-bold text-slate-900">Built for professional facility operations</h2>
+                <p class="mt-4 text-lg text-slate-600">
+                    From court allocation to revenue reporting, SmashZone gives owners and staff
+                    the tools to run a high-standard badminton centre.
+                </p>
+            </div>
+            <div class="mt-12 grid gap-6 md:grid-cols-3">
+                <div class="sz-card sz-card-body">
+                    <div class="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-100 text-emerald-700">
+                        <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
                     </div>
+                    <h3 class="text-lg font-bold text-slate-900">Smart Court Booking</h3>
+                    <p class="mt-2 text-slate-600">Live availability grid, dynamic hourly pricing, multi-slot reservations, and automated booking lifecycle management.</p>
+                </div>
+                <div class="sz-card sz-card-body">
+                    <div class="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-sky-100 text-sky-700">
+                        <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2z"/></svg>
+                    </div>
+                    <h3 class="text-lg font-bold text-slate-900">Integrated Payments</h3>
+                    <p class="mt-2 text-slate-600">Secure Stripe checkout for court fees and pro shop orders, with refund handling and payment reconciliation built in.</p>
+                </div>
+                <div class="sz-card sz-card-body">
+                    <div class="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-violet-100 text-violet-700">
+                        <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+                    </div>
+                    <h3 class="text-lg font-bold text-slate-900">Facility Analytics</h3>
+                    <p class="mt-2 text-slate-600">Revenue dashboards, court utilisation metrics, booking trends, and exportable reports for management review.</p>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- CTA Section -->
-    <section class="py-20 bg-gradient-to-r from-green-600 to-blue-600">
-        <div class="max-w-4xl mx-auto text-center px-4 sm:px-6 lg:px-8">
-            <h2 class="text-4xl font-bold text-white mb-6">Ready to Start Your Badminton Journey?</h2>
-            <p class="text-xl text-green-100 mb-8">
-                Join thousands of players who trust SmashZone for their badminton needs
-            </p>
-            <div class="flex flex-col sm:flex-row gap-4 justify-center">
-                <a href="{{ route('register', absolute: false) }}" 
-                   class="bg-white text-green-600 px-8 py-4 rounded-xl font-bold text-lg hover:bg-gray-100 transition-all transform hover:scale-105 shadow-lg">
-                    Create Free Account
-                </a>
-                <a href="{{ route('login', absolute: false) }}" 
-                   class="border-2 border-white text-white px-8 py-4 rounded-xl font-bold text-lg hover:bg-white hover:text-green-600 transition-all transform hover:scale-105">
-                    Sign In
-                </a>
+    <section id="services" class="border-y border-slate-200 bg-white py-20">
+        <div class="sz-container grid gap-12 lg:grid-cols-2 lg:items-center">
+            <div>
+                <h2 class="text-3xl font-bold text-slate-900">Complete member and staff experience</h2>
+                <ul class="mt-8 space-y-4 text-slate-700">
+                    <li class="flex gap-3"><span class="mt-1 text-emerald-600">✓</span> Role-based dashboards for owners, staff, and members</li>
+                    <li class="flex gap-3"><span class="mt-1 text-emerald-600">✓</span> Pro shop with inventory, orders, and fulfilment tracking</li>
+                    <li class="flex gap-3"><span class="mt-1 text-emerald-600">✓</span> Automated booking reminders and in-app notifications</li>
+                    <li class="flex gap-3"><span class="mt-1 text-emerald-600">✓</span> Mobile app integration with secure web session handoff</li>
+                </ul>
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+                <div class="sz-stat-card"><p class="sz-stat-label">Court Types</p><p class="sz-stat-value">Premier & Standard</p></div>
+                <div class="sz-stat-card"><p class="sz-stat-label">Booking Window</p><p class="sz-stat-value">Real-time</p></div>
+                <div class="sz-stat-card"><p class="sz-stat-label">Currency</p><p class="sz-stat-value">MYR</p></div>
+                <div class="sz-stat-card"><p class="sz-stat-label">Support</p><p class="sz-stat-value">7 Days</p></div>
             </div>
         </div>
     </section>
 
-    <!-- Footer -->
-    <footer id="contact" class="bg-gray-900 text-white py-12">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
-                <div class="col-span-1 md:col-span-2">
-                    <div class="flex items-center space-x-2 mb-4">
-                        <div class="w-10 h-10 bg-gradient-to-r from-green-500 to-blue-600 rounded-lg flex items-center justify-center">
-                            <svg class="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                            </svg>
-                        </div>
-                        <span class="text-2xl font-bold">SmashZone</span>
-                    </div>
-                    <p class="text-gray-400 mb-4">
-                        Your ultimate destination for badminton courts, equipment, and community.
-                    </p>
-                </div>
-                
+    <section id="operations" class="py-20">
+        <div class="sz-container rounded-3xl bg-slate-900 px-8 py-12 text-white sm:px-12">
+            <div class="grid gap-8 lg:grid-cols-2 lg:items-center">
                 <div>
-                    <h3 class="text-lg font-semibold mb-4">Quick Links</h3>
-                    <ul class="space-y-2">
-                        <li><a href="#home" class="text-gray-400 hover:text-white transition-colors">Home</a></li>
-                        <li><a href="#features" class="text-gray-400 hover:text-white transition-colors">Features</a></li>
-                        <li><a href="#about" class="text-gray-400 hover:text-white transition-colors">About</a></li>
-                        <li><a href="{{ route('login', absolute: false) }}" class="text-gray-400 hover:text-white transition-colors">Login</a></li>
-                    </ul>
+                    <h2 class="text-3xl font-bold">Ready to streamline your badminton centre?</h2>
+                    <p class="mt-4 text-slate-300">Register as a member to book courts and shop equipment, or contact our team for facility partnership enquiries.</p>
                 </div>
-                
-                <div>
-                    <h3 class="text-lg font-semibold mb-4">Contact</h3>
-                    <ul class="space-y-2 text-gray-400">
-                        <li>Email: info@smashzone.com</li>
-                        <li>Phone: +1 (555) 123-4567</li>
-                        <li>Address: Badminton Street, Sports City</li>
-                    </ul>
+                <div class="flex flex-wrap gap-4 lg:justify-end">
+                    <a href="{{ route('register') }}" class="sz-btn-primary bg-emerald-500 hover:bg-emerald-400">Get Started</a>
+                    <a href="{{ route('bookings.index') }}" class="sz-btn-secondary border-slate-600 text-white hover:bg-slate-800">View Court Schedule</a>
                 </div>
             </div>
-            
-            <div class="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
-                <p>&copy; 2024 SmashZone. All rights reserved.</p>
+        </div>
+    </section>
+
+    <footer id="contact" class="border-t border-slate-200 bg-white py-12">
+        <div class="sz-container grid gap-8 md:grid-cols-3">
+            <div>
+                <p class="text-lg font-bold text-slate-900">SmashZone</p>
+                <p class="mt-2 text-sm text-slate-600">Professional badminton facility management platform.</p>
             </div>
+            <div>
+                <p class="text-sm font-semibold uppercase tracking-wide text-slate-500">Contact</p>
+                <p class="mt-2 text-sm text-slate-700">hello@smashzone.my</p>
+                <p class="text-sm text-slate-700">+60 3-1234 5678</p>
+                <p class="text-sm text-slate-700">Kuala Lumpur, Malaysia</p>
+            </div>
+            <div>
+                <p class="text-sm font-semibold uppercase tracking-wide text-slate-500">Hours</p>
+                <p class="mt-2 text-sm text-slate-700">Monday – Sunday</p>
+                <p class="text-sm text-slate-700">8:00 AM – 11:00 PM</p>
+            </div>
+        </div>
+        <div class="sz-container mt-8 border-t border-slate-200 pt-6 text-sm text-slate-500">
+            © {{ date('Y') }} SmashZone. All rights reserved.
         </div>
     </footer>
-
-    <script>
-        // Smooth scrolling for navigation links
-        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-            anchor.addEventListener('click', function (e) {
-                e.preventDefault();
-                const target = document.querySelector(this.getAttribute('href'));
-                if (target) {
-                    target.scrollIntoView({
-                        behavior: 'smooth',
-                        block: 'start'
-                    });
-                }
-            });
-        });
-
-        // Add scroll effect to navigation
-        window.addEventListener('scroll', function() {
-            const nav = document.querySelector('nav');
-            if (window.scrollY > 100) {
-                nav.classList.add('bg-white/95', 'backdrop-blur-sm');
-            } else {
-                nav.classList.remove('bg-white/95', 'backdrop-blur-sm');
-            }
-        });
-    </script>
 </body>
 </html>

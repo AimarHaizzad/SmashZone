@@ -87,7 +87,7 @@
                         Confirmed
                     </button>
                     <button onclick="filterBookings('completed')" id="booking-filter-completed" class="booking-filter-btn px-2 sm:px-3 py-1 rounded-lg text-xs sm:text-sm font-medium bg-gray-200 text-gray-700 hover:bg-green-200 hover:text-green-800">
-                        Played
+                        Completed
                     </button>
                     <button onclick="filterBookings('cancelled')" id="booking-filter-cancelled" class="booking-filter-btn px-2 sm:px-3 py-1 rounded-lg text-xs sm:text-sm font-medium bg-gray-200 text-gray-700 hover:bg-red-200 hover:text-red-800">
                         Cancelled
@@ -173,7 +173,7 @@
                                     @elseif($booking->status === 'confirmed')
                                         ✅ Confirmed
                                     @elseif($booking->status === 'completed')
-                                        🏸 Played
+                                        Completed
                                     @elseif($booking->status === 'cancelled')
                                         ❌ Cancelled
                                     @else

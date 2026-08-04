@@ -7,8 +7,8 @@
     <img src="/images/badminton-hero.jpg" alt="Badminton Hero" class="w-full h-48 sm:h-64 md:h-72 object-cover rounded-3xl shadow-2xl">
     <div class="absolute inset-0 flex flex-col justify-center items-center text-center px-4">
         <div class="bg-white/10 backdrop-blur-sm rounded-2xl p-4 sm:p-6 lg:p-8 border border-white/20">
-            <h1 class="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-white drop-shadow-lg mb-2">Book Your Court</h1>
-            <p class="text-base sm:text-lg lg:text-xl text-blue-100 font-medium drop-shadow mb-3 sm:mb-4">Real-time availability • Instant booking • Professional courts</p>
+            <h1 class="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-white drop-shadow-lg mb-2">Court Reservation</h1>
+            <p class="text-base sm:text-lg lg:text-xl text-blue-100 font-medium drop-shadow mb-3 sm:mb-4">Select your preferred court and time slot · Prices shown in MYR</p>
             <div class="flex flex-wrap items-center justify-center gap-3 md:gap-6 text-white/90" data-tutorial="legend">
                 <div class="flex items-center gap-1 md:gap-2">
                     <div class="w-2 h-2 md:w-3 md:h-3 bg-green-400 rounded-full"></div>
@@ -459,7 +459,6 @@
 
 <script>
     // Version: 3.3 - Fixed panel hiding when cleared and added more debugging
-    console.log('Booking system v3.3 loaded - Fixed panel hiding when cleared and added more debugging');
     
     // Multi-slot selection state
     let selectedSlots = new Map(); // Map of slotId -> {courtId, time, courtName}
