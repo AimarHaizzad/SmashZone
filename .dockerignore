@@ -19,7 +19,8 @@ coverage
 *.log
 *.zip
 *.tar.gz
-cookies*.txt
+/firebase-credentials.json
+/storage/app/firebase/
 test_*.php
 test_*.sh
 deploy*.sh

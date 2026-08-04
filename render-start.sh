@@ -43,6 +43,12 @@ echo "📝 Setting up .env file from environment variables..."
 [ ! -z "$APP_NAME" ] && set_env_var "APP_NAME" "$APP_NAME"
 [ ! -z "$APP_ENV" ] && set_env_var "APP_ENV" "$APP_ENV"
 [ ! -z "$APP_DEBUG" ] && set_env_var "APP_DEBUG" "$APP_DEBUG"
+[ ! -z "$SEED_OWNER_EMAIL" ] && set_env_var "SEED_OWNER_EMAIL" "$SEED_OWNER_EMAIL"
+[ ! -z "$SEED_OWNER_PASSWORD" ] && set_env_var "SEED_OWNER_PASSWORD" "$SEED_OWNER_PASSWORD"
+[ ! -z "$SEED_STAFF_PASSWORD" ] && set_env_var "SEED_STAFF_PASSWORD" "$SEED_STAFF_PASSWORD"
+[ ! -z "$FIREBASE_PROJECT_ID" ] && set_env_var "FIREBASE_PROJECT_ID" "$FIREBASE_PROJECT_ID"
+[ ! -z "$FIREBASE_CREDENTIALS_PATH" ] && set_env_var "FIREBASE_CREDENTIALS_PATH" "$FIREBASE_CREDENTIALS_PATH"
+[ ! -z "$FIREBASE_CREDENTIALS_BASE64" ] && set_env_var "FIREBASE_CREDENTIALS_BASE64" "$FIREBASE_CREDENTIALS_BASE64"
 
 # Ensure APP_URL is set (critical for asset URLs)
 if [ ! -z "$APP_URL" ]; then
@@ -202,6 +208,14 @@ php artisan migrate --force || {
     echo "⚠️ Migration failed! Check your database connection."
 }
 
+# Run facility seeder when explicitly enabled (requires SEED_OWNER_PASSWORD in env)
+if [ "$SEED_DATABASE" = "true" ]; then
+    echo "🌱 Running DatabaseSeeder..."
+    php artisan db:seed --force || {
+        echo "⚠️ DatabaseSeeder failed. Ensure SEED_OWNER_PASSWORD is set in environment variables."
+    }
+fi
+
 # Run PastDataSeeder if SEED_PAST_DATA is set to 'true'
 if [ "$SEED_PAST_DATA" = "true" ]; then
     echo "🌱 Running PastDataSeeder to generate historical booking data..."
@@ -211,29 +225,6 @@ if [ "$SEED_PAST_DATA" = "true" ]; then
     echo "💡 To prevent running this seeder again, set SEED_PAST_DATA to 'false' or remove it in Render dashboard."
 fi
 
-# Create owner account if it doesn't exist
-echo "👤 Ensuring owner account exists..."
-php -r "
-require __DIR__ . '/vendor/autoload.php';
-\$app = require_once __DIR__ . '/bootstrap/app.php';
-\$app->make('Illuminate\Contracts\Console\Kernel')->bootstrap();
-\$owner = App\Models\User::firstOrCreate(
-    ['email' => 'AimarHaizzad@gmail.com'],
-    [
-        'name' => 'Owner',
-        'password' => bcrypt('Aimar123'),
-        'role' => 'owner',
-        'email_verified_at' => now(),
-    ]
-);
-if (!\$owner->wasRecentlyCreated) {
-    \$owner->password = bcrypt('Aimar123');
-    \$owner->role = 'owner';
-    \$owner->email_verified_at = now();
-    \$owner->save();
-}
-echo '✅ Owner account ready: AimarHaizzad@gmail.com / Aimar123' . PHP_EOL;
-" || echo "⚠️ Could not create owner account (this is okay if it already exists)"
 
 # Create storage link
 echo "🔗 Creating storage link..."

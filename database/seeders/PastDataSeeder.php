@@ -8,7 +8,6 @@ use App\Models\Court;
 use App\Models\Booking;
 use App\Models\Payment;
 use Carbon\Carbon;
-use Illuminate\Support\Str;
 
 class PastDataSeeder extends Seeder
 {
@@ -39,17 +38,11 @@ class PastDataSeeder extends Seeder
                 throw new \Exception("Invalid owner ID provided: {$this->ownerId}");
             }
         } else {
-            // Fallback for CLI usage - get or create owner
-            $owner = User::firstOrCreate(
-                ['email' => 'AimarHaizzad@gmail.com'],
-                [
-                    'name' => 'Owner',
-                    'password' => bcrypt('Aimar123'),
-                    'role' => 'owner',
-                    'email_verified_at' => now(),
-                    'remember_token' => Str::random(10),
-                ]
-            );
+            $owner = User::where('role', 'owner')->first();
+
+            if (! $owner) {
+                throw new \RuntimeException('No owner account found. Run DatabaseSeeder first.');
+            }
         }
 
         // Get existing courts or create some

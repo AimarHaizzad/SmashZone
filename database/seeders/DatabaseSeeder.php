@@ -7,16 +7,21 @@ use App\Models\Product;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Str;
+use RuntimeException;
 
 class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
+        $ownerEmail = env('SEED_OWNER_EMAIL', 'admin@smashzone.my');
+        $ownerPassword = $this->requiredSeedPassword('SEED_OWNER_PASSWORD');
+        $staffPassword = env('SEED_STAFF_PASSWORD') ?: $ownerPassword;
+
         $owner = User::firstOrCreate(
-            ['email' => 'admin@smashzone.my'],
+            ['email' => $ownerEmail],
             [
                 'name' => 'Ahmad Razif',
-                'password' => bcrypt('SmashZone2026!'),
+                'password' => bcrypt($ownerPassword),
                 'role' => 'owner',
                 'phone' => '+60 12-345 6789',
                 'position' => 'Facility Director',
@@ -35,7 +40,7 @@ class DatabaseSeeder extends Seeder
                 ['email' => $staffData['email']],
                 [
                     'name' => $staffData['name'],
-                    'password' => bcrypt('Staff2026!'),
+                    'password' => bcrypt($staffPassword),
                     'role' => 'staff',
                     'position' => $staffData['position'],
                     'phone' => '+60 11-000 0000',
@@ -71,13 +76,10 @@ class DatabaseSeeder extends Seeder
             ],
         ];
 
-        $createdCourts = collect();
         foreach ($courts as $courtData) {
-            $createdCourts->push(
-                Court::firstOrCreate(
-                    ['name' => $courtData['name'], 'owner_id' => $owner->id],
-                    $courtData
-                )
+            Court::firstOrCreate(
+                ['name' => $courtData['name'], 'owner_id' => $owner->id],
+                $courtData
             );
         }
 
@@ -95,7 +97,19 @@ class DatabaseSeeder extends Seeder
         }
 
         $this->command->info('SmashZone facility data seeded successfully.');
-        $this->command->info('Owner: admin@smashzone.my / SmashZone2026!');
-        $this->command->info('Staff: siti@smashzone.my or raj@smashzone.my / Staff2026!');
+        $this->command->info("Owner account: {$ownerEmail}");
+        $this->command->info('Staff accounts: siti@smashzone.my, raj@smashzone.my');
+        $this->command->warn('Passwords were taken from SEED_OWNER_PASSWORD / SEED_STAFF_PASSWORD in .env — they are never stored in source code.');
+    }
+
+    private function requiredSeedPassword(string $key): string
+    {
+        $password = env($key);
+
+        if (empty($password)) {
+            throw new RuntimeException("Missing {$key}. Set it in your .env file before running db:seed.");
+        }
+
+        return $password;
     }
 }
