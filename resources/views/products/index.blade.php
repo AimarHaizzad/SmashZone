@@ -127,9 +127,31 @@
     <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8" data-tutorial="product-grid">
         @forelse($products as $product)
             <div class="bg-white rounded-3xl shadow-lg border border-gray-100 overflow-hidden group hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2" {{ $loop->first ? 'data-tutorial="product-card-example"' : '' }}>
-                <!-- Product Image -->
+                <!-- Product Image / 3D Preview -->
                 <div class="relative overflow-hidden">
-                    @if($product->image)
+                    @if($product->model_3d_url)
+                        <div
+                            class="relative h-64 w-full bg-slate-800 cursor-pointer"
+                            data-product-3d-card
+                            data-product-id="{{ $product->id }}"
+                        >
+                            <div data-product-3d-canvas class="absolute inset-0"></div>
+                            <div data-product-3d-loading class="absolute inset-0 flex items-center justify-center bg-slate-800/90 text-sm font-medium text-slate-200">
+                                Loading 3D preview...
+                            </div>
+                            <button
+                                type="button"
+                                data-product-3d-open
+                                class="absolute bottom-4 right-4 inline-flex items-center gap-2 rounded-full bg-white/90 backdrop-blur-sm px-4 py-2 text-xs font-semibold text-slate-800 shadow-lg hover:bg-white transition"
+                            >
+                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 10a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z" />
+                                </svg>
+                                View in 3D
+                            </button>
+                        </div>
+                    @elseif($product->image)
                         <img src="{{ $product->image_url ?? asset('images/default-badminton-court.jpg') }}" 
                              alt="{{ $product->name }}" 
                              class="h-64 w-full object-cover group-hover:scale-110 transition-transform duration-300"
@@ -285,6 +307,24 @@
         @endforelse
     </div>
 </div>
+
+@php
+    $productViewerItems = $products
+        ->filter(fn ($product) => $product->model_3d_url)
+        ->map(fn ($product) => [
+            'id' => $product->id,
+            'name' => $product->name,
+            'modelUrl' => $product->model_3d_url,
+        ])
+        ->values();
+@endphp
+
+@if($productViewerItems->isNotEmpty())
+    <script id="product-viewer-config" type="application/json">
+        @json(['products' => $productViewerItems])
+    </script>
+    @vite('resources/js/product-viewer.js')
+@endif
 
 @if(isset($showTutorial) && $showTutorial)
     @push('scripts')

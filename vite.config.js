@@ -8,6 +8,7 @@ export default defineConfig({
                 'resources/css/app.css',
                 'resources/js/app.js',
                 'resources/js/court-viewer.js',
+                'resources/js/product-viewer.js',
             ],
             refresh: true,
         }),

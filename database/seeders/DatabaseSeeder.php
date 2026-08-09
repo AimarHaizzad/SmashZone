@@ -85,7 +85,7 @@ class DatabaseSeeder extends Seeder
 
         $products = [
             ['name' => 'Yonex Power Cushion 65 Z3', 'description' => 'Professional badminton shoes with power cushion technology.', 'price' => 449.00, 'quantity' => 12, 'category' => 'shoes', 'brand' => 'Yonex'],
-            ['name' => 'Li-Ning Aeronaut 9000', 'description' => 'High-speed racket engineered for offensive players.', 'price' => 899.00, 'quantity' => 8, 'category' => 'rackets', 'brand' => 'Li-Ning'],
+            ['name' => 'Li-Ning Aeronaut 9000', 'description' => 'High-speed racket engineered for offensive players.', 'price' => 899.00, 'quantity' => 8, 'category' => 'rackets', 'brand' => 'Li-Ning', 'model_3d' => 'procedural:racket'],
             ['name' => 'Victor Master No.1', 'description' => 'Tournament shuttlecocks, tube of 12.', 'price' => 89.00, 'quantity' => 40, 'category' => 'shuttlecocks', 'brand' => 'Victor'],
             ['name' => 'Yonex Pro Racket Bag 9', 'description' => 'Thermo-guard racket bag with shoe compartment.', 'price' => 329.00, 'quantity' => 15, 'category' => 'bags', 'brand' => 'Yonex'],
             ['name' => 'Apacs Dri-Fit Jersey', 'description' => 'Breathable competition jersey, unisex fit.', 'price' => 79.00, 'quantity' => 30, 'category' => 'clothing', 'brand' => 'Apacs'],

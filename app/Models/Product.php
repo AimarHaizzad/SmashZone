@@ -16,6 +16,7 @@ class Product extends Model
         'old_price',
         'quantity',
         'image',
+        'model_3d',
         'category',
         'brand',
     ];
@@ -52,5 +53,22 @@ class Product extends Model
             ]);
             return null;
         }
+    }
+
+    public function getModel3dUrlAttribute(): ?string
+    {
+        if (!$this->model_3d) {
+            return null;
+        }
+
+        if (str_starts_with($this->model_3d, 'procedural:')) {
+            return $this->model_3d;
+        }
+
+        if (filter_var($this->model_3d, FILTER_VALIDATE_URL)) {
+            return $this->model_3d;
+        }
+
+        return asset(ltrim($this->model_3d, '/'));
     }
 }
