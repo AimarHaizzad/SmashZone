@@ -65,8 +65,78 @@ class BookingController extends Controller
         // Check if user should see booking page tutorial (first time users only)
         // Use database field instead of session to persist across logouts
         $showTutorial = $user->isCustomer() && !$user->booking_tutorial_completed;
+
+        $courtViewerCourts = $this->buildCourtViewerData(
+            $courts,
+            $bookings,
+            $timeSlots,
+            $selectedDate,
+            $user->id
+        );
         
-        return view('bookings.index', compact('courts', 'timeSlots', 'bookings', 'selectedDate', 'showTutorial'));
+        return view('bookings.index', compact(
+            'courts',
+            'timeSlots',
+            'bookings',
+            'selectedDate',
+            'showTutorial',
+            'courtViewerCourts'
+        ));
+    }
+
+    /**
+     * Build court metadata for the dynamic 3D facility viewer.
+     */
+    private function buildCourtViewerData($courts, $bookings, array $timeSlots, string $selectedDate, int $userId): array
+    {
+        $now = Carbon::now();
+
+        return $courts->values()->map(function ($court) use ($bookings, $timeSlots, $selectedDate, $now, $userId) {
+            $hasMine = false;
+            $hasAvailable = false;
+            $hasFutureSlot = false;
+
+            foreach ($timeSlots as $slot) {
+                $slotCarbon = Carbon::createFromFormat('H:i:s', $slot . ':00');
+                $slotDateTime = Carbon::createFromFormat('Y-m-d H:i', "{$selectedDate} {$slot}");
+                $isPast = $slotDateTime->lt($now);
+
+                $booking = $bookings->first(function ($booking) use ($court, $slotCarbon) {
+                    $startTime = Carbon::createFromFormat('H:i:s', $booking->start_time);
+                    $endTime = Carbon::createFromFormat('H:i:s', $booking->end_time);
+
+                    return $booking->court_id == $court->id
+                        && $slotCarbon->gte($startTime)
+                        && $slotCarbon->lt($endTime);
+                });
+
+                if (!$isPast) {
+                    $hasFutureSlot = true;
+
+                    if (!$booking) {
+                        $hasAvailable = true;
+                    } elseif ($booking->user_id == $userId) {
+                        $hasMine = true;
+                    }
+                }
+            }
+
+            if ($hasMine) {
+                $status = 'mine';
+            } elseif ($hasAvailable) {
+                $status = 'available';
+            } elseif (!$hasFutureSlot) {
+                $status = 'past';
+            } else {
+                $status = 'booked';
+            }
+
+            return [
+                'id' => $court->id,
+                'name' => $court->name,
+                'status' => $status,
+            ];
+        })->all();
     }
 
     /**

@@ -83,10 +83,54 @@
         </div>
     </div>
 
+    @if(!empty($courtViewerCourts))
+    <div id="court-viewer-root" class="bg-white rounded-xl md:rounded-2xl shadow-lg border border-gray-100 mb-4 md:mb-8 overflow-hidden" data-tutorial="court-viewer">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 md:p-6 border-b border-gray-100 bg-gradient-to-r from-slate-50 to-emerald-50">
+            <div>
+                <h2 class="text-lg md:text-xl font-bold text-gray-900">3D Facility View</h2>
+                <p class="text-sm text-gray-600 mt-1">Click a court to jump to its time slots in the table below.</p>
+            </div>
+            <button id="court-viewer-toggle" type="button" class="px-4 py-2 rounded-xl border border-gray-200 bg-white text-sm font-semibold text-gray-700 hover:bg-gray-50 transition">
+                Show Table View
+            </button>
+        </div>
+
+        <div id="court-viewer-panel">
+            <div class="relative">
+                <div data-court-viewer-canvas class="w-full h-[320px] sm:h-[400px] md:h-[480px] bg-slate-800"></div>
+                <div data-court-viewer-loading class="absolute inset-0 flex items-center justify-center bg-slate-800/90 text-sm font-medium text-slate-200">
+                    Loading indoor facility...
+                </div>
+                <div data-court-viewer-error class="hidden absolute inset-x-4 bottom-4 rounded-xl bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700"></div>
+            </div>
+            <div class="px-4 md:px-6 py-3 border-t border-gray-100 flex flex-wrap items-center justify-between gap-3">
+                <div class="flex items-center gap-3">
+                    <p data-court-viewer-label class="text-sm font-medium text-gray-700">Seated view · Drag to look around · Click a court</p>
+                    <button id="court-viewer-reset" type="button" class="text-xs font-semibold text-emerald-700 hover:text-emerald-900 underline-offset-2 hover:underline">
+                        Reset view
+                    </button>
+                </div>
+                <div class="flex flex-wrap items-center gap-3 text-xs text-gray-500">
+                    <span class="inline-flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-green-500"></span> Available</span>
+                    <span class="inline-flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-red-500"></span> Booked</span>
+                    <span class="inline-flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-blue-500"></span> My booking</span>
+                    <span class="inline-flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-gray-400"></span> Past</span>
+                </div>
+            </div>
+        </div>
+
+        <script id="court-viewer-config" type="application/json">
+            {!! json_encode([
+                'courts' => $courtViewerCourts,
+            ], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT) !!}
+        </script>
+    </div>
+    @endif
+
 
 
     <!-- Responsive Table View (works on both mobile and desktop) -->
-    <div class="bg-white rounded-xl md:rounded-3xl shadow-xl border border-gray-100 overflow-hidden" data-tutorial="booking-table">
+    <div id="booking-table-section" class="bg-white rounded-xl md:rounded-3xl shadow-xl border border-gray-100 overflow-hidden" data-tutorial="booking-table">
         <div class="overflow-x-auto">
             <table class="min-w-full">
                 <thead class="sticky top-0 z-20">
@@ -1905,4 +1949,8 @@
     @endpush
 @endif
 
-@endsection 
+@push('scripts')
+    @vite('resources/js/court-viewer.js')
+@endpush
+
+@endsection
